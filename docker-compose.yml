@@ -1,0 +1,43 @@
+services:
+  alias-database:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5433:5432"
+    volumes:
+      - postgres_data:/var/lib/postgresql/data
+      - ./db_init:/docker-entrypoint-initdb.d
+
+  cards:
+    build:
+      context: services/cards_service
+    container_name: cards_service
+    volumes:
+      - ./services/cards_service/src:/app/src
+      - ./services/cards_service/alembic:/app/alembic
+    env_file:
+      - services/cards_service/.env
+    depends_on:
+      - alias-database
+    ports:
+      - "8001:8000"
+
+  packs:
+    build:
+      context: services/packs_service
+    container_name: packs_service
+    volumes:
+      - ./services/packs_service/src:/app/src
+      - ./services/packs_service/alembic:/app/alembic
+    env_file:
+      - services/packs_service/.env
+    depends_on:
+      - alias-database
+    ports:
+      - "8002:8000"
+
+volumes:
+  postgres_data:
