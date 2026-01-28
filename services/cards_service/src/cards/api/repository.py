@@ -6,17 +6,25 @@ from sqlalchemy.ext.asyncio import AsyncSession
 
 from cards.database.models import Card
 from cards.exc.exceptions import CardCreationError
+from cards.grpc.clients.packs import PacksClient
 from cards.schemas.schemas import CardCreate
+
+
+# async def save_cards()
 
 
 async def save_card(
         card: CardCreate,
         db: AsyncSession
 ) -> Card:
-    # collection_exists = await is_collection_exist(card.collection_id, db)
-    #
-    #     if not collection_exists:
-    #         raise CardCreationError('Collection does not exist')
+    packs_client = PacksClient('packs_service:50051')
+
+    pack_exists = await packs_client.is_pack_exist(
+        card.pack_id
+    )
+
+    if not pack_exists:
+        raise CardCreationError("Collection does not exist")
 
     card = Card(word=card.word, pack_id=card.pack_id)
 

@@ -27,7 +27,6 @@ def upgrade() -> None:
     sa.Column('pack_id', sa.Integer(), nullable=False),
     sa.PrimaryKeyConstraint('id'),
     sa.UniqueConstraint('word', 'pack_id', name='uix_word_collection'),
-    schema='cards'
     )
     # ### end Alembic commands ###
 

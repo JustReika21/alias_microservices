@@ -34,7 +34,6 @@ def do_run_migrations(connection):
         connection=connection,
         target_metadata=target_metadata,
         dialect_opts={"paramstyle": "named"},
-        version_table_schema=settings.db_schema,
     )
 
     with context.begin_transaction():

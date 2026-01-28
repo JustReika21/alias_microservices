@@ -26,7 +26,6 @@ def upgrade() -> None:
     sa.Column('name', sa.String(length=127), nullable=False),
     sa.Column('description', sa.String(length=1024), nullable=True),
     sa.PrimaryKeyConstraint('id'),
-    schema='packs'
     )
     # ### end Alembic commands ###
 

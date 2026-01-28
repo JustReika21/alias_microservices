@@ -8,6 +8,7 @@ from cards.schemas.schemas import CardCreate, CardRead
 
 card_router = APIRouter(tags=['Cards'])
 
+
 @card_router.post('/card', response_model=CardRead)
 async def card_create_api(
         card: CardCreate,
