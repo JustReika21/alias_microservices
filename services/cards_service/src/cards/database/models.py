@@ -8,8 +8,10 @@ class Card(Base):
     __tablename__ = 'card'
     __table_args__ = (
         UniqueConstraint('word', 'pack_id', name='uix_word_collection'),
+        UniqueConstraint('pack_id', 'position', name='uix_pack_position'),
     )
 
     id: Mapped[int] = mapped_column(primary_key=True)
     word: Mapped[str] = mapped_column(String(127), nullable=False)
     pack_id: Mapped[int] = mapped_column(nullable=False)
+    position: Mapped[int] = mapped_column(nullable=False)

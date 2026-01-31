@@ -48,6 +48,7 @@ services:
       - packs-db
     ports:
       - "8002:8000"
+      - "50052:50051"
 
 
 volumes:
