@@ -1,9 +1,8 @@
 import asyncio
 
-from packs_grpc.v1 import packs_grpc_pb2_grpc
 import grpc
-
 from packs.grpc.servicer import Packs
+from packs_grpc.v1 import packs_grpc_pb2_grpc
 
 
 async def start_grpc_server():

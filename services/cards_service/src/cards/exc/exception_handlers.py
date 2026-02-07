@@ -1,7 +1,6 @@
+from cards.exc.exceptions import CardCreationError
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-
-from cards.exc.exceptions import CardCreationError
 
 
 async def handle_card_creation_error(request: Request, exc: CardCreationError):

@@ -14,7 +14,7 @@ dependencies = [
     "grpcio-tools==1.76",
     "opentelemetry-instrumentation-fastapi>=0.60b1",
     "opentelemetry-sdk>=1.39.1",
-    "packs-grpc==0.1.3",
+    "packs-grpc==0.1.4",
     "pydantic-settings>=2.12.0",
     "python-dotenv>=1.2.1",
     "structlog>=25.5.0",

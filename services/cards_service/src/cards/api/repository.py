@@ -1,18 +1,13 @@
-from typing import Sequence, Iterable
 from random import sample
-
-from sqlalchemy import select, func
-from sqlalchemy.exc import IntegrityError
-from sqlalchemy.ext.asyncio import AsyncSession
+from typing import Sequence
 
 from cards.database.models import Card
 from cards.exc.exceptions import CardCreationError
 from cards.grpc.clients.packs import PacksClient
 from cards.schemas.schemas import CardCreate, CardsCreate
-
-
-def get_packs_client():
-    return PacksClient('packs_service:50051')
+from sqlalchemy import func, select
+from sqlalchemy.exc import IntegrityError
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_max_card_position(pack_id, db):
@@ -23,31 +18,30 @@ async def get_max_card_position(pack_id, db):
 
 async def save_cards(
         cards: CardsCreate,
-        db: AsyncSession
+        db: AsyncSession,
+        packs_client: PacksClient
 ) -> Sequence[Card]:
-    packs_client = get_packs_client()
-
     if not await packs_client.is_pack_exist(cards.pack_id):
         raise CardCreationError("Collection does not exist")
 
-    cards_list = []
-    cur_pos = await get_max_card_position(cards.pack_id, db) or 0
-    for word in cards.words:
-        cur_pos += 1
-        if cur_pos > 5000:
-            raise CardCreationError("Collection overflow")
-        cards_list.append(
-            Card(word=word, pack_id=cards.pack_id, position=cur_pos)
+    total_in_pack = await packs_client.get_total_cards_in_pack(cards.pack_id)
+    if len(cards.words) + total_in_pack > 5000:
+        raise CardCreationError("Collection overflow")
+
+    start_pos = await get_max_card_position(cards.pack_id, db) or 0
+    new_cards = [
+        Card(
+            word=word,
+            pack_id=cards.pack_id,
+            position=start_pos + i + 1,
         )
+        for i, word in enumerate(cards.words)
+    ]
 
     try:
-        db.add_all(cards_list)
+        db.add_all(new_cards)
         await db.commit()
-
-        for card in cards_list:
-            await db.refresh(card)
-
-        return cards_list
+        return new_cards
     except IntegrityError:
         await db.rollback()
         raise CardCreationError("Card error")
@@ -55,18 +49,16 @@ async def save_cards(
 
 async def save_card(
         card: CardCreate,
-        db: AsyncSession
+        db: AsyncSession,
+        packs_client: PacksClient
 ) -> Card:
-    packs_client = get_packs_client()
-
     if not await packs_client.is_pack_exist(card.pack_id):
         raise CardCreationError("Collection does not exist")
 
-    max_pos = await get_max_card_position(card.pack_id, db) or 0
-
-    if max_pos >= 5000:
+    if await packs_client.get_total_cards_in_pack(card.pack_id) >= 5000:
         raise CardCreationError("Collection overflow")
 
+    max_pos = await get_max_card_position(card.pack_id, db) or 0
     card = Card(word=card.word, pack_id=card.pack_id, position=max_pos+1)
 
     try:
@@ -84,6 +76,7 @@ async def get_random_cards_from_db(
         pack_id: int,
         limit: int,
         db: AsyncSession,
+        packs_client: PacksClient
 ) -> Sequence[Card]:
     max_pos = await get_max_card_position(pack_id, db) or 0
 
@@ -104,3 +97,9 @@ async def get_random_cards_from_db(
     #     raise 'No more cards'
 
     return result.scalars().all()
+
+
+# async def delete_cards(card_ids: List[int], db: AsyncSession) -> None:
+#     stmt = delete(Card).where(Card.id.in_(card_ids))
+#     await db.execute(stmt)
+#     await db.commit()

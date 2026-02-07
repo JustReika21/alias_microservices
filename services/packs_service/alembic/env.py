@@ -2,11 +2,9 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-
-from packs.database.db import engine, Base
-from packs.settings import settings
-
+from packs.database.db import Base, engine
 from packs.database.models import Pack
+from packs.settings import settings
 
 config = context.config
 

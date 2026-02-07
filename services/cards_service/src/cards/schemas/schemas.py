@@ -1,8 +1,7 @@
 from typing import List
 
-from pydantic import BaseModel
-
 from cards.schemas.validators import WORD
+from pydantic import BaseModel
 
 
 class CardBase(BaseModel):

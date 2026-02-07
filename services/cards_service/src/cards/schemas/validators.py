@@ -1,8 +1,7 @@
 from typing import Annotated
 
-from pydantic import Field, BeforeValidator
-
 from cards.schemas.utils import strip_whitespace
+from pydantic import BeforeValidator, Field
 
 WORD_MIN_LENGTH = 2
 WORD_MAX_LENGTH = 127

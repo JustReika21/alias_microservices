@@ -2,11 +2,9 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-
-from cards.database.db import engine, Base
-from cards.settings import settings
-
+from cards.database.db import Base, engine
 from cards.database.models import Card
+from cards.settings import settings
 
 config = context.config
 

@@ -1,7 +1,6 @@
-from sqlalchemy import String, UniqueConstraint
-from sqlalchemy.orm import Mapped,mapped_column
-
 from cards.database.db import Base
+from sqlalchemy import String, UniqueConstraint
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class Card(Base):

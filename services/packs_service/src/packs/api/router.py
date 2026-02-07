@@ -1,10 +1,9 @@
 from fastapi import APIRouter
 from fastapi.params import Depends
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from packs.api.service import create_pack
 from packs.database.dependencies import get_session
 from packs.schemas.schemas import PackCreate, PackRead
+from sqlalchemy.ext.asyncio import AsyncSession
 
 pack_router = APIRouter(tags=['Packs'])
 
