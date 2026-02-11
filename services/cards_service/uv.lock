@@ -161,7 +161,7 @@ requires-dist = [
     { name = "grpcio-tools", specifier = "==1.76" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.60b1" },
     { name = "opentelemetry-sdk", specifier = ">=1.39.1" },
-    { name = "packs-grpc", specifier = "==0.1.4" },
+    { name = "packs-grpc", specifier = "==0.1.5" },
     { name = "pydantic-settings", specifier = ">=2.12.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "structlog", specifier = ">=25.5.0" },
@@ -691,15 +691,15 @@ wheels = [
 
 [[package]]
 name = "packs-grpc"
-version = "0.1.4"
+version = "0.1.5"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grpcio" },
     { name = "grpcio-tools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/db/6b/531f8310cc57909f6c9579d58eaa42f770a2c41ce2faa43a86e2c473d6af/packs_grpc-0.1.4.tar.gz", hash = "sha256:e9de9e5a59204b79d388320df0f0c1d669b07b8664eaefa092e379cf5cbcb0c0", size = 2995, upload-time = "2026-01-31T13:19:25.995Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/d9/d5/b76ed2ff30af0fc50710d91f62b53a2003f92742f91492b50b36bf20ece9/packs_grpc-0.1.5.tar.gz", hash = "sha256:8e2460c8946c5b784caad8462d55d7977bfb607b9732b35385be7aec43261591", size = 3202, upload-time = "2026-02-11T12:12:26.169Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/83/94/db26b1a8087243fd47e66e3892b1401fb5e0faa9176c475d3939c70866fc/packs_grpc-0.1.4-py3-none-any.whl", hash = "sha256:cef2b71a0016bdb0cab9a4aca506681bade9a5d8250baf15a2f72cf8c48d5c9e", size = 3694, upload-time = "2026-01-31T13:19:25.051Z" },
+    { url = "https://files.pythonhosted.org/packages/cb/d5/231c801f12e4fc62a065295619e31fe36faf3e4a968829177d958923ed4f/packs_grpc-0.1.5-py3-none-any.whl", hash = "sha256:1f81693c7e1ef586faf6a378ed41c4f1a88f62ee9f7a0cbd0b44914fdf1b52f2", size = 3875, upload-time = "2026-02-11T12:12:26.945Z" },
 ]
 
 [[package]]

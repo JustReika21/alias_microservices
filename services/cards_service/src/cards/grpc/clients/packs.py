@@ -2,7 +2,7 @@ from typing import Optional
 
 import grpc
 import grpc.aio
-from packs_grpc.v1.packs_grpc_pb2 import GetTotalCardsInPackReq, IsPackExistReq
+from packs_grpc.v1.packs_grpc_pb2 import GetTotalCardsInPackReq, IsPackExistReq, UpdateTotalCardsInPackReq
 from packs_grpc.v1.packs_grpc_pb2_grpc import PacksStub
 
 
@@ -27,3 +27,9 @@ class PacksClient:
     async def get_total_cards_in_pack(self, pack_id: int) -> int:
         response = await self.stub.GetTotalCardsInPack(GetTotalCardsInPackReq(id=pack_id))
         return response.total
+
+    async def update_total_cards_in_pack(self, pack_id: int, count: int) -> bool:
+        response = await self.stub.UpdateTotalCardsInPack(
+            UpdateTotalCardsInPackReq(pack_id=pack_id, count=count)
+        )
+        return response.success

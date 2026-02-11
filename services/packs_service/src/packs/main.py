@@ -15,11 +15,6 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-
-@app.get("/")
-def read_root():
-    return {"Hello": "sss"}
-
 app.include_router(pack_router)
 
 register_pack_exception_handlers(app)

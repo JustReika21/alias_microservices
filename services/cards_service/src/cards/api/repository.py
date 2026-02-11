@@ -25,8 +25,11 @@ async def save_cards(
         raise CardCreationError("Collection does not exist")
 
     total_in_pack = await packs_client.get_total_cards_in_pack(cards.pack_id)
-    if len(cards.words) + total_in_pack > 5000:
+    cards_count = len(cards.words)
+    if cards_count + total_in_pack > 5000:
         raise CardCreationError("Collection overflow")
+
+    await packs_client.update_total_cards_in_pack(cards.pack_id, cards_count)
 
     start_pos = await get_max_card_position(cards.pack_id, db) or 0
     new_cards = [
@@ -44,6 +47,7 @@ async def save_cards(
         return new_cards
     except IntegrityError:
         await db.rollback()
+        await packs_client.update_total_cards_in_pack(cards.pack_id, -cards_count)
         raise CardCreationError("Card error")
 
 
@@ -65,10 +69,12 @@ async def save_card(
         db.add(card)
         await db.commit()
         await db.refresh(card)
+        await packs_client.update_total_cards_in_pack(card.pack_id, 1)
 
         return card
     except IntegrityError:
         await db.rollback()
+        await packs_client.update_total_cards_in_pack(card.pack_id, -1)
         raise CardCreationError('Card creation error')
 
 
@@ -76,7 +82,6 @@ async def get_random_cards_from_db(
         pack_id: int,
         limit: int,
         db: AsyncSession,
-        packs_client: PacksClient
 ) -> Sequence[Card]:
     max_pos = await get_max_card_position(pack_id, db) or 0
 

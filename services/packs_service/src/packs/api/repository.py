@@ -1,10 +1,9 @@
-from packs.database.dependencies import get_session
 from packs.database.models import Pack
 from packs.exc.exceptions import PackCreationError
 from packs.schemas.schemas import PackCreate
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import exists, select
+from sqlalchemy.sql import exists, select, update
 
 
 async def save_pack(
@@ -39,3 +38,18 @@ async def get_total_cards_in_pack(
     stmt = select(Pack.total).where(Pack.id == pack_id)
     total_cards = await db.scalar(stmt)
     return total_cards
+
+async def update_total_cards_in_pack(
+        pack_id: int,
+        count: int,
+        db: AsyncSession
+) -> bool:
+    stmt = update(Pack).where(Pack.id == pack_id).values(total=Pack.total+count)
+    try:
+        await db.execute(stmt)
+        await db.commit()
+        return True
+    except IntegrityError:
+        await db.rollback()
+        raise PackCreationError('Pack creation error')
+
