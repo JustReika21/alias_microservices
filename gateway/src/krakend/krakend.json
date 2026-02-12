@@ -1,0 +1,18 @@
+{
+  "version": 3,
+  "name": "Alias API Gateway",
+  "port": 8080,
+  "cache_ttl": "300s",
+  "endpoints": [
+    {
+      "endpoint": "/cards/random/",
+      "method": "GET",
+      "backend": [
+        {
+          "url_pattern": "/cards/random/",
+          "host": ["http://cards:8000"]
+        }
+      ]
+    }
+  ]
+}

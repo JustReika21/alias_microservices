@@ -24,9 +24,8 @@ async def get_random_cards(
         pack_id: int,
         limit: int,
         db: AsyncSession,
-        packs_client: PacksClient
 ) -> List[CardRead]:
-    cards = await get_random_cards_from_db(pack_id, limit, db, packs_client)
+    cards = await get_random_cards_from_db(pack_id, limit, db)
     validated_cards = [CardRead.model_validate(card) for card in cards]
     shuffle(validated_cards)
     return validated_cards

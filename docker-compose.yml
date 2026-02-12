@@ -1,4 +1,17 @@
 services:
+  gateway:
+    container_name: gateway
+    build:
+      context: gateway
+    volumes:
+      - ./gateway/src/krakend:/etc/krakend
+    ports:
+      - "8080:8080"
+    depends_on:
+      - cards
+      - packs
+      - game
+
   cards-db:
     image: postgres:17
     environment:
@@ -20,6 +33,17 @@ services:
       - "5434:5432"
     volumes:
       - packs_data:/var/lib/postgresql/data
+
+  game-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5435:5432"
+    volumes:
+      - game_data:/var/lib/postgresql/data
 
   cards:
     build:
@@ -50,7 +74,21 @@ services:
       - "8002:8000"
       - "50052:50051"
 
+  game:
+    build:
+      context: services/game_service
+    container_name: game_service
+    volumes:
+      - ./services/game_service/src:/app/src
+      - ./services/game_service/alembic:/app/alembic
+    env_file:
+      - services/game_service/.env
+    depends_on:
+      - game-db
+    ports:
+      - "8003:8000"
 
 volumes:
   cards_data:
   packs_data:
+  game_data:

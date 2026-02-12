@@ -1,5 +1,5 @@
 def main():
-    print("Hello from aliasmicro!")
+    print("Hello from game-service!")
 
 
 if __name__ == "__main__":

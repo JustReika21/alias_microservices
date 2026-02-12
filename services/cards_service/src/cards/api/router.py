@@ -27,11 +27,10 @@ async def cards_create_api(
 ) -> List[CardRead]:
     return await create_cards(cards, db, packs_client)
 
-@card_router.post('/cards/random')
+@card_router.get('/cards/random')
 async def random_cards_get_api(
         pack_id: int,
         limit: int = 100,
         db: AsyncSession = Depends(get_session),
-        packs_client: PacksClient = Depends(get_packs_client),
 ) -> List[CardRead]:
-    return await get_random_cards(pack_id, limit, db, packs_client)
+    return await get_random_cards(pack_id, limit, db)
