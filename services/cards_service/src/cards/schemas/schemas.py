@@ -25,3 +25,9 @@ class CardRead(CardBase):
 
     class Config:
         from_attributes = True
+
+
+class RandomCardsRequest(CardBase):
+    pack_id: int = 3
+    limit: int = 100
+

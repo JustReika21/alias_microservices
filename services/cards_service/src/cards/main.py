@@ -2,7 +2,8 @@ from contextlib import asynccontextmanager
 
 from cards.api.router import card_router
 from cards.exc.exception_handlers import register_card_exception_handlers
-from fastapi import FastAPI, Request
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 from cards.grpc.clients.packs import PacksClient
 
@@ -19,3 +20,11 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(card_router)
 
 register_card_exception_handlers(app)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["*"],         # Allows specific origins
+    allow_credentials=True,        # Allows cookies, authorization headers, etc.
+    allow_methods=["*"],           # Allows all methods (GET, POST, PUT, DELETE, etc.)
+    allow_headers=["*"],           # Allows all headers
+)

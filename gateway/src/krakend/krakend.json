@@ -5,12 +5,14 @@
   "cache_ttl": "300s",
   "endpoints": [
     {
-      "endpoint": "/cards/random/",
-      "method": "GET",
+      "endpoint": "/cards/random",
+      "method": "POST",
       "backend": [
         {
-          "url_pattern": "/cards/random/",
-          "host": ["http://cards:8000"]
+          "url_pattern": "/cards/random",
+          "host": ["http://cards:8000"],
+          "encoding": "json",
+          "is_collection": true
         }
       ]
     }
