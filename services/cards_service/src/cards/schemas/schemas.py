@@ -20,7 +20,7 @@ class CardsCreate(CardBase):
 
 class CardRead(CardBase):
     id: int
-    word: WORD
+    word: str
     pack_id: int
 
     class Config:
@@ -28,6 +28,13 @@ class CardRead(CardBase):
 
 
 class RandomCardsRequest(CardBase):
-    pack_id: int = 3
-    limit: int = 100
+    pack_id: int
+    limit: int
 
+
+class CardDelete(CardBase):
+    id: int
+
+
+class CardsDelete(CardBase):
+    ids: List[int]

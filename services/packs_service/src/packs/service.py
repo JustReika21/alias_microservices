@@ -1,4 +1,4 @@
-from packs.api.repository import save_pack
+from packs.repository import save_pack
 from packs.schemas.schemas import PackCreate, PackRead
 from sqlalchemy.ext.asyncio import AsyncSession
 

@@ -1,4 +1,4 @@
-from cards.exc.exceptions import CardCreationError
+from cards.exc.exceptions import CardCreationError, CardError
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 
@@ -9,5 +9,12 @@ async def handle_card_creation_error(request: Request, exc: CardCreationError):
         content={'detail': str(exc)},
     )
 
+async def handle_card_error(request: Request, exc: CardError):
+    return JSONResponse(
+        status_code=status.HTTP_400_BAD_REQUEST,
+        content={'detail': str(exc)},
+    )
+
 def register_card_exception_handlers(app):
     app.add_exception_handler(CardCreationError, handle_card_creation_error)
+    app.add_exception_handler(CardError, handle_card_error)

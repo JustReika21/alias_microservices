@@ -1,6 +1,6 @@
 from contextlib import asynccontextmanager
 
-from cards.api.router import card_router
+from cards.api.v1.router import card_router
 from cards.exc.exception_handlers import register_card_exception_handlers
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(card_router)
+app.include_router(card_router, prefix="/api/v1")
 
 register_card_exception_handlers(app)
 

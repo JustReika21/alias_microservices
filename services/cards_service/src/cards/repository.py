@@ -2,10 +2,11 @@ from random import sample
 from typing import Sequence
 
 from cards.database.models import Card
-from cards.exc.exceptions import CardCreationError
+from cards.exc.exceptions import CardCreationError, CardError
 from cards.grpc.clients.packs import PacksClient
-from cards.schemas.schemas import CardCreate, CardsCreate
-from sqlalchemy import func, select
+from cards.schemas.schemas import CardCreate, CardsCreate, RandomCardsRequest, \
+    CardDelete
+from sqlalchemy import func, select, delete
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -13,7 +14,7 @@ from sqlalchemy.ext.asyncio import AsyncSession
 async def get_max_card_position(pack_id, db):
     stmt = select(func.max(Card.position)).where(Card.pack_id == pack_id)
     result = await db.execute(stmt)
-    return result.scalar()
+    return result.scalar_one_or_none()
 
 
 async def save_cards(
@@ -79,32 +80,47 @@ async def save_card(
 
 
 async def get_random_cards_from_db(
-        pack_id: int,
-        limit: int,
+        payload: RandomCardsRequest,
         db: AsyncSession,
 ) -> Sequence[Card]:
-    max_pos = await get_max_card_position(pack_id, db) or 0
+    max_pos = await get_max_card_position(payload.pack_id, db) or 0
 
-    random_ids = sample(range(1, max_pos +1), min(max_pos, limit))
+    if not max_pos:
+        raise CardError('No cards in pack')
 
-    stmt = (
-        select(Card)
-        .where(
-            Card.pack_id == pack_id,
-            Card.position.in_(random_ids)
+    attempt = 0
+    result = None
+    while not result and attempt < 3:
+        random_ids = sample(range(1, max_pos +1), min(max_pos, payload.limit))
+
+        stmt = (
+            select(Card)
+            .where(
+                Card.pack_id == payload.pack_id,
+                Card.position.in_(random_ids)
+            )
+            .limit(payload.limit)
         )
-        .limit(limit)
-    )
 
+        attempt += 1
+        result = await db.execute(stmt)
+        result = result.scalars().all()
+
+    if not result:
+        raise CardError('No cards in pack')
+
+    return result
+
+
+async def delete_card_from_db(
+        payload: CardDelete,
+        db: AsyncSession,
+        packs_client: PacksClient
+) -> None:
+    stmt = delete(Card).where(Card.id == payload.card_id).returning(Card.pack_id)
     result = await db.execute(stmt)
+    pack_id = result.scalar_one_or_none()
 
-    # if not card:
-    #     raise 'No more cards'
-
-    return result.scalars().all()
-
-
-# async def delete_cards(card_ids: List[int], db: AsyncSession) -> None:
-#     stmt = delete(Card).where(Card.id.in_(card_ids))
-#     await db.execute(stmt)
-#     await db.commit()
+    if pack_id is not None:
+        await packs_client.update_total_cards_in_pack(pack_id, -1)
+        await db.commit()

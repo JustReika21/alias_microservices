@@ -4,3 +4,7 @@ class CardException(Exception):
 
 class CardCreationError(CardException):
     pass
+
+
+class CardError(CardException):
+    pass

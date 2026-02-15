@@ -1,7 +1,7 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
-from packs.api.router import pack_router
+from packs.api.v1.router import pack_router
 from packs.exc.exception_handlers import register_pack_exception_handlers
 from packs.grpc.server import start_grpc_server
 from fastapi.middleware.cors import CORSMiddleware
@@ -16,7 +16,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(pack_router)
+app.include_router(pack_router, prefix="/api/v1")
 
 register_pack_exception_handlers(app)
 
