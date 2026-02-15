@@ -1,5 +1,5 @@
-from packs.repository import get_total_cards_in_pack, is_pack_exist, \
-    update_total_cards_in_pack
+from packs.repositories.repository import PackRepository
+from packs.services.service import PackService
 from packs.database.db import async_session
 from packs_grpc.v1 import packs_grpc_pb2, packs_grpc_pb2_grpc
 
@@ -8,18 +8,21 @@ class Packs(packs_grpc_pb2_grpc.PacksServicer):
     async def IsPackExist(self, request, context):
         pack_id = request.id
         async with async_session() as db:
-            exists = await is_pack_exist(pack_id, db)
+            service = PackService(PackRepository(db))
+            exists = await service.is_pack_exist(pack_id)
         return packs_grpc_pb2.IsPackExistResp(exist=exists)
 
     async def GetTotalCardsInPack(self, request, context):
         pack_id = request.id
         async with async_session() as db:
-            total = await get_total_cards_in_pack(pack_id, db)
+            service = PackService(PackRepository(db))
+            total = await service.get_total_cards_in_pack(pack_id)
         return packs_grpc_pb2.GetTotalCardsInPackResp(total=total)
 
     async def UpdateTotalCardsInPack(self, request, context):
         pack_id = request.pack_id
         count = request.count
         async with async_session() as db:
-            success = await update_total_cards_in_pack(pack_id, count, db)
+            service = PackService(PackRepository(db))
+            success = await service.update_total_cards_in_pack(pack_id, count)
         return packs_grpc_pb2.UpdateTotalCardsInPackResp(success=success)

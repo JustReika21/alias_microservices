@@ -4,3 +4,7 @@ class PackException(Exception):
 
 class PackCreationError(PackException):
     pass
+
+
+class PackUpdateError(PackException):
+    pass

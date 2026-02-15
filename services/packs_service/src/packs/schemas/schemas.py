@@ -2,14 +2,16 @@ from typing import Optional
 
 from pydantic import BaseModel
 
+from packs.schemas.validators import NAME, DESCRIPTION
+
 
 class PackBase(BaseModel):
     pass
 
 
 class PackCreate(PackBase):
-    name: str
-    description: Optional[str] = None
+    name: NAME
+    description: Optional[DESCRIPTION] = None
 
 
 class PackRead(PackBase):
