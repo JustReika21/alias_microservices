@@ -1,0 +1,49 @@
+from typing import Sequence, List
+
+from cards.database.models import Card
+from cards.schemas.schemas import RandomCardsRequest, \
+    CardDelete
+from sqlalchemy import func, select, delete
+from sqlalchemy.ext.asyncio import AsyncSession
+
+
+class CardRepository:
+    def __init__(self, db: AsyncSession) -> None:
+        self.db = db
+
+    async def get_max_card_position(self, pack_id: int) -> int:
+        stmt = select(func.max(Card.position)).where(Card.pack_id == pack_id)
+        result = await self.db.scalar(stmt)
+        return result
+
+
+    async def create(
+            self,
+            cards: List[Card],
+    ) -> None:
+        return self.db.add_all(cards)
+
+    async def get_random_cards(
+            self,
+            payload: RandomCardsRequest,
+            random_ids: List[int]
+    ) -> Sequence[Card]:
+        stmt = (
+            select(Card)
+            .where(
+                Card.pack_id == payload.pack_id,
+                Card.position.in_(random_ids)
+            )
+            .limit(payload.limit)
+        )
+
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
+    async def delete(
+            self,
+            card_id: int,
+    ) -> int:
+        stmt = delete(Card).where(Card.id == card_id).returning(Card.pack_id)
+        result = await self.db.execute(stmt)
+        return result.scalar_one_or_none()
