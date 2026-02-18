@@ -2,10 +2,10 @@ from contextlib import asynccontextmanager
 
 from cards.api.v1.router import card_router
 from cards.exc.exception_handlers import register_card_exception_handlers
+from cards.grpc.clients.packs import PacksClient
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from cards.grpc.clients.packs import PacksClient
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):

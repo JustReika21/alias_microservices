@@ -1,13 +1,9 @@
 from cards.database.db import async_session
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from cards.grpc.clients.packs import PacksClient
-from fastapi import Request
-
 from cards.repositories.repository import CardRepository
 from cards.services.service import CardService
-
-from fastapi import Depends
+from fastapi import Depends, Request
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_session() -> AsyncSession:

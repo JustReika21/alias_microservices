@@ -1,14 +1,12 @@
 from random import sample
 from typing import List, Sequence
-from sqlalchemy.exc import IntegrityError
 
 from cards.database.models import Card
 from cards.exc.exceptions import CardCreationError, CardError
-from cards.repositories.repository import CardRepository
 from cards.grpc.clients.packs import PacksClient
-from cards.schemas.schemas import CardsCreate, \
-    RandomCardsRequest
-
+from cards.repositories.repository import CardRepository
+from cards.schemas.schemas import CardsCreate, RandomCardsRequest
+from sqlalchemy.exc import IntegrityError
 
 MAX_CARDS_IN_PACK = 5000
 

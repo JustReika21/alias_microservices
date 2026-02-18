@@ -1,10 +1,10 @@
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from packs.api.v1.router import pack_router
 from packs.exc.exception_handlers import register_pack_exception_handlers
 from packs.grpc.server import start_grpc_server
-from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager

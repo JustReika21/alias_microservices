@@ -1,11 +1,10 @@
+import random
 import string
 from datetime import datetime
-import random
-
-from sqlalchemy import String, DateTime, func
-from sqlalchemy.orm import mapped_column, Mapped
 
 from game.database.db import Base
+from sqlalchemy import DateTime, String, func
+from sqlalchemy.orm import Mapped, mapped_column
 
 CHARS = string.ascii_letters + string.digits
 

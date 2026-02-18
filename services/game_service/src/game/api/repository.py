@@ -1,8 +1,7 @@
 from typing import Optional
 
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from game.database.models import Game
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def create_game_in_db(password: Optional[str], db: AsyncSession):

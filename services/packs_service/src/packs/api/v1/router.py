@@ -1,8 +1,8 @@
 from fastapi import APIRouter
 from fastapi.params import Depends
-from packs.services.service import PackService
 from packs.dependencies import get_pack_service
 from packs.schemas.schemas import PackCreate, PackRead
+from packs.services.service import PackService
 
 pack_router = APIRouter(tags=['Packs'])
 

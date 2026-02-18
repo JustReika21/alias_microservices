@@ -1,13 +1,10 @@
 from typing import List
 
 from cards.dependencies import get_card_service
-from cards.schemas.schemas import CardRead, CardsCreate, \
-    RandomCardsRequest
+from cards.schemas.schemas import CardRead, CardsCreate, RandomCardsRequest
+from cards.services.service import CardService
 from fastapi import APIRouter, status
 from fastapi.params import Depends
-
-from cards.services.service import CardService
-
 
 card_router = APIRouter(prefix='/cards', tags=['Cards'])
 

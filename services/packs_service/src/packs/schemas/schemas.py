@@ -1,8 +1,7 @@
 from typing import Optional
 
+from packs.schemas.validators import DESCRIPTION, NAME
 from pydantic import BaseModel
-
-from packs.schemas.validators import NAME, DESCRIPTION
 
 
 class PackBase(BaseModel):

@@ -1,9 +1,8 @@
-from typing import Sequence, List
+from typing import List, Sequence
 
 from cards.database.models import Card
-from cards.schemas.schemas import RandomCardsRequest, \
-    CardDelete
-from sqlalchemy import func, select, delete
+from cards.schemas.schemas import CardDelete, RandomCardsRequest
+from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
 

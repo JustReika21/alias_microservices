@@ -3,9 +3,8 @@ from logging.config import fileConfig
 
 from alembic import context
 from game.database.db import Base, engine
-from game.settings import settings
-
 from game.database.models import Game
+from game.settings import settings
 
 config = context.config
 

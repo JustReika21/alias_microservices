@@ -1,8 +1,9 @@
 from packs.database.models import Pack
 from packs.schemas.schemas import PackCreate
+from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import exists, select, update
-from sqlalchemy.engine import Result
+
 
 class PackRepository:
     def __init__(self, db: AsyncSession) -> None:
