@@ -1,0 +1,27 @@
+services:
+  cards-test-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: test_cards
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+    ports:
+      - "15433:5432"
+
+  cards-test:
+    build:
+      context: services/cards_service
+    container_name: cards_test
+    volumes:
+      - ./services/cards_service/src:/app/src
+      - ./services/cards_service/alembic:/app/alembic
+    env_file:
+      - services/cards_service/.env.test
+    depends_on:
+      - cards-test-db
+    command: ["sh", "-c", "alembic upgrade head && uvicorn cards.main:app --host 0.0.0.0 --port 8000"]
+    ports:
+      - "18001:8000"
+
+volumes:
+  cards_test_data:

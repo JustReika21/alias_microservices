@@ -17,7 +17,6 @@ class CardService:
         self.db = self.card_repository.db
         self.packs_client = packs_client
 
-
     async def create_cards(
             self,
             cards: CardsCreate,

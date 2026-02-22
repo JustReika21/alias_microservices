@@ -1,16 +1,11 @@
 from typing import List
 
 from cards.schemas.validators import WORD
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class CardBase(BaseModel):
     pass
-
-
-class CardCreate(CardBase):
-    word: WORD
-    pack_id: int
 
 
 class CardsCreate(CardBase):
@@ -23,8 +18,9 @@ class CardRead(CardBase):
     word: str
     pack_id: int
 
-    class Config:
+    model_config = ConfigDict(
         from_attributes = True
+    )
 
 
 class RandomCardsRequest(CardBase):

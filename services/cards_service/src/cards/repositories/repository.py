@@ -1,7 +1,7 @@
 from typing import List, Sequence
 
 from cards.database.models import Card
-from cards.schemas.schemas import CardDelete, RandomCardsRequest
+from cards.schemas.schemas import RandomCardsRequest
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -14,7 +14,6 @@ class CardRepository:
         stmt = select(func.max(Card.position)).where(Card.pack_id == pack_id)
         result = await self.db.scalar(stmt)
         return result
-
 
     async def create(
             self,
