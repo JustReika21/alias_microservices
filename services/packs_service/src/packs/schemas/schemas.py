@@ -1,7 +1,7 @@
 from typing import Optional
 
 from packs.schemas.validators import DESCRIPTION, NAME
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class PackBase(BaseModel):
@@ -18,5 +18,6 @@ class PackRead(PackBase):
     name: str
     description: Optional[str]
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(
+        from_attributes=True
+    )

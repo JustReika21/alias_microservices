@@ -1,4 +1,5 @@
-from packs.exc.exceptions import PackCreationError, PackUpdateError
+from packs.exc.exceptions import PackCreationError, PackUpdateError, \
+    PackDoesNotExist
 from packs.repositories.repository import PackRepository
 from packs.schemas.schemas import PackCreate, PackRead
 from sqlalchemy.exc import IntegrityError
@@ -24,11 +25,21 @@ class PackService:
         return await self.pack_repository.is_pack_exist(pack_id)
 
     async def get_total_cards_in_pack(self, pack_id: int):
-        return await self.pack_repository.get_total_cards(pack_id)
+        total_cards = await self.pack_repository.get_total_cards(pack_id)
+
+        if total_cards is None:
+            raise PackDoesNotExist('Pack not found')
+
+        return total_cards
 
     async def update_total_cards_in_pack(self, pack_id: int, count: int) -> bool:
         try:
-            await self.pack_repository.update_total_cards(pack_id, count)
+            pack_id = await self.pack_repository.update_total_cards(pack_id, count)
+
+            if pack_id is None:
+                await self.db.rollback()
+                raise PackDoesNotExist('Pack not found')
+
             await self.db.commit()
             return True
         except IntegrityError:

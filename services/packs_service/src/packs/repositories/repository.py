@@ -1,6 +1,5 @@
 from packs.database.models import Pack
 from packs.schemas.schemas import PackCreate
-from sqlalchemy.engine import Result
 from sqlalchemy.ext.asyncio import AsyncSession
 from sqlalchemy.sql import exists, select, update
 
@@ -19,7 +18,7 @@ class PackRepository:
         pack_exists = await self.db.scalar(stmt)
         return pack_exists
 
-    async def get_total_cards(self, pack_id: int) -> int:
+    async def get_total_cards(self, pack_id: int) -> int | None:
         stmt = (
             select(Pack.total)
             .where(Pack.id == pack_id)
@@ -27,10 +26,12 @@ class PackRepository:
         total_cards = await self.db.scalar(stmt)
         return total_cards
 
-    async def update_total_cards(self, pack_id: int, count: int) -> Result:
+    async def update_total_cards(self, pack_id: int, count: int) -> int | None:
         stmt = (
             update(Pack)
             .where(Pack.id == pack_id)
             .values(total=Pack.total + count)
+            .returning(Pack.id)
         )
-        return await self.db.execute(stmt)
+        result = await self.db.scalar(stmt)
+        return result

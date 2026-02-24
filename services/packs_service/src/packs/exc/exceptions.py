@@ -8,3 +8,7 @@ class PackCreationError(PackException):
 
 class PackUpdateError(PackException):
     pass
+
+
+class PackDoesNotExist(PackException):
+    pass
