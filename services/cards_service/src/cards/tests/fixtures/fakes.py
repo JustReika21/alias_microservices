@@ -1,10 +1,14 @@
 import pytest_asyncio
 from fastapi import Request
 
+from cards.constants.packs_constants import MAX_CARDS_IN_PACK
+
+PACK_ID = 1
+
 
 class FakePacksClient:
     def __init__(self):
-        self.id = 1
+        self.id = PACK_ID
         self.name = 'test'
         self.description = 'test'
         self.total = 0
@@ -19,11 +23,10 @@ class FakePacksClient:
             return 0
 
     async def update_total_cards_in_pack(self, pack_id: int, count: int) -> bool:
-        if self.id == pack_id:
+        if self.id == pack_id and count + self.total <= MAX_CARDS_IN_PACK:
             self.total += count
             return True
-        else:
-            return False
+
 
 @pytest_asyncio.fixture
 def get_fake_packs_client(request: Request) -> FakePacksClient:

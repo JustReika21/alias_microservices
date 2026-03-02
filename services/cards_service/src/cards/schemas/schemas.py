@@ -1,6 +1,6 @@
 from typing import List
 
-from cards.schemas.validators import WORD
+from cards.schemas.validators import WORD, LIMIT
 from pydantic import BaseModel, ConfigDict
 
 
@@ -17,6 +17,7 @@ class CardRead(CardBase):
     id: int
     word: str
     pack_id: int
+    position: int
 
     model_config = ConfigDict(
         from_attributes = True
@@ -25,7 +26,7 @@ class CardRead(CardBase):
 
 class RandomCardsRequest(CardBase):
     pack_id: int
-    limit: int
+    limit: LIMIT
 
 
 class CardDelete(CardBase):

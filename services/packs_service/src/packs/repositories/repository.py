@@ -29,7 +29,7 @@ class PackRepository:
     async def update_total_cards(self, pack_id: int, count: int) -> int | None:
         stmt = (
             update(Pack)
-            .where(Pack.id == pack_id)
+            .where(Pack.id == pack_id,)
             .values(total=Pack.total + count)
             .returning(Pack.id)
         )

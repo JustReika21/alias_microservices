@@ -2,13 +2,12 @@ from random import sample
 from typing import List, Sequence
 
 from cards.database.models import Card
-from cards.exc.exceptions import CardCreationError, CardError
+from cards.exc.exceptions import CardCreationError, CardError, \
+    CardDoesNotExistError, CardDeletionError
 from cards.grpc.clients.packs import PacksClient
 from cards.repositories.repository import CardRepository
 from cards.schemas.schemas import CardsCreate, RandomCardsRequest
 from sqlalchemy.exc import IntegrityError
-
-MAX_CARDS_IN_PACK = 5000
 
 
 class CardService:
@@ -22,14 +21,11 @@ class CardService:
             cards: CardsCreate,
     ) -> List[Card]:
         if not await self.packs_client.is_pack_exist(cards.pack_id):
-            raise CardCreationError("Collection does not exist")
+            raise CardCreationError('Collection does not exist')
 
-        total_in_pack = await self.packs_client.get_total_cards_in_pack(cards.pack_id)
         cards_count = len(cards.words)
-        if cards_count + total_in_pack > MAX_CARDS_IN_PACK:
-            raise CardCreationError("Collection overflow")
 
-        start_pos = await self.card_repository.get_max_card_position(cards.pack_id) or 0
+        start_pos = await self.card_repository.get_max_card_position(cards.pack_id)
         new_cards = [
             Card(
                 word=word,
@@ -38,22 +34,25 @@ class CardService:
             )
             for i, word in enumerate(cards.words)
         ]
+
         try:
             await self.card_repository.create(new_cards)
             await self.db.commit()
 
-            await self.packs_client.update_total_cards_in_pack(cards.pack_id, cards_count)
+            result = await self.packs_client.update_total_cards_in_pack(cards.pack_id, cards_count)
+            if not result:
+                raise CardCreationError('Failed to create cards')
 
             return new_cards
         except IntegrityError:
             await self.db.rollback()
-            raise CardCreationError("Card error")
+            raise CardCreationError('Failed to create cards')
 
     async def get_random_cards(
             self,
             payload: RandomCardsRequest,
     ) -> Sequence[Card]:
-        max_pos = await self.card_repository.get_max_card_position(payload.pack_id) or 0
+        max_pos = await self.card_repository.get_max_card_position(payload.pack_id)
 
         if not max_pos:
             raise CardError('No cards in pack')
@@ -62,9 +61,11 @@ class CardService:
         cards = None
         while not cards and attempt < 3:
             random_ids = sample(range(1, max_pos + 1), min(max_pos, payload.limit))
+
             cards = await self.card_repository.get_random_cards(
                 payload, random_ids
             )
+
             attempt += 1
 
         if not cards:
@@ -78,8 +79,13 @@ class CardService:
     ) -> None:
         try:
             pack_id = await self.card_repository.delete(card_id)
-            if pack_id is not None:
-                await self.packs_client.update_total_cards_in_pack(pack_id, -1)
-                await self.db.commit()
+
+            if pack_id is None:
+                await self.db.rollback()
+                raise CardDoesNotExistError('Card does not exist')
+
+            await self.packs_client.update_total_cards_in_pack(pack_id, -1)
+            await self.db.commit()
         except IntegrityError:
             await self.db.rollback()
+            raise CardDeletionError('Card deletion failed')

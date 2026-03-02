@@ -14,3 +14,11 @@ WORD = Annotated[
         max_length=WORD_MAX_LENGTH,
     )
 ]
+
+LIMIT = Annotated[
+    int,
+    Field(
+        ge=1,
+        le=5000,
+    )
+]

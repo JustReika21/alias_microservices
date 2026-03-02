@@ -1,0 +1,27 @@
+services:
+  packs-test-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: test_packs
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_pass
+    ports:
+      - "15434:5432"
+
+  packs-test:
+    build:
+      context: services/packs_service
+    container_name: packs_test
+    volumes:
+      - ./services/packs_service/src:/app/src
+      - ./services/packs_service/alembic:/app/alembic
+    env_file:
+      - services/packs_service/.env.test
+    depends_on:
+      - packs-test-db
+    command: ["sh", "-c", "alembic upgrade head && uvicorn packs.main:app --host 0.0.0.0 --port 8000"]
+    ports:
+      - "18002:8000"
+
+volumes:
+  packs_test_data:

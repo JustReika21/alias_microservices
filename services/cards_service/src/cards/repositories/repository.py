@@ -12,8 +12,8 @@ class CardRepository:
 
     async def get_max_card_position(self, pack_id: int) -> int:
         stmt = select(func.max(Card.position)).where(Card.pack_id == pack_id)
-        result = await self.db.scalar(stmt)
-        return result
+        position = await self.db.scalar(stmt)
+        return position or 0
 
     async def create(
             self,
@@ -41,7 +41,7 @@ class CardRepository:
     async def delete(
             self,
             card_id: int,
-    ) -> int:
+    ) -> int | None:
         stmt = delete(Card).where(Card.id == card_id).returning(Card.pack_id)
-        result = await self.db.execute(stmt)
-        return result.scalar_one_or_none()
+        result = await self.db.scalar(stmt)
+        return result

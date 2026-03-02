@@ -8,3 +8,11 @@ class CardCreationError(CardException):
 
 class CardError(CardException):
     pass
+
+
+class CardDoesNotExistError(CardException):
+    pass
+
+
+class CardDeletionError(CardException):
+    pass

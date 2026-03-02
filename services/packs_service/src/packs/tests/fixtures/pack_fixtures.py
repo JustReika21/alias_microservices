@@ -9,8 +9,13 @@ from packs.services.service import PackService
 
 
 @pytest_asyncio.fixture
-async def pack_service(test_get_session: AsyncSession) -> PackService:
-    return PackService(PackRepository(test_get_session))
+async def pack_repository(test_get_session: AsyncSession) -> PackRepository:
+    return PackRepository(test_get_session)
+
+
+@pytest_asyncio.fixture
+async def pack_service(pack_repository: PackRepository) -> PackService:
+    return PackService(pack_repository)
 
 
 @pytest_asyncio.fixture

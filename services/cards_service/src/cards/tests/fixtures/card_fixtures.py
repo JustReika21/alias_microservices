@@ -1,10 +1,24 @@
-from typing import List
+from typing import List, cast
 
 import pytest_asyncio
 from cards.database.models import Card
+from cards.grpc.clients.packs import PacksClient
+from cards.repositories.repository import CardRepository
+from cards.services.service import CardService
 from cards.tests.fixtures.fakes import FakePacksClient
 from sqlalchemy import func, select
 from sqlalchemy.ext.asyncio import AsyncSession
+
+
+@pytest_asyncio.fixture
+async def cards_repository(test_get_session: AsyncSession) -> CardRepository:
+    return CardRepository(test_get_session)
+
+
+@pytest_asyncio.fixture
+async def cards_service(cards_repository, get_fake_packs_client: FakePacksClient) -> CardService:
+    packs_client = cast(PacksClient, get_fake_packs_client)
+    return CardService(cards_repository, packs_client)
 
 
 @pytest_asyncio.fixture
