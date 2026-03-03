@@ -23,6 +23,7 @@ dependencies = [
     "python-dotenv>=1.2.1",
     "structlog>=25.5.0",
     "uvicorn>=0.40.0",
+    "websockets>=16.0",
 ]
 
 [dependency-groups]

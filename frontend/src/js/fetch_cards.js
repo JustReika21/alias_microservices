@@ -2,7 +2,7 @@
 
 async function fetchRandomCards(packId, limit = 10) {
     try {
-        const response = await fetch('/api/cards/random', {
+        const response = await fetch('/api/v1/cards/random', {
             method: 'POST',
             headers: {
                 'Content-Type': 'application/json'
@@ -19,7 +19,6 @@ async function fetchRandomCards(packId, limit = 10) {
 
         const data = await response.json();
 
-        // выводим карты в консоль
         console.log('Fetched cards:', data);
 
         return data;

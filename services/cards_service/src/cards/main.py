@@ -9,7 +9,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    packs_client = PacksClient("packs_service:50051")
+    packs_client = PacksClient('aliasmicro-packs-1:50051')
     await packs_client.connect()
     app.state.packs_client = packs_client
     yield
@@ -17,7 +17,7 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(card_router, prefix="/api/v1")
+app.include_router(card_router, prefix='/api/v1')
 
 register_card_exception_handlers(app)
 

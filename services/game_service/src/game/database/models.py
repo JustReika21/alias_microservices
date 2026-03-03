@@ -3,14 +3,13 @@ import string
 from datetime import datetime
 
 from game.database.db import Base
-from sqlalchemy import DateTime, String, func
+from sqlalchemy import String, func
 from sqlalchemy.orm import Mapped, mapped_column
 
 CHARS = string.ascii_letters + string.digits
 
 def generate_id():
     return ''.join(random.choice(CHARS) for _ in range(6))
-
 
 
 class Game(Base):

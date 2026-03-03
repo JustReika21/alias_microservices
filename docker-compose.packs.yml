@@ -11,7 +11,6 @@ services:
   packs-test:
     build:
       context: services/packs_service
-    container_name: packs_test
     volumes:
       - ./services/packs_service/src:/app/src
       - ./services/packs_service/alembic:/app/alembic

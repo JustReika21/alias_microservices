@@ -10,7 +10,7 @@
       "backend": [
         {
           "url_pattern": "/api/v1/cards/random",
-          "host": ["http://cards:8000"],
+          "host": ["http://aliasmicro-cards-1:8000"],
           "encoding": "json",
           "is_collection": true
         }

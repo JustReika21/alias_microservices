@@ -11,7 +11,6 @@ services:
   cards-test:
     build:
       context: services/cards_service
-    container_name: cards_test
     volumes:
       - ./services/cards_service/src:/app/src
       - ./services/cards_service/alembic:/app/alembic

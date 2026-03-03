@@ -59,12 +59,12 @@ services:
   cards:
     build:
       context: services/cards_service
-    container_name: cards_service
     volumes:
       - ./services/cards_service/src:/app/src
       - ./services/cards_service/alembic:/app/alembic
     env_file:
       - services/cards_service/.env
+    command: ["sh", "-c", "alembic upgrade head && uvicorn cards.main:app --host 0.0.0.0 --port 8000"]
     depends_on:
       - cards-db
     ports:
@@ -73,12 +73,12 @@ services:
   packs:
     build:
       context: services/packs_service
-    container_name: packs_service
     volumes:
       - ./services/packs_service/src:/app/src
       - ./services/packs_service/alembic:/app/alembic
     env_file:
       - services/packs_service/.env
+    command: ["sh", "-c", "alembic upgrade head && uvicorn packs.main:app --host 0.0.0.0 --port 8000"]
     depends_on:
       - packs-db
     ports:
@@ -88,12 +88,12 @@ services:
   game:
     build:
       context: services/game_service
-    container_name: game_service
     volumes:
       - ./services/game_service/src:/app/src
       - ./services/game_service/alembic:/app/alembic
     env_file:
       - services/game_service/.env
+    command: ["sh", "-c", "alembic upgrade head && uvicorn game.main:app --host 0.0.0.0 --port 8000"]
     depends_on:
       - game-db
     ports:

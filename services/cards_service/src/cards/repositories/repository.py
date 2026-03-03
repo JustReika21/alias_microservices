@@ -19,7 +19,7 @@ class CardRepository:
             self,
             cards: List[Card],
     ) -> None:
-        return self.db.add_all(cards)
+        self.db.add_all(cards)
 
     async def get_random_cards(
             self,
