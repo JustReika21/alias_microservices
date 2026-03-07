@@ -21,6 +21,7 @@ dependencies = [
     "packs-grpc==0.1.5",
     "pydantic-settings>=2.12.0",
     "python-dotenv>=1.2.1",
+    "redis>=7.2.1",
     "structlog>=25.5.0",
     "uvicorn>=0.40.0",
     "websockets>=16.0",

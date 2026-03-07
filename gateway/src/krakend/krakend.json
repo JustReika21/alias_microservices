@@ -15,6 +15,31 @@
           "is_collection": true
         }
       ]
+    },
+    {
+      "endpoint": "/api/v1/game",
+      "method": "POST",
+      "backend": [
+        {
+          "url_pattern": "/api/v1/game",
+          "host": ["http://aliasmicro-game-1:8000"],
+          "encoding": "json",
+          "is_collection": true
+        }
+      ]
+    },
+    {
+      "endpoint": "/ws/game",
+      "backend": [
+        {
+          "url_pattern": "/ws/game",
+          "disable_host_sanitize": true,
+          "host": ["http://aliasmicro-game-1:8000"]
+        }
+      ],
+      "extra_config": {
+          "websocket": {}
+      }
     }
   ]
 }
