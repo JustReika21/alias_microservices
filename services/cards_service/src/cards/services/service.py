@@ -1,4 +1,4 @@
-from random import sample
+from random import sample, shuffle
 from typing import List, Sequence
 
 from cards.database.models import Card
@@ -6,7 +6,8 @@ from cards.exc.exceptions import CardCreationError, CardError, \
     CardDoesNotExistError, CardDeletionError
 from cards.grpc.clients.packs import PacksClient
 from cards.repositories.repository import CardRepository
-from cards.schemas.schemas import CardsCreate, RandomCardsRequest
+from cards.schemas.schemas import CardsCreate, RandomCardsRequest, \
+    RandomCardRead
 from sqlalchemy.exc import IntegrityError
 
 
@@ -51,7 +52,7 @@ class CardService:
     async def get_random_cards(
             self,
             payload: RandomCardsRequest,
-    ) -> Sequence[Card]:
+    ) -> Sequence[RandomCardRead]:
         max_pos = await self.card_repository.get_max_card_position(payload.pack_id)
 
         if not max_pos:
@@ -71,7 +72,9 @@ class CardService:
         if not cards:
             raise CardError('No cards in pack')
 
-        return cards
+        validated_cards = [RandomCardRead.model_validate(card)for card in cards]
+        shuffle(validated_cards)
+        return validated_cards
 
     async def delete_card(
             self,

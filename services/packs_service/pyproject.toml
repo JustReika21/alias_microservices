@@ -8,6 +8,7 @@ dependencies = [
     "aio-pika>=9.5.8",
     "alembic>=1.17.2",
     "asyncpg>=0.31.0",
+    "cards-grpc>=0.1.0",
     "fastapi>=0.128.0",
     "greenlet>=3.3.0",
     "grpcio==1.76",

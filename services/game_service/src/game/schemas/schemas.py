@@ -19,6 +19,7 @@ class Game(GameBase):
     id: str
     host: int
     current_player: int
+    turn_offset: int
     rounds: int
     current_round: int = 0
     time: int

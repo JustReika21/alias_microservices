@@ -1,7 +1,8 @@
 from typing import List
 
 from cards.dependencies import get_card_service
-from cards.schemas.schemas import CardRead, CardsCreate, RandomCardsRequest
+from cards.schemas.schemas import CardRead, CardsCreate, RandomCardsRequest, \
+    RandomCardRead
 from cards.services.service import CardService
 from fastapi import APIRouter, status
 from fastapi.params import Depends
@@ -23,7 +24,7 @@ async def cards_create_api(
 @card_router.post(
     '/random',
     status_code=status.HTTP_200_OK,
-    response_model=List[CardRead],
+    response_model=List[RandomCardRead],
 )
 async def random_cards_get_api(
         payload: RandomCardsRequest,

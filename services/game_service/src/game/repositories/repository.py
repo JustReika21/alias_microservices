@@ -20,6 +20,13 @@ class GameRepository:
     def _player_key(self, game_id: str, player_id: int) -> str:
         return f'alias:game:{game_id}:player:{player_id}'
 
+    def _turn_offset_key(self, game_id: str) -> str:
+        return f'alias:game:{game_id}:turn_offset'
+
+    def _current_player_key(self, game_id: str) -> str:
+        return f'alias:game:{game_id}:current_player'
+
+
     async def create(self, game: Game) -> None:
         await self.redis_client.hset(
             self._game_key(game.id),
@@ -46,3 +53,20 @@ class GameRepository:
             await pipe.execute()
 
         await self.redis_client.expire(players_key, 7200)
+
+    async def next_turn(self, game_id: str) -> str:
+        players_key = self._players_key(game_id)
+        game_key = self._game_key(game_id)
+        players = await self.redis_client.zrange(players_key, 0, -1)
+        offset = await self.redis_client.hincrby(game_key, 'turn_offset', 1)
+
+        current = offset % len(players)
+        current_player_id = players[current]
+
+        async with self.redis_client.pipeline() as pipe:
+            await pipe.hset(game_key, 'turn_offset', str(offset))
+            await pipe.hset(game_key, 'current_player', current_player_id)
+
+            await pipe.execute()
+
+        return current_player_id

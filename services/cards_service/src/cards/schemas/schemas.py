@@ -24,6 +24,13 @@ class CardRead(CardBase):
     )
 
 
+class RandomCardRead(CardBase):
+    word: str
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
 class RandomCardsRequest(CardBase):
     pack_id: int
     limit: LIMIT

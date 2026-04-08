@@ -1,16 +1,33 @@
 services:
-  gateway:
-    container_name: gateway
-    build:
-      context: gateway
-    volumes:
-      - ./gateway/src/krakend:/etc/krakend
+  apisix-dashboard:
+    image: apache/apisix-dashboard:3.0.1-alpine
     ports:
-      - "8080:8080"
+      - "9000:9000"
+    volumes:
+      - ./apisix-dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
     depends_on:
-      - cards
-      - packs
-      - game
+      - etcd
+
+  apisix:
+    image: apache/apisix:3.15.0-debian
+    volumes:
+      - ./apisix/conf.yaml:/usr/local/apisix/conf/config.yaml
+    depends_on:
+      - etcd
+    ports:
+      - "9080:9080"
+      - "9180:9180"
+
+  etcd:
+    image: bitnamilegacy/etcd:3.5.13
+    environment:
+      - ALLOW_NONE_AUTHENTICATION=yes
+      - ETCD_ADVERTISE_CLIENT_URLS=http://etcd:2379
+      - ETCD_LISTEN_CLIENT_URLS=http://0.0.0.0:2379
+    ports:
+      - "2379:2379"
+    volumes:
+      - etcd_data:/bitnami/etcd
 
   nginx:
     image: nginx:1.27-alpine
@@ -21,7 +38,7 @@ services:
     ports:
       - "80:80"
     depends_on:
-      - gateway
+      - apisix
 
   cards-db:
     image: postgres:17
@@ -71,6 +88,7 @@ services:
       - cards-db
     ports:
       - "8001:8000"
+      - "50052:50051"
 
   packs:
     build:
@@ -87,7 +105,7 @@ services:
       - packs-db
     ports:
       - "8002:8000"
-      - "50052:50051"
+      - "50053:50051"
 
   game:
     build:
@@ -115,6 +133,8 @@ services:
       - game_redis_data:/data
 
 volumes:
+  etcd_data:
+
   cards_data:
   packs_data:
   game_data:
