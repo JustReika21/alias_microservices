@@ -73,6 +73,17 @@ services:
     volumes:
       - game_data:/var/lib/postgresql/data
 
+  auth-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${DATABASE_NAME}
+      POSTGRES_USER: ${DATABASE_USERNAME}
+      POSTGRES_PASSWORD: ${DATABASE_PASSWORD}
+    ports:
+      - "5436:5432"
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+
   cards:
     build:
       context: services/cards_service
@@ -123,6 +134,22 @@ services:
     ports:
       - "8003:8000"
 
+  auth:
+    build:
+      context: services/auth_service
+    volumes:
+      - ./services/auth_service/src:/app/src
+      - ./services/auth_service/alembic:/app/alembic
+    env_file:
+      - services/auth_service/.env
+    command: >
+      sh -c "alembic upgrade head &&
+             uvicorn auth.main:app --host 0.0.0.0 --port 8000 --reload"
+    depends_on:
+      - auth-db
+    ports:
+      - "8004:8000"
+
   game-redis:
     image: redis:8.6.1
     ports:
@@ -138,5 +165,6 @@ volumes:
   cards_data:
   packs_data:
   game_data:
+  auth_data:
 
   game_redis_data:
