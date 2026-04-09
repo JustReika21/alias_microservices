@@ -1,3 +1,5 @@
+from datetime import datetime
+
 from pydantic import BaseModel, ConfigDict
 
 
@@ -23,4 +25,12 @@ class UserRead(AuthBase):
 
 class TokenInfo(AuthBase):
     access_token: str
-    token_type: str
+    refresh_token: str | None = None
+    token_type: str = 'Bearer'
+
+
+class RefreshTokenCreate(AuthBase):
+    user_id: int
+    token: str
+    expires_at: datetime
+

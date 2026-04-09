@@ -12,6 +12,7 @@ load_dotenv()
 BASE_DIR = Path(__file__).resolve().parent
 
 ACCESS_TOKEN_TTL = 15
+REFRESH_TOKEN_TTL = 60 * 24 * 30
 
 
 class AuthJWT(AuthBase):
@@ -19,6 +20,7 @@ class AuthJWT(AuthBase):
     public_key_path: Path = BASE_DIR / 'certs/jwt-public.pem'
     algorithm: str = 'RS256'
     access_token_expire_minutes: int = ACCESS_TOKEN_TTL
+    refresh_token_expire_minutes: int = REFRESH_TOKEN_TTL
 
 
 class Settings(BaseSettings):
