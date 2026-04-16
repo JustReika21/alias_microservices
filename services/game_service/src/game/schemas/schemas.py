@@ -2,8 +2,6 @@ from typing import List
 
 from pydantic import BaseModel
 
-from game.database.models import generate_id
-
 
 class GameBase(BaseModel):
     pass
@@ -13,17 +11,33 @@ class Player(GameBase):
     id: int
     name: str
     score: int = 0
+    team_id: int = 1
+
+
+class Team(GameBase):
+    id: int
+    players_ids: List[int] = []
+    total_players: int = 0
+    score: int = 0
+
+
+class GameCreate(BaseModel):
+    rounds: int
+    time: int = 60
+    pack: int
+    password: str | None = None
 
 
 class Game(GameBase):
     id: str
     host: int
-    current_player: int
-    turn_offset: int
+    total_teams: int = 1
+    team_offset: int = 0
+    mode: str = 'solo'
     rounds: int
     current_round: int = 0
-    time: int
+    time: int = 60
     pack: int
-    password: str = None
-    status: str = 'waiting'
-    total_players: int
+    password: str | None = None
+    status: str = 'setting_up'
+    total_players: int = 1

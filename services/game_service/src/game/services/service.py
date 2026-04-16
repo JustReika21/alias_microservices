@@ -1,12 +1,25 @@
+import asyncio
+from typing import List, Any
+
 from game.database.models import generate_id
+from game.exc.exceptions import TeamNotFoundError
+from game.grpc.clients.auth import AuthClient
 from game.grpc.clients.cards import CardsClient
-from game.schemas.schemas import Game, Player
+from game.schemas.schemas import Game, Player, GameCreate
 from game.grpc.clients.packs import PacksClient
 from game.repositories.repository import GameRepository
+from fastapi import WebSocket
+
+
+guessed_cards: dict[str, set[int]] = {}
+played_cards: dict[str, set[int]] = {}
 
 
 class GameService:
-    def __init__(self, game_repository: GameRepository, packs_client: PacksClient, cards_client: CardsClient):
+    def __init__(
+            self, game_repository: GameRepository, packs_client: PacksClient,
+            cards_client: CardsClient, auth_client: AuthClient
+    ):
         self.game_repository = game_repository
 
         self.db = game_repository.db
@@ -14,18 +27,166 @@ class GameService:
 
         self.packs_client = packs_client
         self.cards_client = cards_client
+        self.auth_client = auth_client
 
-    async def create_game(self, game: Game) -> None:
-        player = Player(id=1, name='PLACEHOLDER', score=0)
-        game.host = player.id
-        game.current_player = player.id
-        game.turn_offset = 0
-        game.id = generate_id()
-        game.total_players = 1
-        game.status = 'waiting'
+        self.game_cards: dict[str, dict] = {}
+        self.total_cards: int = 0
 
-        await self.game_repository.create(game)
+    async def _cleanup_game(self, game_id: str):
+        guessed_cards.pop(game_id, None)
+        played_cards.pop(game_id, None)
+        self.game_cards.pop(game_id, None)
+
+
+    async def create_game(self, game_data: GameCreate, player: Player) -> None:
+        game = Game(
+            id=generate_id(),
+            host=player.id,
+            rounds=game_data.rounds,
+            time=game_data.time,
+            pack=game_data.pack,
+            password=game_data.password or ''
+        )
+
+        await self.game_repository.create_game(game)
+        await self.game_repository.create_team(game.id, 1)
         await self.game_repository.add_player(game.id, player)
+
 
     async def join_game(self, game_id: str, player: Player) -> None:
         await self.game_repository.add_player(game_id, player)
+
+    async def get_current_player(self, game_id: str) -> int:
+        return await self.game_repository.get_current_player_id(game_id)
+
+    async def get_game_status(self, game_id: str) -> str:
+        return await self.game_repository.get_game_status(game_id)
+
+    async def get_players(self, game_id: str) -> List[dict[str: Any]]:
+        return await self.game_repository.get_players(game_id)
+
+    async def start_game(
+            self, game_id: str,
+            websocket: WebSocket,
+            con: dict[int, WebSocket]
+    ):
+        current_player_id = await self.get_current_player(game_id)
+        current_player = con.get(current_player_id)
+
+        if current_player and current_player == websocket:
+            asyncio.create_task(self.run_round(game_id, con))
+
+    async def run_round(self, game_id: str, con: dict[int, WebSocket]):
+        round_time = await self.game_repository.get_round_time(game_id)
+        cards = await self.cards_client.get_random_cards(1, 100)
+
+        self.total_cards = len(cards)
+
+        await self.game_repository.set_game_status(game_id, 'started')
+
+        self.game_cards = {game_id: {'cards': cards, 'index': 0}}
+
+        for ws in con.values():
+            await ws.send_json({'type': 'status', 'value': 'started'})
+
+        await self.send_card(game_id, con)
+
+        await asyncio.sleep(round_time)
+
+        await self.game_repository.set_game_status(game_id, 'calculating')
+
+        await self.send_final_card(game_id, con)
+
+    async def send_card(self, game_id: str, con: dict[int, WebSocket]):
+        state = self.game_cards[game_id]
+        cards = state['cards']
+        idx = state['index']
+
+        current_player_id = await self.game_repository.get_current_player_id(game_id)
+
+        if idx >= self.total_cards:
+            await self.game_repository.set_game_status(game_id, 'calculating')
+            return
+
+        current_player_card = cards[idx]
+        other_players_card = cards[idx-1] if idx - 1 >= 0 else None
+
+        state['index'] += 1
+
+        for user_id, ws in con.items():
+            await ws.send_json({
+                'type': 'card',
+                'card': current_player_card if user_id == current_player_id else other_players_card,
+                'guessed': True
+            })
+
+    async def send_final_card(self, game_id: str, con: dict[int, WebSocket]):
+        state = self.game_cards[game_id]
+        cards = state['cards']
+        idx = state['index']
+
+        current_player_id = await self.game_repository.get_current_player_id(game_id)
+
+        card = cards[idx-1]
+
+        for user_id, ws in con.items():
+            if current_player_id != user_id:
+                await ws.send_json({'type': 'card', 'card': card, 'guessed': True})
+            await ws.send_json({'type': 'status', 'value': 'calculating'})
+
+        guessed_cards[game_id] = set()
+        for i in range(idx):
+            guessed_cards[game_id].add(cards[i]['id'])
+        played_cards[game_id] = guessed_cards[game_id].copy()
+
+    async def card_guessed(self, game_id, card_id: int, guessed: bool, con: dict[int, WebSocket]):
+        if card_id not in played_cards[game_id]:
+            return
+
+        if guessed:
+            guessed_cards[game_id].add(card_id)
+        else:
+            guessed_cards[game_id].discard(card_id)
+
+        for ws in con.values():
+            await ws.send_json({'type': 'guess', 'card': card_id, 'guessed': guessed})
+
+    async def set_scores(self, game_id: str, con: dict[int, WebSocket]):
+        await self.game_repository.set_game_status(game_id, 'waiting')
+        current_player_id = await self.game_repository.get_current_player_id(game_id)
+        current_team_id = await self.game_repository.get_current_team_id(game_id)
+
+        points = len(guessed_cards[game_id])
+
+        player_score = await self.game_repository.update_player_score(game_id, current_player_id, points)
+        team_score = await self.game_repository.update_team_score(game_id, current_team_id, points)
+
+        next_player_id = await self.game_repository.next_turn(game_id)
+        for user_id, ws in con.items():
+            await ws.send_json({
+                'type': 'current_player',
+                'player_id': next_player_id,
+                'is_current': user_id == next_player_id
+            })
+
+            await ws.send_json({
+                'type': 'player',
+                'id': current_player_id,
+                'score': player_score}
+            )
+
+            await ws.send_json({
+                'type': 'team',
+                'id': current_team_id,
+                'score': team_score
+            })
+
+            await ws.send_json({'type': 'status', 'value': 'waiting'})
+
+        await self._cleanup_game(game_id)
+
+    async def switch_team(self, game_id: str, player_id: int, new_team_id: int):
+        if new_team_id < 0 or new_team_id > 4:
+            raise TeamNotFoundError('Invalid team id')
+
+        await self.game_repository.switch_team(game_id, player_id, new_team_id)

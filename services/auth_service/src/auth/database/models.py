@@ -13,6 +13,7 @@ class User(Base):
     )
     password: Mapped[bytes] = mapped_column(nullable=False)
 
+
 class RefreshToken(Base):
     __tablename__ = "refresh_token"
 

@@ -4,7 +4,6 @@ from cards.repositories.repository import CardRepository
 from cards.schemas.schemas import RandomCardsRequest
 from cards.services.service import CardService
 from cards_grpc.v1 import cards_grpc_pb2, cards_grpc_pb2_grpc
-from cards_grpc.v1.cards_grpc_pb2 import GetRandomCardsResp, Card
 
 
 class Cards(cards_grpc_pb2_grpc.CardsServicer):
@@ -18,4 +17,9 @@ class Cards(cards_grpc_pb2_grpc.CardsServicer):
         async with async_session() as db:
             service = CardService(CardRepository(db), self.packs_client)
             cards = await service.get_random_cards(payload)
-        return GetRandomCardsResp(cards=[Card(word=card.word) for card in cards])
+        return cards_grpc_pb2.GetRandomCardsResp(
+            cards=[
+                cards_grpc_pb2.Card(id=card.id, word=card.word)
+                for card in cards
+            ]
+        )

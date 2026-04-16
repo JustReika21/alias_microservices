@@ -124,15 +124,15 @@ wheels = [
 
 [[package]]
 name = "cards-grpc"
-version = "0.1.0"
+version = "0.1.1"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grpcio" },
     { name = "grpcio-tools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/3e/b1/b5ca63b19e057d87b2ea9a16669a210051f72f67df6febf0c52d903ead50/cards_grpc-0.1.0.tar.gz", hash = "sha256:72cf2ac2625a4fd8dcf2f73ea516e8e394a36cedd81c044292b0d01cf06fa07e", size = 2896, upload-time = "2026-03-16T18:27:22.549Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/1e/df/03f37c325abd2535bc18d76398e5a0e5efc1b515dce876a1b189af66a6f1/cards_grpc-0.1.1.tar.gz", hash = "sha256:948bed83351b2eb167b28dc7f14f9765b50152fb37e29441133e6301c2c9121a", size = 2913, upload-time = "2026-04-13T19:59:43.496Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/c6/1eedb0fe204dfc07b04de0e957b2557d394bdb278cb2ddf7d8f34cfb5708/cards_grpc-0.1.0-py3-none-any.whl", hash = "sha256:3fdd4126c5c46e4a50759b9b12cb6bd708d5602043eee4cc3fc94b616c724ddc", size = 3554, upload-time = "2026-03-16T18:27:23.505Z" },
+    { url = "https://files.pythonhosted.org/packages/f4/2f/f35dd00cef5d90e30d2dd176d4b66d4b79117a92ff2be42ad55683f82934/cards_grpc-0.1.1-py3-none-any.whl", hash = "sha256:0b61b30cff2027aa254d1fb22d84c8f97bc675dfae4b42eeaafc4870ff6235ab", size = 3563, upload-time = "2026-04-13T19:59:44.37Z" },
 ]
 
 [[package]]
@@ -167,7 +167,7 @@ requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.8" },
     { name = "alembic", specifier = ">=1.17.2" },
     { name = "asyncpg", specifier = ">=0.31.0" },
-    { name = "cards-grpc", specifier = ">=0.1.0" },
+    { name = "cards-grpc", specifier = "==0.1.1" },
     { name = "fastapi", specifier = ">=0.128.0" },
     { name = "greenlet", specifier = ">=3.3.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.60b1" },

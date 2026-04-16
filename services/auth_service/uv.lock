@@ -123,6 +123,19 @@ wheels = [
 ]
 
 [[package]]
+name = "auth-grpc"
+version = "0.1.1"
+source = { registry = "https://pypi.org/simple" }
+dependencies = [
+    { name = "grpcio" },
+    { name = "grpcio-tools" },
+]
+sdist = { url = "https://files.pythonhosted.org/packages/11/f7/fd18662a56eb17268b0fcb2d82cab39d47e0ebf5be9f50b6d24d7426a7a7/auth_grpc-0.1.1.tar.gz", hash = "sha256:e66bb0500927041ad5c14f7012c302a0b4bbece28c9db40bceae5b08f589d7db", size = 3037, upload-time = "2026-04-12T10:14:18.037Z" }
+wheels = [
+    { url = "https://files.pythonhosted.org/packages/3a/8b/38f5b3c521eff5ee2d36d6f9314a9bb4c4a1b60926ad33cb6b34ff03fd50/auth_grpc-0.1.1-py3-none-any.whl", hash = "sha256:0bb869207ec3f8b1d23c52502dc6197019ccc047baead8df6c7af803ac040fb7", size = 3682, upload-time = "2026-04-12T10:14:19.002Z" },
+]
+
+[[package]]
 name = "auth-service"
 version = "0.1.0"
 source = { editable = "." }
@@ -130,8 +143,8 @@ dependencies = [
     { name = "aio-pika" },
     { name = "alembic" },
     { name = "asyncpg" },
+    { name = "auth-grpc" },
     { name = "bcrypt" },
-    { name = "cards-grpc" },
     { name = "cryptography" },
     { name = "fastapi" },
     { name = "greenlet" },
@@ -157,8 +170,8 @@ requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.8" },
     { name = "alembic", specifier = ">=1.17.2" },
     { name = "asyncpg", specifier = ">=0.31.0" },
+    { name = "auth-grpc", specifier = ">=0.1.1" },
     { name = "bcrypt", specifier = ">=5.0.0" },
-    { name = "cards-grpc", specifier = ">=0.1.0" },
     { name = "cryptography", specifier = ">=46.0.7" },
     { name = "fastapi", specifier = ">=0.128.0" },
     { name = "greenlet", specifier = ">=3.3.0" },
@@ -243,19 +256,6 @@ wheels = [
     { url = "https://files.pythonhosted.org/packages/c0/f6/688d2cd64bfd0b14d805ddb8a565e11ca1fb0fd6817175d58b10052b6d88/bcrypt-5.0.0-cp39-abi3-win32.whl", hash = "sha256:64d7ce196203e468c457c37ec22390f1a61c85c6f0b8160fd752940ccfb3a683", size = 153725, upload-time = "2025-09-25T19:50:34.384Z" },
     { url = "https://files.pythonhosted.org/packages/9f/b9/9d9a641194a730bda138b3dfe53f584d61c58cd5230e37566e83ec2ffa0d/bcrypt-5.0.0-cp39-abi3-win_amd64.whl", hash = "sha256:64ee8434b0da054d830fa8e89e1c8bf30061d539044a39524ff7dec90481e5c2", size = 150912, upload-time = "2025-09-25T19:50:35.69Z" },
     { url = "https://files.pythonhosted.org/packages/27/44/d2ef5e87509158ad2187f4dd0852df80695bb1ee0cfe0a684727b01a69e0/bcrypt-5.0.0-cp39-abi3-win_arm64.whl", hash = "sha256:f2347d3534e76bf50bca5500989d6c1d05ed64b440408057a37673282c654927", size = 144953, upload-time = "2025-09-25T19:50:37.32Z" },
-]
-
-[[package]]
-name = "cards-grpc"
-version = "0.1.0"
-source = { registry = "https://pypi.org/simple" }
-dependencies = [
-    { name = "grpcio" },
-    { name = "grpcio-tools" },
-]
-sdist = { url = "https://files.pythonhosted.org/packages/3e/b1/b5ca63b19e057d87b2ea9a16669a210051f72f67df6febf0c52d903ead50/cards_grpc-0.1.0.tar.gz", hash = "sha256:72cf2ac2625a4fd8dcf2f73ea516e8e394a36cedd81c044292b0d01cf06fa07e", size = 2896, upload-time = "2026-03-16T18:27:22.549Z" }
-wheels = [
-    { url = "https://files.pythonhosted.org/packages/2c/c6/1eedb0fe204dfc07b04de0e957b2557d394bdb278cb2ddf7d8f34cfb5708/cards_grpc-0.1.0-py3-none-any.whl", hash = "sha256:3fdd4126c5c46e4a50759b9b12cb6bd708d5602043eee4cc3fc94b616c724ddc", size = 3554, upload-time = "2026-03-16T18:27:23.505Z" },
 ]
 
 [[package]]

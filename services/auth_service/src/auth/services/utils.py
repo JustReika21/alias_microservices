@@ -1,10 +1,11 @@
 from datetime import datetime, timezone, timedelta
+from fastapi import HTTPException
 
 import bcrypt
 import jwt
 
 from auth.database.models import User
-from auth.exc.exceptions import InvalidToken
+from auth.exc.exceptions import InvalidToken, TokenExpired
 from auth.settings import settings
 
 TOKEN_TYPE_FIELD = 'type'
@@ -66,8 +67,14 @@ def decode_jwt(
         key: str = settings.auth_jwt.public_key_path.read_text(),
         algorithm: str = settings.auth_jwt.algorithm,
 ) -> dict:
-    decoded = jwt.decode(encoded, key, algorithms=[algorithm])
-    return decoded
+    try:
+        decoded = jwt.decode(encoded, key, algorithms=[algorithm])
+        return decoded
+    except jwt.ExpiredSignatureError:
+        raise TokenExpired('Token is expired')
+
+    except jwt.InvalidTokenError:
+        raise InvalidToken('Invalid token')
 
 
 def hash_password(password: str) -> bytes:

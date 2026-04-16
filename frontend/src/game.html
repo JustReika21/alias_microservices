@@ -1,10 +1,27 @@
-<link rel="stylesheet" href="/css/game.css">
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Game</title>
+    <link rel="stylesheet" href="/css/game.css">
+</head>
+<body>
 
 <h1>Game</h1>
 
-<input type="text" id="data" placeholder="data">
-<button id="data-btn">Send</button>
+<div id="players">Players: loading...</div>
 
-<div id="cards-container"></div>
+<div id="controls">
+    <button id="start-btn" style="display:none;">START</button>
+    <button id="next-btn" style="display:none;">NEXT CARD</button>
+    <button id="calculated-btn" style="display:none;">CALCULATED</button>
+</div>
+
+<div id="cards-stack"></div>
+
+<h3>LOG</h3>
+<div id="log"></div>
 
 <script src="/js/websocket.js"></script>
+</body>
+</html>

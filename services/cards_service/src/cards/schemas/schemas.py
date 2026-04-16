@@ -25,6 +25,7 @@ class CardRead(CardBase):
 
 
 class RandomCardRead(CardBase):
+    id: int
     word: str
 
     model_config = ConfigDict(

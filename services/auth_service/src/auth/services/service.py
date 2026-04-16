@@ -1,13 +1,12 @@
 from datetime import datetime, timezone
 
 from auth.exc.exceptions import UserLoginError, UserCreationError, \
-    UserNotFound, InvalidToken
+    UserNotFound, InvalidToken, TokenNotFound
 from auth.database.models import User
 from auth.repositories.repository import UserRepository
-from auth.schemas.schemas import UserCreate, UserLogin, UserRead
+from auth.schemas.schemas import UserCreate, UserLogin, TokenInfo, UserRead
 from auth.services.utils import validate_password, decode_jwt, \
-    validate_token_type, ACCESS_TOKEN_TYPE, create_refresh_token, \
-    REFRESH_TOKEN_TYPE
+    validate_token_type, REFRESH_TOKEN_TYPE, create_access_token
 
 
 class UserService:
@@ -57,6 +56,16 @@ class UserService:
 
         return user
 
+    async def refresh(self, refresh_token: str) -> TokenInfo:
+        if not refresh_token:
+            raise TokenNotFound('Token not found')
+        user_id = await self.validate_refresh_token(refresh_token)
+
+        user = await self.get_user(user_id)
+        access_token = create_access_token(user)
+
+        return TokenInfo(access_token=access_token)
+
     async def save_refresh_token(self, user_id: int, token: str) -> None:
         token = await self.user_repository.save_refresh_token_in_db(user_id, token)
         await self.db.commit()
@@ -76,3 +85,12 @@ class UserService:
             raise InvalidToken('Token is expired')
 
         return int(payload.get('sub'))
+
+    async def validate_refresh_token_for_websocket(self, refresh_token: str) -> UserRead:
+        if not refresh_token:
+            raise TokenNotFound('Token not found')
+
+        user_id = await self.validate_refresh_token(refresh_token)
+        user = await self.get_user(user_id)
+
+        return UserRead.model_validate(user)

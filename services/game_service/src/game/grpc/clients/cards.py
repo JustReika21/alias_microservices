@@ -5,6 +5,8 @@ import grpc.aio
 from cards_grpc.v1.cards_grpc_pb2 import GetRandomCardsReq
 from cards_grpc.v1.cards_grpc_pb2_grpc import CardsStub
 
+from google.protobuf.json_format import MessageToDict
+
 class CardsClient:
     def __init__(self, target: str):
         self.target = target
@@ -21,4 +23,4 @@ class CardsClient:
 
     async def get_random_cards(self, pack_id: int, limit: int):
         response = await self.stub.GetRandomCards(GetRandomCardsReq(pack_id=pack_id, limit=limit))
-        return [card.word for card in response.cards]
+        return [{'id': c.id, 'word': c.word} for c in response.cards]
