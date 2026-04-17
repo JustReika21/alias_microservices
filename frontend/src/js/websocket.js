@@ -1,10 +1,11 @@
-'use strict';
+"use strict"
 
+const setUpBtn = document.getElementById("set-up-btn")
 const startBtn = document.getElementById("start-btn");
 const nextBtn = document.getElementById("next-btn");
 const calculatedBtn = document.getElementById("calculated-btn");
 
-const logDiv = document.getElementById("log");
+
 const playersDiv = document.getElementById("players");
 const cardsStackDiv = document.getElementById("cards-stack");
 
@@ -14,54 +15,47 @@ const socket = new WebSocket(`/ws/game/${gameId}`);
 // ================= STATE =================
 let isCurrentPlayer = false;
 let status = "setting_up";
+
 let cards = [];
 let guessedMap = {};
-
-// ================= LOG =================
-function log(msg, data = null) {
-    if (!logDiv) return;
-
-    const div = document.createElement("div");
-    div.textContent =
-        `[${new Date().toLocaleTimeString()}] ${msg}` +
-        (data ? ` ${JSON.stringify(data)}` : "");
-
-    logDiv.appendChild(div);
-    logDiv.scrollTop = logDiv.scrollHeight;
-
-    console.log(msg, data);
-}
+let playersMap = {};
 
 // ================= PLAYERS =================
-function renderPlayers(players) {
-    if (!players?.length) {
+function renderPlayers() {
+    const players = Object.values(playersMap);
+
+    if (!players.length) {
         playersDiv.textContent = "Players: empty";
         return;
     }
 
-    playersDiv.innerHTML = players.map(p =>
-        `<span class="player">${p.name} (${p.score})</span>`
-    ).join("");
+    playersDiv.innerHTML = players
+        .map(p => `<span class="player">${p.name} (${p.score})</span>`)
+        .join("");
 }
 
 // ================= CONTROLS =================
 function updateControls() {
+    setUpBtn.style.display = "none"
     startBtn.style.display = "none";
     nextBtn.style.display = "none";
     calculatedBtn.style.display = "none";
 
-    // 🔥 ONLY current_player affects these buttons
     if (!isCurrentPlayer) return;
 
-    if (status === "waiting" || status === "setting_up") {
+    if (status === "setting_up") {
+        setUpBtn.style.display = "inline-block"
+    }
+
+    if (status === "waiting") {
         startBtn.style.display = "inline-block";
     }
 
-    else if (status === "started") {
+    if (status === "started") {
         nextBtn.style.display = "inline-block";
     }
 
-    else if (status === "calculating") {
+    if (status === "calculating") {
         calculatedBtn.style.display = "inline-block";
     }
 }
@@ -104,7 +98,7 @@ function renderCards() {
     }
 }
 
-// ================= SEND GUESS =================
+// ================= GUESS =================
 function sendGuess(cardId, guessed) {
     socket.send(JSON.stringify({
         type: guessed ? "guessed" : "not_guessed",
@@ -119,11 +113,33 @@ function resetGameState() {
     cardsStackDiv.innerHTML = "";
 }
 
-// ================= SOCKET =================
-socket.onopen = () => log("SOCKET OPENED");
-socket.onclose = () => log("SOCKET CLOSED");
-socket.onerror = (e) => log("SOCKET ERROR", e);
+// ================= AUTO MARK =================
+function markAllCardsAsGuessed() {
+    for (const card of cards) {
+        guessedMap[card.id] = true;
+    }
+}
 
+// ================= SNAPSHOT =================
+function applySnapshot(snapshot) {
+    resetGameState();
+
+    status = snapshot.status;
+    isCurrentPlayer = snapshot.current_player.is_current;
+
+    if (snapshot.cards) {
+        cards = snapshot.cards;
+
+        if (status === "calculating") {
+            markAllCardsAsGuessed();
+        }
+    }
+
+    renderCards();
+    updateControls();
+}
+
+// ================= SOCKET =================
 socket.onmessage = (event) => {
     let data;
 
@@ -136,42 +152,74 @@ socket.onmessage = (event) => {
 
     log("RECEIVED", data);
 
-    // ================= PLAYERS =================
-    if (data.type === "players") {
-        renderPlayers(data.players);
+    // ✅ SNAPSHOT (highest priority)
+    if (data.type === "snapshot") {
+        applySnapshot(data);
+        return;
     }
 
-    // ================= CURRENT PLAYER (ONLY UI CONTROL) =================
+    // PLAYERS INIT
+    if (data.type === "players") {
+        playersMap = {};
+
+        for (const p of data.players) {
+            playersMap[p.id] = p;
+        }
+
+        renderPlayers();
+    }
+
+    // CURRENT PLAYER
     else if (data.type === "current_player") {
         isCurrentPlayer = data.is_current;
         updateControls();
     }
 
-    // ================= STATUS =================
+    // STATUS
     else if (data.type === "status") {
         status = data.value;
 
-        if (status === "waiting") resetGameState();
-        if (status === "started") resetGameState();
+        if (status === "waiting" || status === "started") {
+            resetGameState();
+        }
+
+        if (status === "calculating") {
+            markAllCardsAsGuessed();
+        }
 
         renderCards();
         updateControls();
     }
 
-    // ================= CARD =================
+    // CARD
     else if (data.type === "card") {
         if (data.card) {
             cards.push(data.card);
+
+            if (status === "calculating") {
+                guessedMap[data.card.id] = true;
+            }
+
             renderCards();
         }
     }
 
-    // ================= GUESS (GLOBAL STATE) =================
+    // GUESS
     else if (data.type === "guess") {
         guessedMap[data.card] = data.guessed;
         renderCards();
     }
 
+    // SCORE
+    else if (data.type === "player_score_update") {
+        const p = playersMap[data.id];
+        if (p) {
+            p.score = data.score;
+        }
+        renderPlayers();
+    }
+
+    // KICK
     else if (data.type === "kick") {
         alert("KICKED");
         socket.close();
@@ -179,6 +227,9 @@ socket.onmessage = (event) => {
 };
 
 // ================= ACTIONS =================
+setUpBtn.onclick = () =>
+    socket.send(JSON.stringify({ type: "set_up" }));
+
 startBtn.onclick = () =>
     socket.send(JSON.stringify({ type: "start" }));
 

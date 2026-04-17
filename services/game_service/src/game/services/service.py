@@ -11,10 +11,6 @@ from game.repositories.repository import GameRepository
 from fastapi import WebSocket
 
 
-guessed_cards: dict[str, set[int]] = {}
-played_cards: dict[str, set[int]] = {}
-
-
 class GameService:
     def __init__(
             self, game_repository: GameRepository, packs_client: PacksClient,
@@ -28,14 +24,6 @@ class GameService:
         self.packs_client = packs_client
         self.cards_client = cards_client
         self.auth_client = auth_client
-
-        self.game_cards: dict[str, dict] = {}
-        self.total_cards: int = 0
-
-    async def _cleanup_game(self, game_id: str):
-        guessed_cards.pop(game_id, None)
-        played_cards.pop(game_id, None)
-        self.game_cards.pop(game_id, None)
 
 
     async def create_game(self, game_data: GameCreate, player: Player) -> None:
@@ -56,6 +44,32 @@ class GameService:
     async def join_game(self, game_id: str, player: Player) -> None:
         await self.game_repository.add_player(game_id, player)
 
+    async def load_snapshot(self, game_id: str, user_id: int, game_status: str, websocket: WebSocket):
+        current_player_id = await self.get_current_player(game_id)
+        is_current = user_id == current_player_id
+
+        snapshot = {
+            'type': 'snapshot',
+            'current_player': {
+                'player_id': current_player_id,
+                'is_current': is_current
+            },
+            'status': game_status,
+            'cards': None
+        }
+
+        if game_status == 'started':
+            cards = await self.game_repository.get_played_cards(game_id)
+            snapshot['cards'] = cards if is_current else cards[:-1]
+
+        elif game_status == 'calculating':
+            cards = await self.game_repository.get_played_cards(game_id)
+            snapshot['cards'] = cards
+
+        await websocket.send_json(snapshot)
+
+
+
     async def get_current_player(self, game_id: str) -> int:
         return await self.game_repository.get_current_player_id(game_id)
 
@@ -64,6 +78,9 @@ class GameService:
 
     async def get_players(self, game_id: str) -> List[dict[str: Any]]:
         return await self.game_repository.get_players(game_id)
+
+    async def get_teams(self, game_id: str) -> List[dict[str: Any]]:
+        return await self.game_repository.get_teams(game_id)
 
     async def start_game(
             self, game_id: str,
@@ -80,13 +97,13 @@ class GameService:
         round_time = await self.game_repository.get_round_time(game_id)
         cards = await self.cards_client.get_random_cards(1, 100)
 
-        self.total_cards = len(cards)
-
         await self.game_repository.set_game_status(game_id, 'started')
 
-        self.game_cards = {game_id: {'cards': cards, 'index': 0}}
+        await self.game_repository.set_game_cards(game_id, cards)
+        await self.game_repository.set_card_cursor(game_id)
 
         for ws in con.values():
+            await ws.send_json({'type': 'timer', 'time': round_time})
             await ws.send_json({'type': 'status', 'value': 'started'})
 
         await self.send_card(game_id, con)
@@ -98,55 +115,46 @@ class GameService:
         await self.send_final_card(game_id, con)
 
     async def send_card(self, game_id: str, con: dict[int, WebSocket]):
-        state = self.game_cards[game_id]
-        cards = state['cards']
-        idx = state['index']
-
         current_player_id = await self.game_repository.get_current_player_id(game_id)
 
-        if idx >= self.total_cards:
+        cards = await self.game_repository.get_player_cards(game_id)
+
+        current_card = cards['current']
+        if current_card is None:
             await self.game_repository.set_game_status(game_id, 'calculating')
             return
 
-        current_player_card = cards[idx]
-        other_players_card = cards[idx-1] if idx - 1 >= 0 else None
+        previous_card = cards['previous']
 
-        state['index'] += 1
+        await self.game_repository.push_played_card(game_id, current_card)
 
         for user_id, ws in con.items():
             await ws.send_json({
                 'type': 'card',
-                'card': current_player_card if user_id == current_player_id else other_players_card,
+                'card': current_card if user_id == current_player_id else previous_card,
                 'guessed': True
             })
 
     async def send_final_card(self, game_id: str, con: dict[int, WebSocket]):
-        state = self.game_cards[game_id]
-        cards = state['cards']
-        idx = state['index']
-
         current_player_id = await self.game_repository.get_current_player_id(game_id)
 
-        card = cards[idx-1]
+        cards = await self.game_repository.get_player_cards(game_id)
+        card = cards['previous']
 
         for user_id, ws in con.items():
             if current_player_id != user_id:
                 await ws.send_json({'type': 'card', 'card': card, 'guessed': True})
             await ws.send_json({'type': 'status', 'value': 'calculating'})
 
-        guessed_cards[game_id] = set()
-        for i in range(idx):
-            guessed_cards[game_id].add(cards[i]['id'])
-        played_cards[game_id] = guessed_cards[game_id].copy()
+        await self.game_repository.set_guessed_cards(game_id)
 
     async def card_guessed(self, game_id, card_id: int, guessed: bool, con: dict[int, WebSocket]):
-        if card_id not in played_cards[game_id]:
+        played_cards = await self.game_repository.get_played_cards(game_id)
+        played_card_ids = set(card['id'] for card in played_cards)
+        if card_id not in played_card_ids:
             return
 
-        if guessed:
-            guessed_cards[game_id].add(card_id)
-        else:
-            guessed_cards[game_id].discard(card_id)
+        await self.game_repository.guess_card(game_id, card_id, guessed)
 
         for ws in con.values():
             await ws.send_json({'type': 'guess', 'card': card_id, 'guessed': guessed})
@@ -155,8 +163,11 @@ class GameService:
         await self.game_repository.set_game_status(game_id, 'waiting')
         current_player_id = await self.game_repository.get_current_player_id(game_id)
         current_team_id = await self.game_repository.get_current_team_id(game_id)
+        guessed_card_ids = await self.game_repository.get_guessed_cards(game_id)
 
-        points = len(guessed_cards[game_id])
+        points = len(guessed_card_ids)
+
+        await self.game_repository.cleanup_round(game_id)
 
         player_score = await self.game_repository.update_player_score(game_id, current_player_id, points)
         team_score = await self.game_repository.update_team_score(game_id, current_team_id, points)
@@ -170,20 +181,18 @@ class GameService:
             })
 
             await ws.send_json({
-                'type': 'player',
+                'type': 'player_score_update',
                 'id': current_player_id,
-                'score': player_score}
-            )
+                'score': player_score
+            })
 
             await ws.send_json({
-                'type': 'team',
+                'type': 'team_score_update',
                 'id': current_team_id,
                 'score': team_score
             })
 
             await ws.send_json({'type': 'status', 'value': 'waiting'})
-
-        await self._cleanup_game(game_id)
 
     async def switch_team(self, game_id: str, player_id: int, new_team_id: int):
         if new_team_id < 0 or new_team_id > 4:

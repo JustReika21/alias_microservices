@@ -1,9 +1,9 @@
+import json
 from typing import List, Any
 
 from redis.asyncio import Redis
 
-from game.exc.exceptions import GameClosedError
-from game.schemas.schemas import Game, Player, Team
+from game.schemas.schemas import Game, Player
 from sqlalchemy.ext.asyncio import AsyncSession
 
 
@@ -35,6 +35,18 @@ class GameRepository:
 
     def _current_player_key(self, game_id: str) -> str:
         return f'alias:game:{game_id}:current_player'
+
+    def _cards_key(self, game_id: str) -> str:
+        return f'alias:game:{game_id}:cards'
+
+    def _card_cursor_key(self, game_id: str) -> str:
+        return f'alias:game:{game_id}:card_cursor'
+
+    def _played_cards_key(self, game_id: str) -> str:
+        return f'alias:game:{game_id}:played_cards'
+
+    def _guessed_cards_key(self, game_id: str) -> str:
+        return f'alias:game:{game_id}:guessed_cards'
 
 
     async def create_game(self, game: Game) -> None:
@@ -146,19 +158,25 @@ class GameRepository:
         game_key = self._game_key(game_id)
         teams_key = self._teams_key(game_id)
 
-        team_ids = await self.redis_client.zrange(teams_key, 0, -1)
-        team_offset = await self.redis_client.hincrby(game_key, 'team_offset', 1)
+        async with self.redis_client.pipeline() as pipe:
+            await pipe.zrange(teams_key, 0, -1)
+            await pipe.hincrby(game_key, 'team_offset', 1)
+
+            team_ids, team_offset = await pipe.execute()
 
         total_teams = len(team_ids)
         team_offset = int(team_offset) % int(total_teams)
-
-        if team_offset == 0:
-            turn_offset = await self.redis_client.hincrby(game_key, 'current_round', 1)
-        else:
-            turn_offset = await self.redis_client.hget(game_key, 'current_round')
-
         team_players_key = self._team_players_key(game_id, team_ids[team_offset])
-        players = await self.redis_client.lrange(team_players_key, 0, -1)
+
+        async with self.redis_client.pipeline() as pipe:
+            if team_offset == 0:
+                await pipe.hincrby(game_key, 'current_round', 1)
+            else:
+                await pipe.hget(game_key, 'current_round')
+
+            await pipe.lrange(team_players_key, 0, -1)
+
+            turn_offset, players = await pipe.execute()
 
         turn_offset = int(turn_offset) % len(players)
 
@@ -170,11 +188,13 @@ class GameRepository:
         game_key = self._game_key(game_id)
         teams_key = self._teams_key(game_id)
 
-        team_ids = await self.redis_client.zrange(teams_key, 0, -1)
-        team_offset = await self.redis_client.hget(game_key, 'team_offset')
+        async with self.redis_client.pipeline() as pipe:
+            await pipe.zrange(teams_key, 0, -1)
+            await pipe.hget(game_key, 'team_offset')
+
+            team_ids, team_offset = await pipe.execute()
 
         total_teams = len(team_ids)
-
         current_team = int(team_offset) % int(total_teams) + 1
 
         return current_team
@@ -183,9 +203,12 @@ class GameRepository:
         game_key = self._game_key(game_id)
         teams_key = self._teams_key(game_id)
 
-        team_ids = await self.redis_client.zrange(teams_key, 0, -1)
-        turn_offset = await self.redis_client.hget(game_key, 'current_round')
-        team_offset = await self.redis_client.hget(game_key, 'team_offset')
+        async with self.redis_client.pipeline() as pipe:
+            await pipe.zrange(teams_key, 0, -1)
+            await pipe.hget(game_key, 'current_round')
+            await pipe.hget(game_key, 'team_offset')
+
+            team_ids, turn_offset, team_offset = await pipe.execute()
 
         total_teams = len(team_ids)
         team_offset = int(team_offset) % int(total_teams)
@@ -214,16 +237,28 @@ class GameRepository:
         return status
 
     async def get_players(self, game_id: str) -> List[dict[str: Any]]:
-        players = []
-        for i in range(1, 5):
-            team_players_key = self._team_players_key(game_id, i)
-            player_ids = await self.redis_client.lrange(team_players_key, 0, -1)
+        teams_key = self._teams_key(game_id)
+        team_ids = await self.redis_client.zrange(teams_key, 0, -1)
 
-            for player_id in player_ids:
-                player_key = self._player_key(game_id, player_id)
-                player = await self.redis_client.hgetall(player_key)
+        async with self.redis_client.pipeline() as pipe:
+            for team_id in team_ids:
+                team_players_key = self._team_players_key(game_id, team_id)
+                await pipe.lrange(team_players_key, 0, -1)
 
-                players.append(player)
+            team_players = await pipe.execute()
+
+        player_ids = []
+        for team in team_players:
+            player_ids.extend(pid for pid in team)
+
+        if not player_ids:
+            return []
+
+        async with self.redis_client.pipeline() as pipe:
+            for pid in player_ids:
+                await pipe.hgetall(self._player_key(game_id, pid))
+
+            players = await pipe.execute()
 
         return players
 
@@ -232,6 +267,97 @@ class GameRepository:
         await self.redis_client.hset(game_key, 'status', status)
         return status
 
+    async def set_game_cards(self, game_id: str, cards: dict):
+        cards_key = self._cards_key(game_id)
+        async with self.redis_client.pipeline() as pipe:
+            for card in cards:
+                await pipe.rpush(cards_key, json.dumps(card))
+
+            await pipe.expire(cards_key, EXPIRE_TIME)
+            await pipe.execute()
+
+    async def get_player_cards(self, game_id: str) -> dict:
+        cards_key = self._cards_key(game_id)
+        cursor_key = self._card_cursor_key(game_id)
+
+        cursor = await self.get_card_cursor(game_id)
+
+        current = await self.redis_client.lindex(cards_key, cursor)
+
+        previous = None
+        if cursor > 0:
+            previous = await self.redis_client.lindex(cards_key, cursor - 1)
+
+        await self.redis_client.hincrby(cursor_key, 'cursor', 1)
+
+        cards = {
+            'current': json.loads(current) if current else None,
+            'previous': json.loads(previous) if previous else None
+        }
+        return cards
+
+    async def set_card_cursor(self, game_id: str) -> None:
+        cursor_key = self._card_cursor_key(game_id)
+        await self.redis_client.hset(cursor_key, 'cursor', str(0))
+
+        await self.redis_client.expire(cursor_key, EXPIRE_TIME)
+
+    async def get_card_cursor(self, game_id: str) -> int:
+        cursor_key = self._card_cursor_key(game_id)
+        cursor = await self.redis_client.hget(cursor_key, 'cursor')
+        return int(cursor)
+
+    async def push_played_card(self, game_id: str, card: dict) -> None:
+        played_cards_key = self._played_cards_key(game_id)
+        await self.redis_client.rpush(played_cards_key, json.dumps(card))
+
+    async def get_played_cards(self, game_id: str) -> List[dict]:
+        played_cards_key = self._played_cards_key(game_id)
+
+        raw = await self.redis_client.lrange(played_cards_key, 0, -1)
+
+        cards = [json.loads(card) for card in raw]
+        return cards
+
+    async def set_guessed_cards(self, game_id: str) -> None:
+        guessed_cards_key = self._guessed_cards_key(game_id)
+        cards = await self.get_played_cards(game_id)
+
+        async with self.redis_client.pipeline() as pipe:
+            for card in cards:
+                await pipe.sadd(guessed_cards_key, card['id'])
+
+            await pipe.expire(guessed_cards_key, EXPIRE_TIME)
+            await pipe.execute()
+
+    async def get_guessed_cards(self, game_id: str) -> set[int]:
+        guessed_cards_key = self._guessed_cards_key(game_id)
+
+        card_ids = await self.redis_client.smembers(guessed_cards_key)
+
+        return card_ids
+
+    async def guess_card(self, game_id: str, card_id: int, guessed: bool):
+        guessed_cards_key = self._guessed_cards_key(game_id)
+
+        if guessed:
+            await self.redis_client.sadd(guessed_cards_key, card_id)
+        else:
+            await self.redis_client.srem(guessed_cards_key, card_id)
+
+    async def cleanup_round(self, game_id: str):
+        cards_key = self._cards_key(game_id)
+        cursor_key = self._card_cursor_key(game_id)
+        played_cards_key = self._played_cards_key(game_id)
+        guessed_cards_key = self._guessed_cards_key(game_id)
+        async with self.redis_client.pipeline() as pipe:
+            await pipe.delete(cards_key)
+            await pipe.delete(cursor_key)
+            await pipe.delete(played_cards_key)
+            await pipe.delete(guessed_cards_key)
+
+            await pipe.execute()
+
     async def update_player_score(self, game_id: str, player_id: int, points: int) -> int:
         player_key = self._player_key(game_id, player_id)
         return await self.redis_client.hincrby(player_key, 'score', points)
@@ -239,3 +365,16 @@ class GameRepository:
     async def update_team_score(self, game_id: str, team_id: int, points: int) -> int:
         team_key = self._team_key(game_id, team_id)
         return await self.redis_client.hincrby(team_key, 'score', points)
+
+    async def get_teams(self, game_id: str) -> List[dict[str: Any]]:
+        teams_key = self._teams_key(game_id)
+        team_ids = await self.redis_client.zrange(teams_key, 0, -1)
+
+        async with self.redis_client.pipeline() as pipe:
+            for team_id in team_ids:
+                team_key = self._team_key(game_id, team_id)
+                await pipe.hgetall(team_key)
+
+            teams = await pipe.execute()
+
+        return teams

@@ -1,5 +1,4 @@
 from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect, Request
-from sqlalchemy.util import await_only
 
 from game.dependencies import get_game_service, get_websocket_game_service
 from game.exc.exceptions import GameNotFoundError
@@ -65,6 +64,8 @@ async def game_websocket(
     if not exist:
         raise GameNotFoundError('Game not found')
 
+    game_status = await game_service.game_repository.get_game_status(game_id)
+
     await websocket.accept()
 
     refresh_token = websocket.cookies.get('refresh_token')
@@ -78,16 +79,13 @@ async def game_websocket(
 
     connections[game_id][user.user_id] = websocket
 
-    current_player_id = await game_service.get_current_player(game_id)
-
-    await websocket.send_json({
-        'type': 'current_player',
-        'player_id': current_player_id,
-        'is_current': user.user_id == current_player_id
-    })
+    await game_service.load_snapshot(game_id, user.user_id, game_status, websocket)
 
     players = await game_service.get_players(game_id)
     await websocket.send_json({'type': 'players', 'players': players})
+
+    # teams = await game_service.get_teams(game_id)
+    # await websocket.send_json({'type': 'teams', 'teams': teams})
 
     try:
         while True:
@@ -96,9 +94,11 @@ async def game_websocket(
             game_status = await game_service.get_game_status(game_id)
 
             if data['type'] == 'set_up' and game_status == 'setting_up':
-                pass
+                await game_service.game_repository.set_game_status(game_id, 'waiting')
+                for ws in con.values():
+                    await ws.send_json({'type': 'status', 'value': 'waiting'})
 
-            if data['type'] == 'start' and (game_status == 'waiting' or game_status == 'setting_up'):
+            if data['type'] == 'start' and game_status == 'waiting':
                 await game_service.start_game(game_id, websocket, con)
 
             if data['type'] == 'next':
@@ -108,14 +108,10 @@ async def game_websocket(
                 pass
 
             if data['type'] == 'guessed' and game_status == 'calculating':
-                for ws in con.values():
-                    await ws.send_text('GUESSED')
                 card_id = int(data['card'])
                 await game_service.card_guessed(game_id, card_id, True, con)
 
             if data['type'] == 'not_guessed' and game_status == 'calculating':
-                for ws in con.values():
-                    await ws.send_text('NOT GUESSED')
                 card_id = int(data['card'])
                 await game_service.card_guessed(game_id, card_id, False, con)
 
