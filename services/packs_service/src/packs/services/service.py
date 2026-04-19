@@ -1,14 +1,28 @@
+from typing import List
+
 from packs.exc.exceptions import PackCreationError, PackUpdateError, \
-    PackDoesNotExist
+    PackDoesNotExist, PackDeletionError, PermissionDenied
+from packs.grpc.clients.auth import AuthClient
+from packs.grpc.clients.cards import CardsClient
 from packs.repositories.repository import PackRepository
-from packs.schemas.schemas import PackCreate, PackRead
+from packs.schemas.schemas import PackCreate, PackRead, PackUpdate
 from sqlalchemy.exc import IntegrityError
+
+PACKS_QUERY_LIMIT = 100
 
 
 class PackService:
-    def __init__(self, pack_repository: PackRepository):
+    def __init__(
+            self,
+            pack_repository: PackRepository,
+            auth_client: AuthClient,
+            cards_client: CardsClient
+    ):
         self.pack_repository = pack_repository
         self.db = self.pack_repository.db
+
+        self.auth_client = auth_client
+        self.cards_client = cards_client
 
     async def create_pack(self, pack: PackCreate) -> PackRead:
         try:
@@ -42,6 +56,70 @@ class PackService:
 
             await self.db.commit()
             return True
+        except IntegrityError:
+            await self.db.rollback()
+            raise PackUpdateError('Update failed')
+
+    async def get_packs(self, offset) -> List[PackRead]:
+        packs = await self.pack_repository.get_packs(offset, PACKS_QUERY_LIMIT)
+
+        validated_packs = [
+            PackRead.model_validate(pack)
+            for pack in packs
+        ]
+        return validated_packs
+
+    async def get_pack(self, pack_id: int) -> PackRead:
+        pack = await self.pack_repository.get_pack(pack_id)
+
+        if pack is None:
+            raise PackDoesNotExist('Pack not found')
+
+        return PackRead.model_validate(pack)
+
+    async def get_my_packs(self, access_token: str, offset: int) -> List[PackRead]:
+        user = await self.auth_client.get_user(access_token)
+        packs = await self.pack_repository.get_packs_by_creator_id(
+            user.user_id, offset, PACKS_QUERY_LIMIT
+        )
+
+        validated_packs = [
+            PackRead.model_validate(pack)
+            for pack in packs
+        ]
+        return validated_packs
+
+
+    async def delete_pack(self, pack_id: int):
+        try:
+            pack_id = await self.pack_repository.delete_pack(pack_id)
+
+            if pack_id is None:
+                await self.db.rollback()
+                raise PackDoesNotExist('Pack not found')
+
+            await self.db.commit()
+
+        except IntegrityError:
+            await self.db.rollback()
+            raise PackDeletionError('Pack deletion error')
+
+    async def is_creator(self, pack_id: int, access_token: str) -> bool:
+        user = await self.auth_client.get_user(access_token)
+        creator_id = await self.pack_repository.get_pack_creator_id(pack_id)
+
+        if user.user_id != creator_id:
+            raise PermissionDenied('You do not have permission to delete this pack')
+
+        return True
+
+    async def update_pack(self, pack_id: int, payload: PackUpdate) -> PackRead:
+        data = payload.model_dump(exclude_unset=True)
+        try:
+            pack = await self.pack_repository.update(pack_id, data)
+            await self.db.commit()
+            await self.db.refresh(pack)
+            return PackRead.model_validate(pack)
         except IntegrityError:
             await self.db.rollback()
             raise PackUpdateError('Update failed')

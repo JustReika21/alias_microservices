@@ -4,7 +4,8 @@ import grpc
 import grpc.aio
 from packs_grpc.v1.packs_grpc_pb2 import (GetTotalCardsInPackReq,
                                           IsPackExistReq,
-                                          UpdateTotalCardsInPackReq)
+                                          UpdateTotalCardsInPackReq,
+                                          IsPackCreatorReq)
 from packs_grpc.v1.packs_grpc_pb2_grpc import PacksStub
 
 
@@ -35,3 +36,9 @@ class PacksClient:
             UpdateTotalCardsInPackReq(pack_id=pack_id, count=count)
         )
         return response.success
+
+    async def is_pack_creator(self, pack_id: int, access_token: str) -> bool:
+        response = await self.stub.IsPackCreator(
+            IsPackCreatorReq(pack_id=pack_id, access_token=access_token)
+        )
+        return response.is_creator

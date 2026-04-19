@@ -124,15 +124,15 @@ wheels = [
 
 [[package]]
 name = "cards-grpc"
-version = "0.1.1"
+version = "0.1.2"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grpcio" },
     { name = "grpcio-tools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/1e/df/03f37c325abd2535bc18d76398e5a0e5efc1b515dce876a1b189af66a6f1/cards_grpc-0.1.1.tar.gz", hash = "sha256:948bed83351b2eb167b28dc7f14f9765b50152fb37e29441133e6301c2c9121a", size = 2913, upload-time = "2026-04-13T19:59:43.496Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/41/1e/2e73e7028e854075282c346dfcad32767e86bafeb3ba6889ec3c6c71fdbc/cards_grpc-0.1.2.tar.gz", hash = "sha256:78d5b1762490ea4e3524184d3330936abdfa6a027528fac25dff484d245a530f", size = 3130, upload-time = "2026-04-18T19:46:18.999Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/f4/2f/f35dd00cef5d90e30d2dd176d4b66d4b79117a92ff2be42ad55683f82934/cards_grpc-0.1.1-py3-none-any.whl", hash = "sha256:0b61b30cff2027aa254d1fb22d84c8f97bc675dfae4b42eeaafc4870ff6235ab", size = 3563, upload-time = "2026-04-13T19:59:44.37Z" },
+    { url = "https://files.pythonhosted.org/packages/eb/f9/89d9964b26d348f9159af483291dd67adb2137aff479b88389cebe4c85ba/cards_grpc-0.1.2-py3-none-any.whl", hash = "sha256:e25d907e4ba6e1228a4e09152caecccd85132901e4769b88a0f5018a2be6006d", size = 3781, upload-time = "2026-04-18T19:46:17.947Z" },
 ]
 
 [[package]]
@@ -167,12 +167,12 @@ requires-dist = [
     { name = "aio-pika", specifier = ">=9.5.8" },
     { name = "alembic", specifier = ">=1.17.2" },
     { name = "asyncpg", specifier = ">=0.31.0" },
-    { name = "cards-grpc", specifier = "==0.1.1" },
+    { name = "cards-grpc", specifier = "==0.1.2" },
     { name = "fastapi", specifier = ">=0.128.0" },
     { name = "greenlet", specifier = ">=3.3.0" },
     { name = "opentelemetry-instrumentation-fastapi", specifier = ">=0.60b1" },
     { name = "opentelemetry-sdk", specifier = ">=1.39.1" },
-    { name = "packs-grpc", specifier = ">=0.1.5" },
+    { name = "packs-grpc", specifier = "==0.1.7" },
     { name = "pydantic-settings", specifier = ">=2.12.0" },
     { name = "python-dotenv", specifier = ">=1.2.1" },
     { name = "structlog", specifier = ">=25.5.0" },
@@ -702,15 +702,15 @@ wheels = [
 
 [[package]]
 name = "packs-grpc"
-version = "0.1.5"
+version = "0.1.7"
 source = { registry = "https://pypi.org/simple" }
 dependencies = [
     { name = "grpcio" },
     { name = "grpcio-tools" },
 ]
-sdist = { url = "https://files.pythonhosted.org/packages/d9/d5/b76ed2ff30af0fc50710d91f62b53a2003f92742f91492b50b36bf20ece9/packs_grpc-0.1.5.tar.gz", hash = "sha256:8e2460c8946c5b784caad8462d55d7977bfb607b9732b35385be7aec43261591", size = 3202, upload-time = "2026-02-11T12:12:26.169Z" }
+sdist = { url = "https://files.pythonhosted.org/packages/c2/52/1844ddd39fbcfcb6d6a8dd41cfb90a2be482a4bfc3443ca2eb8c011c5013/packs_grpc-0.1.7.tar.gz", hash = "sha256:c6261c78b2b00d1b6b3d2c49eca9fce10ecb22d024964298a911a37b11f9fcb8", size = 3362, upload-time = "2026-04-19T13:06:53.006Z" }
 wheels = [
-    { url = "https://files.pythonhosted.org/packages/cb/d5/231c801f12e4fc62a065295619e31fe36faf3e4a968829177d958923ed4f/packs_grpc-0.1.5-py3-none-any.whl", hash = "sha256:1f81693c7e1ef586faf6a378ed41c4f1a88f62ee9f7a0cbd0b44914fdf1b52f2", size = 3875, upload-time = "2026-02-11T12:12:26.945Z" },
+    { url = "https://files.pythonhosted.org/packages/b5/9a/9cda284a989da08b3ae471e7a85722a3201967fcd73df90bc499bab508ea/packs_grpc-0.1.7-py3-none-any.whl", hash = "sha256:9a01985f47157eeae06a723c62a1615aafdd4df8e9659657bac0c2344352f770", size = 4051, upload-time = "2026-04-19T13:06:54.308Z" },
 ]
 
 [[package]]

@@ -13,4 +13,4 @@ class Pack(Base):
     name: Mapped[str] = mapped_column(String(127), nullable=False)
     description: Mapped[str | None] = mapped_column(String(1024))
     total: Mapped[int] = mapped_column(SmallInteger, nullable=False, default=0)
-    #TODO: reverse for cards
+    creator: Mapped[int] = mapped_column(SmallInteger, nullable=False)

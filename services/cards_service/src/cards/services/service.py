@@ -7,7 +7,7 @@ from cards.exc.exceptions import CardCreationError, CardError, \
 from cards.grpc.clients.packs import PacksClient
 from cards.repositories.repository import CardRepository
 from cards.schemas.schemas import CardsCreate, RandomCardsRequest, \
-    RandomCardRead
+    RandomCardRead, CardRead, CardsDelete
 from sqlalchemy.exc import IntegrityError
 
 
@@ -49,6 +49,15 @@ class CardService:
             await self.db.rollback()
             raise CardCreationError('Failed to create cards')
 
+    async def get_cards(self, pack_id: int) -> List[CardRead]:
+        cards = await self.card_repository.get(pack_id)
+
+        validated_cards = [
+            CardRead.model_validate(card)
+            for card in cards
+        ]
+        return validated_cards
+
     async def get_random_cards(
             self,
             payload: RandomCardsRequest,
@@ -72,23 +81,37 @@ class CardService:
         if not cards:
             raise CardError('No cards in pack')
 
-        validated_cards = [RandomCardRead.model_validate(card)for card in cards]
+        validated_cards = [RandomCardRead.model_validate(card) for card in cards]
         shuffle(validated_cards)
         return validated_cards
 
-    async def delete_card(
-            self,
-            card_id: int,
-    ) -> None:
+    async def delete_cards(self, payload: CardsDelete):
         try:
-            pack_id = await self.card_repository.delete(card_id)
+            card_ids = await self.card_repository.delete_cards(payload)
+            total_deleted = len(card_ids)
 
-            if pack_id is None:
-                await self.db.rollback()
-                raise CardDoesNotExistError('Card does not exist')
+            if card_ids:
+                success = await self.packs_client.update_total_cards_in_pack(payload.pack_id, -total_deleted)
+                if not success:
+                    raise CardDeletionError('Failed to delete cards')
 
-            await self.packs_client.update_total_cards_in_pack(pack_id, -1)
             await self.db.commit()
+
         except IntegrityError:
             await self.db.rollback()
             raise CardDeletionError('Card deletion failed')
+
+    async def delete_all_cards_in_pack(self, pack_id: int) -> bool:
+        try:
+            await self.card_repository.delete_all_cards_in_pack(pack_id)
+            await self.db.commit()
+            return True
+        except IntegrityError:
+            await self.db.rollback()
+            raise CardDeletionError('Card deletion failed')
+
+    async def is_pack_creator(self, pack_id: int, access_token: str) -> None:
+        is_creator = await self.packs_client.is_pack_creator(pack_id, access_token)
+
+        if not is_creator:
+            raise CardError('You do not have permission')

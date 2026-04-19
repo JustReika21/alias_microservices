@@ -2,7 +2,7 @@ from typing import Optional
 
 import grpc
 import grpc.aio
-from cards_grpc.v1.cards_grpc_pb2 import GetRandomCardsReq
+from cards_grpc.v1.cards_grpc_pb2 import DeleteAllCardsInPackReq
 from cards_grpc.v1.cards_grpc_pb2_grpc import CardsStub
 
 class CardsClient:
@@ -19,6 +19,6 @@ class CardsClient:
         if self.channel:
             await self.channel.close()
 
-    async def get_random_cards(self, pack_id: int, limit: int):
-        response = await self.stub.GetRandomCards(GetRandomCardsReq(pack_id=pack_id, limit=limit))
-        return [{'id': c.id, 'word': c.word} for c in response.cards]
+    async def delete_all_cards_in_pack(self, pack_id: int):
+        response = await self.stub.DeleteAllCardsInPack(DeleteAllCardsInPackReq(pack_id=pack_id))
+        return response.success

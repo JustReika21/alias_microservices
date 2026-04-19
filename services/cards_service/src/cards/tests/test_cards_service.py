@@ -1,7 +1,7 @@
 import pytest
 
 from cards.exc.exceptions import CardError, CardCreationError
-from cards.schemas.schemas import RandomCardsRequest, CardsCreate, CardRead
+from cards.schemas.schemas import RandomCardsRequest, CardsCreate, CardFullRead
 from cards.services.service import CardService
 from cards.tests.fixtures.fakes import MAX_CARDS_IN_PACK, FakePacksClient
 from cards.tests.test_cards_api import PACK_ID
@@ -67,7 +67,7 @@ class TestCardsService:
     ):
         cards = CardsCreate(words=['test1', 'test2', 'test3'], pack_id=1)
         result = await cards_service.create_cards(cards=cards)
-        validated = [CardRead.model_validate(card) for card in result]
+        validated = [CardFullRead.model_validate(card) for card in result]
 
         current = [[card.word, card.position, card.pack_id] for card in validated]
         expected = [['test1', 1, 1], ['test2', 2, 1], ['test3', 3, 1]]

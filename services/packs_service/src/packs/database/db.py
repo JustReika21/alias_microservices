@@ -1,5 +1,4 @@
 from packs.settings import settings
-from pydantic import BaseModel
 from sqlalchemy.ext.asyncio import async_sessionmaker, create_async_engine
 from sqlalchemy.orm import DeclarativeBase
 
@@ -9,7 +8,4 @@ async_session = async_sessionmaker(engine, expire_on_commit=False)
 
 
 class Base(DeclarativeBase):
-    pass
-
-class AliasBase(BaseModel):
     pass

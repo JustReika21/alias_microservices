@@ -1,7 +1,7 @@
 from typing import List, Sequence
 
 from cards.database.models import Card
-from cards.schemas.schemas import RandomCardsRequest
+from cards.schemas.schemas import RandomCardsRequest, CardsDelete
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,6 +21,15 @@ class CardRepository:
     ) -> None:
         self.db.add_all(cards)
 
+    async def get(self, pack_id: int) -> Sequence[Card]:
+        stmt = (
+            select(Card)
+            .where(Card.pack_id == pack_id)
+        )
+        cards = await self.db.execute(stmt)
+        return cards.scalars().all()
+
+
     async def get_random_cards(
             self,
             payload: RandomCardsRequest,
@@ -38,10 +47,21 @@ class CardRepository:
         result = await self.db.execute(stmt)
         return result.scalars().all()
 
-    async def delete(
-            self,
-            card_id: int,
-    ) -> int | None:
-        stmt = delete(Card).where(Card.id == card_id).returning(Card.pack_id)
-        result = await self.db.scalar(stmt)
-        return result
+    async def delete_cards(self, payload: CardsDelete) -> Sequence[int]:
+        stmt = (
+            delete(Card)
+            .where(
+                Card.pack_id == payload.pack_id,
+                Card.id.in_(payload.card_ids)
+            )
+            .returning(Card.id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
+    async def delete_all_cards_in_pack(self, pack_id: int) -> None:
+        stmt = (
+            delete(Card)
+            .where(Card.pack_id == pack_id)
+        )
+        await self.db.execute(stmt)

@@ -50,16 +50,36 @@ async function apiFetch(url, options = {}) {
     return res;
 }
 
+
+async function get_user() {
+    try {
+        const response = await apiFetch('/api/v1/auth/me', {
+            method: 'GET',
+            headers: {
+                'Content-Type': 'application/json'
+            }
+        });
+
+        const data = await response.json();
+        console.log('user:', data);
+
+        return data;
+    } catch (error) {
+        console.error('Failed to fetch cards:', error);
+        return [];
+    }
+}
+
+
 async function fetchRandomCards(packId, limit = 10) {
     try {
-        const response = await apiFetch('/api/v1/cards/random', {
-            method: 'POST',
+        const response = await apiFetch(`/api/v1/packs/${packId}/`, {
+            method: 'DELETE',
             headers: {
                 'Content-Type': 'application/json'
             },
             body: JSON.stringify({
                 pack_id: packId,
-                limit: limit
             })
         });
 
@@ -108,6 +128,7 @@ async function loadCards() {
 
     const cards = await fetchRandomCards(packId, 100);
     renderCards(cards);
+    // get_user()
 }
 
 document.addEventListener('DOMContentLoaded', () => {

@@ -23,3 +23,10 @@ class Cards(cards_grpc_pb2_grpc.CardsServicer):
                 for card in cards
             ]
         )
+
+    async def DeleteAllCardsInPack(self, request, context):
+        pack_id = request.pack_id
+        async with async_session() as db:
+            service = CardService(CardRepository(db), self.packs_client)
+            success = await service.delete_all_cards_in_pack(pack_id)
+        return cards_grpc_pb2.DeleteAllCardsInPackResp(success=success)

@@ -16,6 +16,3 @@ Starting auth-grpc server on port 50051
 ''')
     await server.start()
     return  server
-
-if __name__ == "__main__":
-    asyncio.run(start_grpc_server())

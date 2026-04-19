@@ -16,6 +16,15 @@ class CardsCreate(CardBase):
 class CardRead(CardBase):
     id: int
     word: str
+
+    model_config = ConfigDict(
+        from_attributes=True
+    )
+
+
+class CardFullRead(CardBase):
+    id: int
+    word: str
     pack_id: int
     position: int
 
@@ -42,4 +51,5 @@ class CardDelete(CardBase):
 
 
 class CardsDelete(CardBase):
-    ids: List[int]
+    card_ids: List[int]
+    pack_id: int

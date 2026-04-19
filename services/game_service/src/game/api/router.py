@@ -1,4 +1,5 @@
-from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect, Request
+from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 from game.dependencies import get_game_service, get_websocket_game_service
 from game.exc.exceptions import GameNotFoundError
@@ -13,11 +14,11 @@ game_router = APIRouter(tags=['Games'])
 @game_router.post('/api/v1/game')
 async def game_create_api(
         game_data: GameCreate,
-        request: Request,
+        credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
         game_service: GameService = Depends(get_game_service),
 ):
-    refresh_token = request.cookies.get('refresh_token')
-    user = await game_service.auth_client.get_user(refresh_token)
+    access_token = credentials.credentials
+    user = await game_service.auth_client.get_user(access_token)
     player = Player(id=user.user_id, name=user.name, score=0)
     return await game_service.create_game(game_data, player)
 

@@ -69,19 +69,6 @@ class GameService:
         await websocket.send_json(snapshot)
 
 
-
-    async def get_current_player(self, game_id: str) -> int:
-        return await self.game_repository.get_current_player_id(game_id)
-
-    async def get_game_status(self, game_id: str) -> str:
-        return await self.game_repository.get_game_status(game_id)
-
-    async def get_players(self, game_id: str) -> List[dict[str: Any]]:
-        return await self.game_repository.get_players(game_id)
-
-    async def get_teams(self, game_id: str) -> List[dict[str: Any]]:
-        return await self.game_repository.get_teams(game_id)
-
     async def start_game(
             self, game_id: str,
             websocket: WebSocket,
@@ -194,8 +181,21 @@ class GameService:
 
             await ws.send_json({'type': 'status', 'value': 'waiting'})
 
+
     async def switch_team(self, game_id: str, player_id: int, new_team_id: int):
         if new_team_id < 0 or new_team_id > 4:
             raise TeamNotFoundError('Invalid team id')
 
         await self.game_repository.switch_team(game_id, player_id, new_team_id)
+
+    async def get_current_player(self, game_id: str) -> int:
+        return await self.game_repository.get_current_player_id(game_id)
+
+    async def get_game_status(self, game_id: str) -> str:
+        return await self.game_repository.get_game_status(game_id)
+
+    async def get_players(self, game_id: str) -> List[dict[str: Any]]:
+        return await self.game_repository.get_players(game_id)
+
+    async def get_teams(self, game_id: str) -> List[dict[str: Any]]:
+        return await self.game_repository.get_teams(game_id)

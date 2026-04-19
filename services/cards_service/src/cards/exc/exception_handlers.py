@@ -26,7 +26,7 @@ async def handle_card_does_not_exist(request: Request, exc: CardDoesNotExistErro
 
 async def handle_card_deletion_error(request: Request, exc: CardDeletionError):
     return JSONResponse(
-        status_code=status.HTTP_404_NOT_FOUND,
+        status_code=status.HTTP_400_BAD_REQUEST,
         content={'detail': str(exc)},
     )
 

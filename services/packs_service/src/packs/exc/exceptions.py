@@ -12,3 +12,11 @@ class PackUpdateError(PackException):
 
 class PackDoesNotExist(PackException):
     pass
+
+
+class PermissionDenied(PackException):
+    pass
+
+
+class PackDeletionError(PackException):
+    pass
