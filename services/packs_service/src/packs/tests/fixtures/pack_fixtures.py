@@ -2,10 +2,9 @@ from typing import List, Optional
 
 import pytest_asyncio
 from packs.database.models import Pack
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from packs.repositories.repository import PackRepository
 from packs.services.service import PackService
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 @pytest_asyncio.fixture

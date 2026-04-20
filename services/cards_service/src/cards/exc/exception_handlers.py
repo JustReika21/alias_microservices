@@ -1,5 +1,5 @@
-from cards.exc.exceptions import CardCreationError, CardError, \
-    CardDoesNotExistError, CardDeletionError
+from cards.exc.exceptions import (CardCreationError, CardDeletionError,
+                                  CardDoesNotExistError, CardError)
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
 

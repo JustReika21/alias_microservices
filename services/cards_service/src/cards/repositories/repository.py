@@ -1,7 +1,7 @@
 from typing import List, Sequence
 
 from cards.database.models import Card
-from cards.schemas.schemas import RandomCardsRequest, CardsDelete
+from cards.schemas.schemas import CardsDelete, RandomCardsRequest
 from sqlalchemy import delete, func, select
 from sqlalchemy.ext.asyncio import AsyncSession
 

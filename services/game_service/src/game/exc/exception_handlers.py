@@ -1,8 +1,7 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-
-from game.exc.exceptions import GameCreationError, GameNotFoundError, \
-    TeamNotFoundError, GameClosedError
+from game.exc.exceptions import (GameClosedError, GameCreationError,
+                                 GameNotFoundError, TeamNotFoundError)
 
 
 async def handle_game_creation_error(request: Request, exc: GameCreationError):

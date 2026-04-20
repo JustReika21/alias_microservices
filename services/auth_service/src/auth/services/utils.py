@@ -1,12 +1,11 @@
-from datetime import datetime, timezone, timedelta
-from fastapi import HTTPException
+from datetime import datetime, timedelta, timezone
 
 import bcrypt
 import jwt
-
 from auth.database.models import User
 from auth.exc.exceptions import InvalidToken, TokenExpired
 from auth.settings import settings
+from fastapi import HTTPException
 
 TOKEN_TYPE_FIELD = 'type'
 ACCESS_TOKEN_TYPE = 'access'

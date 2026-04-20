@@ -1,12 +1,13 @@
-from datetime import datetime, timezone, timedelta
+from datetime import datetime, timedelta, timezone
 
-from sqlalchemy import select
-from sqlalchemy.ext.asyncio import AsyncSession
-
-from auth.database.models import User, RefreshToken
-from auth.schemas.schemas import UserCreate, UserLogin, RefreshTokenCreate
+from auth.database.models import RefreshToken, User
+from auth.schemas.schemas import UserCreate, UserLogin
 from auth.services.utils import hash_password
 from auth.settings import settings
+from sqlalchemy import delete, select
+from sqlalchemy.ext.asyncio import AsyncSession
+
+MAX_REFRESH_TOKENS_PER_USER = 5
 
 
 class UserRepository:
@@ -19,7 +20,33 @@ class UserRepository:
         self.db.add(user)
         return user
 
-    async def save_refresh_token_in_db(self, user_id, token) -> RefreshToken:
+    async def cleanup_refresh_tokens(self, user_id: int) -> None:
+        now = datetime.now(timezone.utc)
+
+        time_stmt = (
+            delete(RefreshToken)
+            .where(
+                RefreshToken.user_id == user_id,
+                RefreshToken.expires_at < now
+            )
+        )
+        await self.db.execute(time_stmt)
+
+        overflow_stmt = (
+            select(RefreshToken.id)
+            .where(RefreshToken.user_id == user_id)
+            .order_by(RefreshToken.expires_at.desc())
+            .offset(MAX_REFRESH_TOKENS_PER_USER)
+        )
+
+        delete_stmt = (
+            delete(RefreshToken)
+            .where(RefreshToken.id.in_(overflow_stmt))
+        )
+
+        await self.db.execute(delete_stmt)
+
+    async def save_refresh_token_in_db(self, user_id, token: str) -> RefreshToken:
         expires_at = datetime.now(timezone.utc) + timedelta(
             minutes=settings.auth_jwt.refresh_token_expire_minutes
         )

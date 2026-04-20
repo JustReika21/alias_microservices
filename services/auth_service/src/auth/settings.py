@@ -1,10 +1,9 @@
 import os
 from pathlib import Path
 
+from auth.schemas.schemas import AuthBase
 from dotenv import load_dotenv
 from pydantic.v1 import BaseSettings
-
-from auth.schemas.schemas import AuthBase
 
 load_dotenv()
 

@@ -1,12 +1,10 @@
 from contextlib import asynccontextmanager
 
-from fastapi import FastAPI
 from auth.api.v1.router import auth_router
-
-from fastapi.middleware.cors import CORSMiddleware
-
 from auth.exc.exception_handlers import register_auth_exception_handlers
 from auth.grpc.server import start_grpc_server
+from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 
 
 @asynccontextmanager

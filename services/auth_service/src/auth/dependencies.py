@@ -1,9 +1,8 @@
-from sqlalchemy.ext.asyncio import AsyncSession
-from fastapi import Depends
-
 from auth.database.db import async_session
 from auth.repositories.repository import UserRepository
 from auth.services.service import UserService
+from fastapi import Depends
+from sqlalchemy.ext.asyncio import AsyncSession
 
 
 async def get_session() -> AsyncSession:

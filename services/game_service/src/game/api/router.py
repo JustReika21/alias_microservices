@@ -1,10 +1,8 @@
-from fastapi import APIRouter, WebSocket, Depends, WebSocketDisconnect
+from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
 from game.dependencies import get_game_service, get_websocket_game_service
 from game.exc.exceptions import GameNotFoundError
-from game.schemas.schemas import Player, GameCreate
-
+from game.schemas.schemas import GameCreate, Player
 from game.services.service import GameService
 
 game_router = APIRouter(tags=['Games'])
@@ -83,7 +81,8 @@ async def game_websocket(
     await game_service.load_snapshot(game_id, user.user_id, game_status, websocket)
 
     players = await game_service.get_players(game_id)
-    await websocket.send_json({'type': 'players', 'players': players})
+    for ws in connections[game_id].values():
+        await ws.send_json({'type': 'players', 'players': players})
 
     # teams = await game_service.get_teams(game_id)
     # await websocket.send_json({'type': 'teams', 'teams': teams})

@@ -2,12 +2,12 @@ from random import sample, shuffle
 from typing import List, Sequence
 
 from cards.database.models import Card
-from cards.exc.exceptions import CardCreationError, CardError, \
-    CardDoesNotExistError, CardDeletionError
+from cards.exc.exceptions import (CardCreationError, CardDeletionError,
+                                  CardDoesNotExistError, CardError)
 from cards.grpc.clients.packs import PacksClient
 from cards.repositories.repository import CardRepository
-from cards.schemas.schemas import CardsCreate, RandomCardsRequest, \
-    RandomCardRead, CardRead, CardsDelete
+from cards.schemas.schemas import (CardRead, CardsCreate, CardsDelete,
+                                   RandomCardRead, RandomCardsRequest)
 from sqlalchemy.exc import IntegrityError
 
 

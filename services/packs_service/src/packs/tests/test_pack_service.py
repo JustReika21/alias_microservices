@@ -1,10 +1,9 @@
 import pytest
 from httpx import AsyncClient
-
-from packs.exc.exceptions import PackUpdateError, PackDoesNotExist
+from packs.exc.exceptions import PackDoesNotExist, PackUpdateError
 from packs.services.service import PackService
-
 from sqlalchemy.ext.asyncio import AsyncSession
+
 
 class TestPackService:
     @pytest.mark.asyncio

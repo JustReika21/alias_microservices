@@ -1,7 +1,8 @@
 from typing import List
 
-from packs.exc.exceptions import PackCreationError, PackUpdateError, \
-    PackDoesNotExist, PackDeletionError, PermissionDenied
+from packs.exc.exceptions import (PackCreationError, PackDeletionError,
+                                  PackDoesNotExist, PackUpdateError,
+                                  PermissionDenied)
 from packs.grpc.clients.auth import AuthClient
 from packs.grpc.clients.cards import CardsClient
 from packs.repositories.repository import PackRepository
@@ -24,9 +25,9 @@ class PackService:
         self.auth_client = auth_client
         self.cards_client = cards_client
 
-    async def create_pack(self, pack: PackCreate) -> PackRead:
+    async def create_pack(self, pack: PackCreate, user_id: int) -> PackRead:
         try:
-            created_pack = await self.pack_repository.create(pack)
+            created_pack = await self.pack_repository.create(pack, user_id)
             await self.db.commit()
             await self.db.refresh(created_pack)
 

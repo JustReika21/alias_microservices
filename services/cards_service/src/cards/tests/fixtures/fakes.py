@@ -1,7 +1,6 @@
 import pytest_asyncio
-from fastapi import Request
-
 from cards.constants.packs_constants import MAX_CARDS_IN_PACK
+from fastapi import Request
 
 PACK_ID = 1
 

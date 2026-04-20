@@ -2,7 +2,7 @@ from typing import Optional
 
 import grpc
 import grpc.aio
-from auth_grpc.v1.auth_grpc_pb2 import VerifyUserWebSoketReq, GetUserReq
+from auth_grpc.v1.auth_grpc_pb2 import GetUserReq, VerifyUserWebSoketReq
 from auth_grpc.v1.auth_grpc_pb2_grpc import AuthStub
 
 

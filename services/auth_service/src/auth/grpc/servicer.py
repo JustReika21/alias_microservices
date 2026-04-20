@@ -1,9 +1,8 @@
 from auth.database.db import async_session
 from auth.repositories.repository import UserRepository
 from auth.services.service import UserService
-from auth_grpc.v1 import auth_grpc_pb2, auth_grpc_pb2_grpc
-
 from auth.services.utils import ACCESS_TOKEN_TYPE
+from auth_grpc.v1 import auth_grpc_pb2, auth_grpc_pb2_grpc
 
 
 class User(auth_grpc_pb2_grpc.AuthServicer):

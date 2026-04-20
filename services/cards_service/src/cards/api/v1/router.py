@@ -1,12 +1,12 @@
 from typing import List
 
 from cards.dependencies import get_card_service
-from cards.schemas.schemas import CardFullRead, CardsCreate, \
-    RandomCardsRequest, \
-    RandomCardRead, CardRead, CardsDelete
+from cards.schemas.schemas import (CardFullRead, CardRead, CardsCreate,
+                                   CardsDelete, RandomCardRead,
+                                   RandomCardsRequest)
 from cards.services.service import CardService
-from fastapi import APIRouter, status, Depends
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
+from fastapi import APIRouter, Depends, status
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 card_router = APIRouter(prefix='/cards', tags=['Cards'])
 
@@ -25,6 +25,7 @@ async def cards_create_api(
     await cards_service.is_pack_creator(cards.pack_id, access_token)
     return await cards_service.create_cards(cards)
 
+
 @card_router.get(
     '',
     status_code=status.HTTP_200_OK,
@@ -36,6 +37,7 @@ async def cards_get_api(
 ):
     return await cards_service.get_cards(pack_id)
 
+
 @card_router.post(
     '/random',
     status_code=status.HTTP_200_OK,
@@ -46,6 +48,7 @@ async def random_cards_get_api(
         cards_service: CardService = Depends(get_card_service)
 ):
     return await cards_service.get_random_cards(payload)
+
 
 @card_router.delete(
     '',

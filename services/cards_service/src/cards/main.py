@@ -3,9 +3,9 @@ from contextlib import asynccontextmanager
 from cards.api.v1.router import card_router
 from cards.exc.exception_handlers import register_card_exception_handlers
 from cards.grpc.clients.packs import PacksClient
+from cards.grpc.server import start_grpc_server
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from cards.grpc.server import start_grpc_server
 
 
 @asynccontextmanager

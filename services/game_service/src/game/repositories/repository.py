@@ -1,11 +1,9 @@
 import json
-from typing import List, Any
-
-from redis.asyncio import Redis
+from typing import Any, List
 
 from game.schemas.schemas import Game, Player
+from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
-
 
 EXPIRE_TIME = 7200
 
@@ -378,3 +376,8 @@ class GameRepository:
             teams = await pipe.execute()
 
         return teams
+
+    async def get_pack_id(self, game_id: str) -> int:
+        game_key = self._game_key(game_id)
+        pack_id = await self.redis_client.hget(game_key, 'pack')
+        return int(pack_id)

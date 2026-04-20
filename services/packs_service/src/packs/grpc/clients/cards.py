@@ -5,6 +5,7 @@ import grpc.aio
 from cards_grpc.v1.cards_grpc_pb2 import DeleteAllCardsInPackReq
 from cards_grpc.v1.cards_grpc_pb2_grpc import CardsStub
 
+
 class CardsClient:
     def __init__(self, target: str):
         self.target = target

@@ -1,5 +1,3 @@
-import asyncio
-
 import grpc
 from auth.grpc.servicer import User
 from auth_grpc.v1 import auth_grpc_pb2_grpc

@@ -1,8 +1,6 @@
-from sqlalchemy.exc import IntegrityError
-
 import pytest
-
 from packs.repositories.repository import PackRepository
+from sqlalchemy.exc import IntegrityError
 
 
 class TestPacksRepository:

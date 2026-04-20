@@ -1,5 +1,4 @@
 import pytest
-
 from cards.repositories.repository import CardRepository
 from cards.tests.test_cards_api import PACK_ID
 

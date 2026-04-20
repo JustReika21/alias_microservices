@@ -1,0 +1,30 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <title>Edit Pack</title>
+    <link rel="stylesheet" href="/css/edit_pack.css">
+</head>
+<body>
+    <div class="container">
+        <h1>Edit Pack</h1>
+        <form id="pack-form">
+            <label for="pack-name">Name:</label>
+            <input type="text" id="pack-name" name="name">
+            <label for="pack-description">Description:</label>
+            <textarea id="pack-description" name="description"></textarea>
+            <button type="submit">Update Pack</button>
+        </form>
+
+        <h2>Cards</h2>
+        <ul id="cards-list"></ul>
+
+        <form id="add-card-form">
+            <input type="text" id="new-card-word" placeholder="New card word">
+            <button type="submit">Add Card</button>
+        </form>
+    </div>
+
+    <script type="module" src="/js/edit_pack.js"></script>
+</body>
+</html>

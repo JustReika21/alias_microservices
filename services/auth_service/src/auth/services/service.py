@@ -1,12 +1,15 @@
 from datetime import datetime, timezone
+from sqlite3 import IntegrityError
 
-from auth.exc.exceptions import UserLoginError, UserCreationError, \
-    UserNotFound, InvalidToken, TokenNotFound
 from auth.database.models import User
+from auth.exc.exceptions import (InvalidToken, TokenNotFound,
+                                 UserCreationError, UserLoginError,
+                                 UserNotFound)
 from auth.repositories.repository import UserRepository
-from auth.schemas.schemas import UserCreate, UserLogin, TokenInfo, UserRead
-from auth.services.utils import validate_password, decode_jwt, \
-    validate_token_type, REFRESH_TOKEN_TYPE, create_access_token
+from auth.schemas.schemas import TokenInfo, UserCreate, UserLogin, UserRead
+from auth.services.utils import (REFRESH_TOKEN_TYPE, create_access_token,
+                                 decode_jwt, validate_password,
+                                 validate_token_type)
 
 
 class UserService:
@@ -67,9 +70,14 @@ class UserService:
         return TokenInfo(access_token=access_token)
 
     async def save_refresh_token(self, user_id: int, token: str) -> None:
-        token = await self.user_repository.save_refresh_token_in_db(user_id, token)
-        await self.db.commit()
-        await self.db.refresh(token)
+        try:
+            await self.user_repository.cleanup_refresh_tokens(user_id)
+            token = await self.user_repository.save_refresh_token_in_db(user_id, token)
+            await self.db.commit()
+            await self.db.refresh(token)
+        except IntegrityError:
+            await self.db.rollback()
+            raise UserLoginError('User login error')
 
     async def validate_refresh_token(self, token: str) -> int:
         payload = decode_jwt(token)
@@ -81,7 +89,6 @@ class UserService:
         if not stored_token:
             raise InvalidToken('Invalid token')
         elif stored_token.expires_at < datetime.now(timezone.utc):
-            # TODO: Delete token
             raise InvalidToken('Token is expired')
 
         return int(payload.get('sub'))

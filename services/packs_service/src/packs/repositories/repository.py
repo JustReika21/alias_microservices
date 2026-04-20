@@ -3,15 +3,15 @@ from typing import Sequence
 from packs.database.models import Pack
 from packs.schemas.schemas import PackCreate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import exists, select, update, delete
+from sqlalchemy.sql import delete, exists, select, update
 
 
 class PackRepository:
     def __init__(self, db: AsyncSession) -> None:
         self.db = db
 
-    async def create(self, pack: PackCreate) -> Pack:
-        pack = Pack(name=pack.name, description=pack.description)
+    async def create(self, pack: PackCreate, user_id: int) -> Pack:
+        pack = Pack(name=pack.name, description=pack.description, creator=user_id)
         self.db.add(pack)
         return pack
 

@@ -1,7 +1,8 @@
-from sqlalchemy import String, DateTime
-from sqlalchemy.orm import Mapped,mapped_column
-from auth.database.db import Base
 from datetime import datetime
+
+from auth.database.db import Base
+from sqlalchemy import DateTime, String
+from sqlalchemy.orm import Mapped, mapped_column
 
 
 class User(Base):

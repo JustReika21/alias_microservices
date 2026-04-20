@@ -1,6 +1,6 @@
 from typing import List
 
-from cards.schemas.validators import WORD, LIMIT
+from cards.schemas.validators import LIMIT, WORD
 from pydantic import BaseModel, ConfigDict
 
 

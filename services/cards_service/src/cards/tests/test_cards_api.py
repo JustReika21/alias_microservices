@@ -1,11 +1,9 @@
 import pytest
-
 from cards.constants.packs_constants import MAX_CARDS_IN_PACK
 from cards.schemas.validators import WORD_MAX_LENGTH
-from cards.tests.fixtures.fakes import FakePacksClient, get_fake_packs_client, PACK_ID
+from cards.tests.fixtures.fakes import (PACK_ID, FakePacksClient,
+                                        get_fake_packs_client)
 from httpx import AsyncClient
-
-
 
 
 class TestCardsAPI:

@@ -1,7 +1,6 @@
 import pytest
-
-from cards.exc.exceptions import CardError, CardCreationError
-from cards.schemas.schemas import RandomCardsRequest, CardsCreate, CardFullRead
+from cards.exc.exceptions import CardCreationError, CardError
+from cards.schemas.schemas import CardFullRead, CardsCreate, RandomCardsRequest
 from cards.services.service import CardService
 from cards.tests.fixtures.fakes import MAX_CARDS_IN_PACK, FakePacksClient
 from cards.tests.test_cards_api import PACK_ID

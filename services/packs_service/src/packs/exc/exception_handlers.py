@@ -1,7 +1,8 @@
 from fastapi import Request, status
 from fastapi.responses import JSONResponse
-from packs.exc.exceptions import PackCreationError, PackUpdateError, \
-    PackDoesNotExist, PermissionDenied, PackDeletionError
+from packs.exc.exceptions import (PackCreationError, PackDeletionError,
+                                  PackDoesNotExist, PackUpdateError,
+                                  PermissionDenied)
 
 
 async def handle_pack_creation_error(request: Request, exc: PackCreationError):

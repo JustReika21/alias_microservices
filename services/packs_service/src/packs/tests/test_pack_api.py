@@ -1,6 +1,5 @@
 import pytest
 from httpx import AsyncClient
-
 from packs.schemas.validators import DESCRIPTION_MAX_LENGTH, NAME_MAX_LENGTH
 
 

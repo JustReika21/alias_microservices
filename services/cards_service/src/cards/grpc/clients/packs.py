@@ -3,9 +3,8 @@ from typing import Optional
 import grpc
 import grpc.aio
 from packs_grpc.v1.packs_grpc_pb2 import (GetTotalCardsInPackReq,
-                                          IsPackExistReq,
-                                          UpdateTotalCardsInPackReq,
-                                          IsPackCreatorReq)
+                                          IsPackCreatorReq, IsPackExistReq,
+                                          UpdateTotalCardsInPackReq)
 from packs_grpc.v1.packs_grpc_pb2_grpc import PacksStub
 
 

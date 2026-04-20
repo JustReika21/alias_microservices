@@ -1,29 +1,31 @@
 from typing import List
 
-from fastapi import APIRouter, status, Query, Depends
+from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-
 from packs.dependencies import get_pack_service
 from packs.schemas.schemas import PackCreate, PackRead, PackUpdate
 from packs.services.service import PackService
 
-pack_router = APIRouter(tags=['Packs'])
+pack_router = APIRouter(tags=['Packs'], prefix='/packs')
 
 
 @pack_router.post(
-    '/packs',
+    '',
     status_code=status.HTTP_201_CREATED,
     response_model=PackRead,
 )
 async def pack_create_api(
         pack: PackCreate,
+        credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
         pack_service: PackService = Depends(get_pack_service)
 ):
-    return await pack_service.create_pack(pack)
+    access_token = credentials.credentials
+    user = await pack_service.auth_client.get_user(access_token)
+    return await pack_service.create_pack(pack, user.user_id)
 
 
 @pack_router.get(
-    '/packs/my',
+    '/my',
     status_code=status.HTTP_200_OK,
     response_model=List[PackRead],
 )
@@ -37,7 +39,22 @@ async def get_my_packs_api(
 
 
 @pack_router.get(
-    '/packs',
+    '/edit/{pack_id}',
+    status_code=status.HTTP_200_OK,
+    response_model=PackRead,
+)
+async def get_pack_for_update(
+        pack_id: int,
+        credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
+        pack_service: PackService = Depends(get_pack_service)
+):
+    access_token = credentials.credentials
+    await pack_service.is_creator(pack_id, access_token)
+    return await pack_service.get_pack(pack_id)
+
+
+@pack_router.get(
+    '',
     status_code=status.HTTP_200_OK,
     response_model=List[PackRead],
 )
@@ -49,7 +66,7 @@ async def get_packs_api(
 
 
 @pack_router.get(
-    '/packs/{pack_id}',
+    '/{pack_id}',
     status_code=status.HTTP_200_OK,
     response_model=PackRead,
 )
@@ -60,7 +77,7 @@ async def get_pack_api(
     return await pack_service.get_pack(pack_id)
 
 
-@pack_router.delete('/packs/{pack_id}', status_code=status.HTTP_204_NO_CONTENT)
+@pack_router.delete('/{pack_id}', status_code=status.HTTP_204_NO_CONTENT)
 async def delete_pack_api(
         pack_id: int,
         credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
@@ -75,7 +92,7 @@ async def delete_pack_api(
 
 
 @pack_router.put(
-    '/packs/{pack_id}',
+    '/{pack_id}',
     status_code=status.HTTP_200_OK,
     response_model=PackRead,
 )

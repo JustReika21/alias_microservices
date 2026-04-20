@@ -1,66 +1,21 @@
-async function refreshAccessToken() {
-    const res = await fetch('/api/v1/auth/refresh', {
-        method: 'POST',
-        credentials: 'include'
-    });
+'use strict';
 
-    if (!res.ok) {
-        throw new Error('Refresh failed');
-    }
-
-    const data = await res.json();
-    localStorage.setItem('access_token', data.access_token);
-
-    return data.access_token;
-}
-
-async function getAccessToken() {
-    let token = localStorage.getItem('access_token');
-
-    if (!token) {
-        token = await refreshAccessToken();
-    }
-
-    return token;
-}
+import { apiFetch } from './auth.js';
 
 async function createGame(gameData) {
-    let token;
+    let res;
 
     try {
-        token = await getAccessToken();
+        res = await apiFetch('/api/v1/game', {
+            method: 'POST',
+            headers: {
+                'Content-Type': 'application/json'
+            },
+            body: JSON.stringify(gameData)
+        });
     } catch (e) {
-        document.getElementById('result').innerText = 'Auth error';
+        document.getElementById('result').innerText = 'Session expired';
         return;
-    }
-
-    let res = await fetch('/api/v1/game', {
-        method: 'POST',
-        headers: {
-            'Content-Type': 'application/json',
-            'Authorization': `Bearer ${token}`
-        },
-        credentials: 'include',
-        body: JSON.stringify(gameData)
-    });
-
-    if (res.status === 401) {
-        try {
-            token = await refreshAccessToken();
-
-            res = await fetch('/api/v1/game', {
-                method: 'POST',
-                headers: {
-                    'Content-Type': 'application/json',
-                    'Authorization': `Bearer ${token}`
-                },
-                credentials: 'include',
-                body: JSON.stringify(gameData)
-            });
-        } catch (e) {
-            document.getElementById('result').innerText = 'Session expired';
-            return;
-        }
     }
 
     if (!res.ok) {

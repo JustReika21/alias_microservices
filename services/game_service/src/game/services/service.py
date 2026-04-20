@@ -1,14 +1,14 @@
 import asyncio
-from typing import List, Any
+from typing import Any, List
 
+from fastapi import WebSocket
 from game.database.models import generate_id
 from game.exc.exceptions import TeamNotFoundError
 from game.grpc.clients.auth import AuthClient
 from game.grpc.clients.cards import CardsClient
-from game.schemas.schemas import Game, Player, GameCreate
 from game.grpc.clients.packs import PacksClient
 from game.repositories.repository import GameRepository
-from fastapi import WebSocket
+from game.schemas.schemas import Game, GameCreate, Player
 
 
 class GameService:
@@ -44,7 +44,13 @@ class GameService:
     async def join_game(self, game_id: str, player: Player) -> None:
         await self.game_repository.add_player(game_id, player)
 
-    async def load_snapshot(self, game_id: str, user_id: int, game_status: str, websocket: WebSocket):
+    async def load_snapshot(
+            self,
+            game_id: str,
+            user_id: int,
+            game_status: str,
+            websocket: WebSocket
+    ):
         current_player_id = await self.get_current_player(game_id)
         is_current = user_id == current_player_id
 
@@ -82,7 +88,8 @@ class GameService:
 
     async def run_round(self, game_id: str, con: dict[int, WebSocket]):
         round_time = await self.game_repository.get_round_time(game_id)
-        cards = await self.cards_client.get_random_cards(1, 100)
+        pack_id = await self.game_repository.get_pack_id(game_id)
+        cards = await self.cards_client.get_random_cards(pack_id, 100)
 
         await self.game_repository.set_game_status(game_id, 'started')
 

@@ -1,13 +1,11 @@
-from fastapi import APIRouter, Response, Request, Depends, status
-from fastapi.security import HTTPBearer, HTTPAuthorizationCredentials
-from fastapi.responses import JSONResponse
-
-from auth.schemas.schemas import UserCreate, UserLogin, TokenInfo, UserRead
-from auth.services.service import UserService
-from auth.services.utils import create_access_token, \
-    create_refresh_token, ACCESS_TOKEN_TYPE, decode_jwt
 from auth.dependencies import get_user_service
-
+from auth.schemas.schemas import TokenInfo, UserCreate, UserLogin, UserRead
+from auth.services.service import UserService
+from auth.services.utils import (ACCESS_TOKEN_TYPE, create_access_token,
+                                 create_refresh_token, decode_jwt)
+from fastapi import APIRouter, Depends, Request, Response, status
+from fastapi.responses import JSONResponse
+from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 
 auth_router = APIRouter(tags=['Authentication'])
 
@@ -22,12 +20,12 @@ async def user_create_view(
     await user_service.create_user(data)
 
 
-@auth_router.post('/login')
+@auth_router.post('/login', response_model=TokenInfo)
 async def user_login(
         data: UserLogin,
         response: Response,
         user_service: UserService = Depends(get_user_service)
-) -> TokenInfo:
+):
     user = await user_service.validate_auth_user(data)
 
     access_token = create_access_token(user)
@@ -56,11 +54,11 @@ async def get_current_user(
     return user
 
 
-@auth_router.post('/refresh')
+@auth_router.post('/refresh', response_model=TokenInfo)
 async def refresh_jwt(
         request: Request,
         user_service: UserService = Depends(get_user_service)
-) -> TokenInfo:
+):
     refresh_token = request.cookies.get('refresh_token')
 
     access_token = await user_service.refresh(refresh_token)
@@ -81,10 +79,10 @@ async def verify(
     return JSONResponse(content={'X-User-Id': str(payload["sub"])}, status_code=status.HTTP_200_OK)
 
 
-@auth_router.get('/wsverify')
+@auth_router.get('/wsverify', response_model=UserRead)
 async def websocket_verify(
         refresh_token: str,
         user_service: UserService = Depends(get_user_service)
-) -> UserRead:
+):
     user = await user_service.validate_refresh_token_for_websocket(refresh_token)
     return user

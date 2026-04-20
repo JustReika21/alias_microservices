@@ -1,17 +1,15 @@
 from fastapi import Request
 from fastapi.params import Depends
-from redis.asyncio import Redis
-from starlette.websockets import WebSocket
-
 from game.database.db import async_session
 from game.grpc.clients.auth import AuthClient
 from game.grpc.clients.cards import CardsClient
 from game.grpc.clients.packs import PacksClient
-from sqlalchemy.ext.asyncio import AsyncSession
-
 from game.repositories.repository import GameRepository
 from game.services.service import GameService
 from game.settings import settings
+from redis.asyncio import Redis
+from sqlalchemy.ext.asyncio import AsyncSession
+from starlette.websockets import WebSocket
 
 
 async def get_session() -> AsyncSession:
