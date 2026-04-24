@@ -76,17 +76,17 @@ class GameService:
 
 
     async def start_game(
-            self, game_id: str,
-            websocket: WebSocket,
+            self,
+            game_id: str,
             con: dict[int, WebSocket]
     ):
-        current_player_id = await self.get_current_player(game_id)
-        current_player = con.get(current_player_id)
+        asyncio.create_task(self.run_round(game_id, con))
 
-        if current_player and current_player == websocket:
-            asyncio.create_task(self.run_round(game_id, con))
-
-    async def run_round(self, game_id: str, con: dict[int, WebSocket]):
+    async def run_round(
+            self,
+            game_id: str,
+            con: dict[int, WebSocket]
+    ):
         round_time = await self.game_repository.get_round_time(game_id)
         pack_id = await self.game_repository.get_pack_id(game_id)
         cards = await self.cards_client.get_random_cards(pack_id, 100)
@@ -108,10 +108,13 @@ class GameService:
 
         await self.send_final_card(game_id, con)
 
-    async def send_card(self, game_id: str, con: dict[int, WebSocket]):
-        current_player_id = await self.game_repository.get_current_player_id(game_id)
-
+    async def send_card(
+            self,
+            game_id: str,
+            con: dict[int, WebSocket]
+    ):
         cards = await self.game_repository.get_player_cards(game_id)
+        current_player_id = await self.get_current_player(game_id)
 
         current_card = cards['current']
         if current_card is None:
@@ -206,3 +209,14 @@ class GameService:
 
     async def get_teams(self, game_id: str) -> List[dict[str: Any]]:
         return await self.game_repository.get_teams(game_id)
+
+    async def sender_is_current_player(
+            self,
+            game_id: str,
+            websocket: WebSocket,
+            con: dict[int, WebSocket]
+    ) -> bool:
+        current_player_id = await self.game_repository.get_current_player_id(game_id)
+        current_player = con.get(current_player_id)
+
+        return current_player and current_player == websocket

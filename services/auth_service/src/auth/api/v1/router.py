@@ -44,7 +44,7 @@ async def user_login(
     return TokenInfo(access_token=access_token, token_type="Bearer")
 
 
-@auth_router.post('/me', response_model=UserRead)
+@auth_router.get('/me', response_model=UserRead)
 async def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(security),
         user_service: UserService = Depends(get_user_service)

@@ -1,5 +1,7 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from sqlalchemy.util import await_only
+
 from game.dependencies import get_game_service, get_websocket_game_service
 from game.exc.exceptions import GameNotFoundError
 from game.schemas.schemas import GameCreate, Player
@@ -99,10 +101,12 @@ async def game_websocket(
                     await ws.send_json({'type': 'status', 'value': 'waiting'})
 
             if data['type'] == 'start' and game_status == 'waiting':
-                await game_service.start_game(game_id, websocket, con)
+                if await game_service.sender_is_current_player(game_id, websocket, con):
+                    await game_service.start_game(game_id, con)
 
-            if data['type'] == 'next':
-                await game_service.send_card(game_id, con)
+            if data['type'] == 'next' and game_status == 'started':
+                if await game_service.sender_is_current_player(game_id, websocket, con):
+                    await game_service.send_card(game_id, con)
 
             if data['type'] == 'chose_team':
                 pass
@@ -116,7 +120,8 @@ async def game_websocket(
                 await game_service.card_guessed(game_id, card_id, False, con)
 
             if data['type'] == 'calculated' and game_status == 'calculating':
-                await game_service.set_scores(game_id, con)
+                if await game_service.sender_is_current_player(game_id, websocket, con):
+                    await game_service.set_scores(game_id, con)
 
             if data['type'] == 'kick':
                 for ws in con.values():
