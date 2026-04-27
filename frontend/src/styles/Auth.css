@@ -1,0 +1,44 @@
+.default-box {
+  width: 360px;
+  margin: 100px auto;
+  padding: 24px;
+
+  background: var(--panel-bg);
+  border-radius: 12px;
+
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.default-box h2 {
+  margin: 0;
+  text-align: center;
+  color: var(--text-on-dark);
+}
+
+.default-box input {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+
+  background: var(--input-bg);
+  color: var(--text-on-dark);
+}
+
+.default-box button {
+  padding: 10px;
+  border-radius: 8px;
+  border: none;
+
+  color: var(--text-on-dark);
+  cursor: pointer;
+}
+
+
+.msg {
+  text-align: center;
+  font-size: 14px;
+  min-height: 20px;
+  color: var(--text-on-dark);
+}

@@ -124,6 +124,7 @@ class GameService:
         previous_card = cards['previous']
 
         await self.game_repository.push_played_card(game_id, current_card)
+        await self.game_repository.increment_cursor(game_id)
 
         for user_id, ws in con.items():
             await ws.send_json({

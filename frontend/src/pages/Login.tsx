@@ -1,23 +1,26 @@
 import { useState } from "react";
 import { loginUser } from "../services/authService";
+import {useNavigate} from "react-router-dom";
 
 export default function Login() {
   const [name, setName] = useState("");
   const [password, setPassword] = useState("");
   const [msg, setMsg] = useState("");
+  const navigate = useNavigate();
 
-  const handleLogin = async () => {
+  const handleLogin = async (e: React.FormEvent) => {
+    e.preventDefault();
     setMsg("Loading...");
     try {
       await loginUser(name, password);
-      setMsg("Login successfully!");
+      navigate("/")
     } catch (err: any) {
       setMsg("Error: " + err.message);
     }
   };
 
   return (
-    <div className="box">
+    <div className="panel default-box">
       <h2>Login</h2>
       <input value={name} onChange={(e) => setName(e.target.value)} placeholder="Name" />
       <input type="password" value={password} onChange={(e) => setPassword(e.target.value)} placeholder="Password" />

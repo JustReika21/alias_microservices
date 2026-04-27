@@ -1,22 +1,23 @@
 import { useGame } from "../hooks/useGame";
-import PlayerList from "./PlayerList";
+import TeamGrid from "./TeamGrid";
 import CardStack from "./CardStack";
 
 export default function GameBoard({ gameId }: { gameId: string }) {
   const {
     players,
+    teams,
     cards,
     status,
     currentPlayer,
     guessedMap,
     logs,
     sendGuess,
-    sendAction
+    sendAction,
   } = useGame(gameId);
 
   return (
     <div>
-      <PlayerList players={players} />
+      <TeamGrid players={players} teams={teams} status={status} />
 
       <CardStack
         cards={cards}
@@ -40,13 +41,17 @@ export default function GameBoard({ gameId }: { gameId: string }) {
           )}
 
           {status === "calculating" && (
-            <button onClick={() => sendAction("calculated")}>Calculated</button>
+            <button onClick={() => sendAction("calculated")}>
+              Calculated
+            </button>
           )}
         </div>
       )}
 
       <div style={{ height: 200, overflowY: "auto" }}>
-        {logs.map((l, i) => <div key={i}>{l}</div>)}
+        {logs.map((l, i) => (
+          <div key={i}>{l}</div>
+        ))}
       </div>
     </div>
   );

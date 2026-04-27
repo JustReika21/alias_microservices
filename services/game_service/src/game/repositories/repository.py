@@ -286,8 +286,6 @@ class GameRepository:
         if cursor > 0:
             previous = await self.redis_client.lindex(cards_key, cursor - 1)
 
-        await self.redis_client.hincrby(cursor_key, 'cursor', 1)
-
         cards = {
             'current': json.loads(current) if current else None,
             'previous': json.loads(previous) if previous else None
@@ -381,3 +379,7 @@ class GameRepository:
         game_key = self._game_key(game_id)
         pack_id = await self.redis_client.hget(game_key, 'pack')
         return int(pack_id)
+
+    async def increment_cursor(self, game_id: str) -> None:
+        cursor_key = self._card_cursor_key(game_id)
+        await self.redis_client.hincrby(cursor_key, 'cursor', 1)

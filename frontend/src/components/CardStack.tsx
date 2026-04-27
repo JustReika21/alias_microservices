@@ -1,3 +1,7 @@
+import { useCardSlider } from "../hooks/useCardSlider";
+import { useSwipe } from "../hooks/useSwipe";
+import { useEffect, useRef } from "react";
+
 interface CardStackProps {
   cards: any[];
   guessedMap: Record<number, boolean>;
@@ -11,19 +15,130 @@ export default function CardStack({
   status,
   sendAction
 }: CardStackProps) {
+  const { index, next, prev, setIndex } = useCardSlider(cards.length);
+  const prevLengthRef = useRef(cards.length);
+
+  const hasCards = cards.length > 0;
+
+  // 🔒 безопасные навигаторы
+  const safeNext = () => {
+    if (!hasCards) return;
+    next();
+  };
+
+  const safePrev = () => {
+    if (!hasCards) return;
+    prev();
+  };
+
+  const swipe = useSwipe(safeNext, safePrev);
+
+  // 🔧 синхронизация индекса
+  useEffect(() => {
+    if (cards.length === 0) {
+      setIndex(0);
+    } else {
+      // если индекс вышел за границы (например массив уменьшился)
+      if (index > cards.length - 1) {
+        setIndex(cards.length - 1);
+      }
+
+      // если добавились новые карточки — прыгаем на последнюю
+      if (cards.length > prevLengthRef.current) {
+        setIndex(cards.length - 1);
+      }
+    }
+
+    prevLengthRef.current = cards.length;
+  }, [cards.length, index, setIndex]);
+
+  const getCardClass = (card: any, offset: number) => {
+    let cls = "card-item";
+
+    if (offset < 0) cls += " left";
+    else if (offset > 0) cls += " right";
+    else cls += " center";
+
+    if (status === "calculating") {
+      if (guessedMap[card.id] === false) {
+        cls += " not-guessed";
+      } else {
+        cls += " guessed";
+      }
+    }
+
+    return cls;
+  };
+
   return (
-    <div>
-      {cards.map(card => (
-        <div key={card.id} className={`card-item ${guessedMap[card.id] ? "guessed" : ""}`}>
-          {card.word}
-          {status === "calculating" && (
-            <div className="card-actions">
-              <button onClick={() => sendAction({ type: "guessed", card: card.id })}>GUESSED</button>
-              <button onClick={() => sendAction({ type: "not_guessed", card: card.id })}>NOT GUESSED</button>
+    <div className="card-stack-wrapper" {...swipe}>
+      <div className="card-stack">
+        {cards.map((card, i) => {
+          const offset = i - index;
+
+          if (Math.abs(offset) > 2) return null;
+
+          return (
+            <div
+              key={card.id}
+              className={getCardClass(card, offset)}
+              style={{
+                transform: `translateX(${offset * 120}%) scale(${offset === 0 ? 1 : 0.85})`,
+                zIndex: 100 - Math.abs(offset),
+                opacity:
+                  Math.abs(offset) > 1
+                    ? 0
+                    : Math.abs(offset) === 1
+                    ? 0.6
+                    : 1,
+                filter: offset !== 0 ? "blur(2px)" : "none",
+                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+              }}
+            >
+              <div className="card-word">{card.word}</div>
+
+              {status === "calculating" && i === index && (
+                <div className="card-actions">
+                  <button
+                    onClick={() =>
+                      sendAction({ type: "guessed", card: card.id })
+                    }
+                  >
+                    GUESSED
+                  </button>
+                  <button
+                    onClick={() =>
+                      sendAction({ type: "not_guessed", card: card.id })
+                    }
+                  >
+                    NOT GUESSED
+                  </button>
+                </div>
+              )}
             </div>
-          )}
-        </div>
-      ))}
+          );
+        })}
+      </div>
+
+      <div className="card-nav">
+        <button
+          onClick={safePrev}
+          disabled={!hasCards || index === 0}
+        >
+          ←
+        </button>
+
+        <span>
+          {hasCards ? `${index + 1} / ${cards.length}` : "0 / 0"}
+        </span>
+
+        <button
+          onClick={safeNext}
+          disabled={!hasCards || index === cards.length - 1}
+        >
+          →
+        </button>
+      </div>
     </div>
   );
 }

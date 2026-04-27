@@ -8,7 +8,7 @@ export default function CreatePack() {
   const [msg, setMsg] = useState("");
   const navigate = useNavigate();
 
-  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setMsg("Loading...");
 
@@ -23,20 +23,23 @@ export default function CreatePack() {
   };
 
   return (
-    <form onSubmit={handleSubmit}>
-      <input
-        value={name}
-        onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
-        required
-      />
-      <textarea
-        value={description}
-        onChange={(e) => setDescription(e.target.value)}
-        placeholder="Description"
-      />
-      <button type="submit">Create Pack</button>
-      <div>{msg}</div>
-    </form>
+    <div className="panel default-box">
+      <h2>Create pack</h2>
+      <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+        <input
+          value={name}
+          onChange={(e) => setName(e.target.value)}
+          placeholder="Name"
+          required
+        />
+        <textarea
+          value={description}
+          onChange={(e) => setDescription(e.target.value)}
+          placeholder="Description"
+        />
+        <button type="submit">Create Pack</button>
+        <div>{msg}</div>
+      </form>
+    </div>
   );
 }

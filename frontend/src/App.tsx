@@ -1,6 +1,8 @@
 import { BrowserRouter, Routes, Route } from "react-router-dom";
 import PrivateRoute from "./components/PrivateRoute";
 
+import Navbar from "./components/Navbar.tsx";
+
 import Register from "./pages/Register";
 import Main from "./pages/Main";
 import Login from "./pages/Login";
@@ -13,6 +15,8 @@ import GamePage from "./pages/GamePage.tsx";
 function App() {
   return (
     <BrowserRouter>
+      <Navbar />
+
       <Routes>
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login />} />

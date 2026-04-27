@@ -35,52 +35,43 @@ export default function CreateGame() {
   }
 
   return (
-    <div>
+    <div className={"panel default-box"}>
       <h2>Create Game</h2>
 
-      <form onSubmit={handleSubmit}>
-        <div>
-          <input
-            type="number"
-            placeholder="Rounds"
-            value={rounds}
-            onChange={(e) => setRounds(Number(e.target.value))}
-          />
-        </div>
-
-        <div>
-          <input
-            type="number"
-            placeholder="Time (seconds)"
-            value={time}
-            onChange={(e) => setTime(Number(e.target.value))}
-          />
-        </div>
-
-        <div>
-          <input
-            type="number"
-            placeholder="Pack ID"
-            value={pack}
-            onChange={(e) => setPack(Number(e.target.value))}
-          />
-        </div>
-
-        <div>
-          <input
-            type="text"
-            placeholder="Password (optional)"
-            value={password}
-            onChange={(e) => setPassword(e.target.value)}
-          />
-        </div>
-
+      <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+        <input
+          type="number"
+          placeholder="Rounds"
+          value={rounds}
+          onChange={(e) => setRounds(Number(e.target.value))}
+          required
+        />
+        <input
+          type="number"
+          placeholder="Time (seconds)"
+          value={time}
+          onChange={(e) => setTime(Number(e.target.value))}
+          required
+        />
+        <input
+          type="number"
+          placeholder="Pack ID"
+          value={pack}
+          onChange={(e) => setPack(Number(e.target.value))}
+          required
+        />
+        <input
+          type="text"
+          placeholder="Password (optional)"
+          value={password}
+          onChange={(e) => setPassword(e.target.value)}
+        />
         <button type="submit" disabled={loading}>
           {loading ? "Creating..." : "Create Game"}
         </button>
       </form>
 
-      {result && <div style={{ marginTop: 10 }}>{result}</div>}
+      {result && <div className="msg">{result}</div>}
     </div>
   );
 }

@@ -86,8 +86,8 @@ async def game_websocket(
     for ws in connections[game_id].values():
         await ws.send_json({'type': 'players', 'players': players})
 
-    # teams = await game_service.get_teams(game_id)
-    # await websocket.send_json({'type': 'teams', 'teams': teams})
+    teams = await game_service.get_teams(game_id)
+    await websocket.send_json({'type': 'teams', 'teams': teams})
 
     try:
         while True:

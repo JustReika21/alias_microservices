@@ -1,9 +1,11 @@
 import { useEffect, useState } from "react";
 import { GameSocket } from "../services/gameService";
-import type {GuessData} from "../types/game";
+import type { GuessData } from "../types/game";
+import type { Player, Team } from "../types/team";
 
 export function useGame(gameId: string) {
-  const [players, setPlayers] = useState<any[]>([]);
+  const [players, setPlayers] = useState<Player[]>([]);
+  const [teams, setTeams] = useState<Team[]>([]);
   const [cards, setCards] = useState<any[]>([]);
   const [status, setStatus] = useState("setting_up");
   const [currentPlayer, setCurrentPlayer] = useState(false);
@@ -11,10 +13,11 @@ export function useGame(gameId: string) {
   const [logs, setLogs] = useState<string[]>([]);
   const [socket, setSocket] = useState<GameSocket | null>(null);
 
-  function log(msg: string, data?: any) {
-    const entry = `[${new Date().toLocaleTimeString()}] ${msg}` +
+  function log(msg: string, data?: unknown) {
+    const entry =
+      `[${new Date().toLocaleTimeString()}] ${msg}` +
       (data ? ` ${JSON.stringify(data)}` : "");
-    setLogs(prev => [...prev, entry]);
+    setLogs((prev) => [...prev, entry]);
   }
 
   function resetGameState() {
@@ -22,11 +25,36 @@ export function useGame(gameId: string) {
     setGuessedMap({});
   }
 
+  function normalizePlayer(p: any): Player {
+    return {
+      id: String(p.id),
+      name: p.name,
+      score: Number(p.score),
+      teamId: String(p.team_id),
+    };
+  }
+
+  function normalizeTeam(t: any): Team {
+    return {
+      id: String(t.id),
+      totalPlayers: Number(t.total_players),
+      score: Number(t.score),
+    };
+  }
+
   function applySnapshot(snapshot: any) {
     resetGameState();
 
     setStatus(snapshot.status);
     setCurrentPlayer(snapshot.current_player?.is_current || false);
+
+    if (snapshot.players) {
+      setPlayers(snapshot.players.map(normalizePlayer));
+    }
+
+    if (snapshot.teams) {
+      setTeams(snapshot.teams.map(normalizeTeam));
+    }
 
     if (snapshot.cards) {
       setCards(snapshot.cards);
@@ -52,7 +80,21 @@ export function useGame(gameId: string) {
         break;
 
       case "players":
-        setPlayers(data.players || []);
+        setPlayers((data.players || []).map(normalizePlayer));
+        break;
+
+      case "teams":
+        setTeams((data.teams || []).map(normalizeTeam));
+        break;
+
+      case "team_score_update":
+        setTeams((prev) =>
+          prev.map((t) =>
+            t.id === String(data.id)
+              ? { ...t, score: Number(data.score) }
+              : t
+          )
+        );
         break;
 
       case "current_player":
@@ -61,26 +103,30 @@ export function useGame(gameId: string) {
 
       case "status":
         setStatus(data.value);
-        if (data.value === "waiting" || data.value === "started") resetGameState();
+        if (data.value === "waiting" || data.value === "started") {
+          resetGameState();
+        }
         break;
 
       case "card":
         if (data.card) {
-          setCards(prev => [...prev, data.card]);
+          setCards((prev) => [...prev, data.card]);
         }
         break;
 
       case "guess":
-        setGuessedMap(prev => ({
+        setGuessedMap((prev) => ({
           ...prev,
-          [data.card]: data.guessed
+          [data.card]: data.guessed,
         }));
         break;
 
       case "player_score_update":
-        setPlayers(prev =>
-          prev.map(p =>
-            p.id == data.id ? { ...p, score: data.score } : p
+        setPlayers((prev) =>
+          prev.map((p) =>
+            p.id === String(data.id)
+              ? { ...p, score: Number(data.score) }
+              : p
           )
         );
         break;
@@ -89,7 +135,7 @@ export function useGame(gameId: string) {
 
   function sendGuess(guessData: GuessData) {
     socket?.send(guessData);
-    log("send guess", guessData );
+    log("send guess", guessData);
   }
 
   function sendAction(type: string) {
@@ -105,12 +151,13 @@ export function useGame(gameId: string) {
 
   return {
     players,
+    teams,
     cards,
     status,
     currentPlayer,
     guessedMap,
     logs,
     sendGuess,
-    sendAction
+    sendAction,
   };
 }

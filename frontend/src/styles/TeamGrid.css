@@ -1,0 +1,68 @@
+.team-grid {
+  display: flex;
+  justify-content: center;
+  gap: 16px;
+  margin: 12px auto;
+  width: fit-content;
+}
+
+.team-box {
+  width: 160px;
+  height: 160px;
+  border: 1px solid var(--primary);
+  border-radius: 10px;
+  padding: 8px;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  align-items: center;
+  overflow: hidden;
+}
+
+.team-title {
+  font-weight: 600;
+  font-size: 15px;
+  text-align: center;
+  margin-bottom: 8px;
+}
+
+.team-players {
+  font-size: 12px;
+  overflow-y: auto;
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  justify-content: flex-start;
+  gap: 4px;
+  width: 100%;
+}
+
+.player {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  overflow: hidden;
+}
+
+.player-name {
+  text-align: left;
+  flex: 8;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  max-width: 80%;
+}
+
+.player-score {
+  text-align: right;
+  flex: 2;
+  white-space: nowrap;
+  margin-left: 5%;
+  max-width: 100%;
+}
+
+.empty {
+  opacity: 0.3;
+  text-align: center;
+}
