@@ -1,6 +1,5 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
-from sqlalchemy.util import await_only
 
 from game.dependencies import get_game_service, get_websocket_game_service
 from game.exc.exceptions import GameNotFoundError
@@ -85,6 +84,8 @@ async def game_websocket(
     players = await game_service.get_players(game_id)
     for ws in connections[game_id].values():
         await ws.send_json({'type': 'players', 'players': players})
+
+    await websocket.send_json({'type': 'my_id', 'my_id': user.user_id})
 
     teams = await game_service.get_teams(game_id)
     await websocket.send_json({'type': 'teams', 'teams': teams})

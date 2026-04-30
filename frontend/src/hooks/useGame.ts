@@ -8,10 +8,16 @@ export function useGame(gameId: string) {
   const [teams, setTeams] = useState<Team[]>([]);
   const [cards, setCards] = useState<any[]>([]);
   const [status, setStatus] = useState("setting_up");
-  const [currentPlayer, setCurrentPlayer] = useState(false);
+
+  const [myId, setMyId] = useState<string | null>(null);
+  const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
+
   const [guessedMap, setGuessedMap] = useState<Record<number, boolean>>({});
   const [logs, setLogs] = useState<string[]>([]);
+  const [endTime, setEndTime] = useState<number | null>(null);
   const [socket, setSocket] = useState<GameSocket | null>(null);
+
+  const isMyTurn = myId !== null && currentPlayerId === myId;
 
   function log(msg: string, data?: unknown) {
     const entry =
@@ -23,6 +29,7 @@ export function useGame(gameId: string) {
   function resetGameState() {
     setCards([]);
     setGuessedMap({});
+    setEndTime(null);
   }
 
   function normalizePlayer(p: any): Player {
@@ -46,26 +53,21 @@ export function useGame(gameId: string) {
     resetGameState();
 
     setStatus(snapshot.status);
-    setCurrentPlayer(snapshot.current_player?.is_current || false);
 
-    if (snapshot.players) {
-      setPlayers(snapshot.players.map(normalizePlayer));
+    if (snapshot.current_player?.player_id) {
+      setCurrentPlayerId(String(snapshot.current_player.player_id));
     }
 
-    if (snapshot.teams) {
-      setTeams(snapshot.teams.map(normalizeTeam));
-    }
+    if (snapshot.players) setPlayers(snapshot.players.map(normalizePlayer));
+    if (snapshot.teams) setTeams(snapshot.teams.map(normalizeTeam));
+    if (snapshot.cards) setCards(snapshot.cards);
 
-    if (snapshot.cards) {
-      setCards(snapshot.cards);
+    if (snapshot.end_time) setEndTime(snapshot.end_time);
 
-      if (snapshot.status === "calculating") {
-        const map: Record<number, boolean> = {};
-        snapshot.cards.forEach((c: any) => {
-          map[c.id] = true;
-        });
-        setGuessedMap(map);
-      }
+    if (snapshot.status === "calculating" && snapshot.cards) {
+      const map: Record<number, boolean> = {};
+      snapshot.cards.forEach((c: any) => (map[c.id] = true));
+      setGuessedMap(map);
     }
 
     log("snapshot", snapshot);
@@ -75,6 +77,10 @@ export function useGame(gameId: string) {
     log("recv", data);
 
     switch (data.type) {
+      case "my_id":
+        setMyId(String(data.my_id));
+        break;
+
       case "snapshot":
         applySnapshot(data);
         break;
@@ -97,8 +103,18 @@ export function useGame(gameId: string) {
         );
         break;
 
+      case "player_score_update":
+        setPlayers((prev) =>
+          prev.map((p) =>
+            p.id === String(data.id)
+              ? { ...p, score: Number(data.score) }
+              : p
+          )
+        );
+        break;
+
       case "current_player":
-        setCurrentPlayer(data.is_current);
+        setCurrentPlayerId(String(data.player_id));
         break;
 
       case "status":
@@ -109,9 +125,7 @@ export function useGame(gameId: string) {
         break;
 
       case "card":
-        if (data.card) {
-          setCards((prev) => [...prev, data.card]);
-        }
+        if (data.card) setCards((prev) => [...prev, data.card]);
         break;
 
       case "guess":
@@ -121,14 +135,8 @@ export function useGame(gameId: string) {
         }));
         break;
 
-      case "player_score_update":
-        setPlayers((prev) =>
-          prev.map((p) =>
-            p.id === String(data.id)
-              ? { ...p, score: Number(data.score) }
-              : p
-          )
-        );
+      case "timer":
+        setEndTime(data.end_time);
         break;
     }
   }
@@ -154,9 +162,12 @@ export function useGame(gameId: string) {
     teams,
     cards,
     status,
-    currentPlayer,
+    isMyTurn,
+    myId,
+    currentPlayerId,
     guessedMap,
     logs,
+    endTime,
     sendGuess,
     sendAction,
   };

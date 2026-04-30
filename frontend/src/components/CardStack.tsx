@@ -20,7 +20,6 @@ export default function CardStack({
 
   const hasCards = cards.length > 0;
 
-  // 🔒 безопасные навигаторы
   const safeNext = () => {
     if (!hasCards) return;
     next();
@@ -33,17 +32,14 @@ export default function CardStack({
 
   const swipe = useSwipe(safeNext, safePrev);
 
-  // 🔧 синхронизация индекса
   useEffect(() => {
     if (cards.length === 0) {
       setIndex(0);
     } else {
-      // если индекс вышел за границы (например массив уменьшился)
       if (index > cards.length - 1) {
         setIndex(cards.length - 1);
       }
 
-      // если добавились новые карточки — прыгаем на последнюю
       if (cards.length > prevLengthRef.current) {
         setIndex(cards.length - 1);
       }

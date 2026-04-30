@@ -6,6 +6,7 @@ import './styles/Auth.css';
 import './styles/Navbar.css'
 import './styles/CardStack.css'
 import './styles/TeamGrid.css'
+import './styles/GameButton.css'
 
 
 import App from './App.tsx'

@@ -8,7 +8,6 @@ export default function GamePage() {
 
   return (
     <div>
-      <h1>Game Room: {gameId}</h1>
       <GameBoard gameId={gameId} />
     </div>
   );

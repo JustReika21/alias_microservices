@@ -46,6 +46,9 @@ class GameRepository:
     def _guessed_cards_key(self, game_id: str) -> str:
         return f'alias:game:{game_id}:guessed_cards'
 
+    def _timer_key(self, game_id: str) -> str:
+        return f'alias:game:{game_id}:timer'
+
 
     async def create_game(self, game: Game) -> None:
         await self.redis_client.hset(
@@ -276,7 +279,6 @@ class GameRepository:
 
     async def get_player_cards(self, game_id: str) -> dict:
         cards_key = self._cards_key(game_id)
-        cursor_key = self._card_cursor_key(game_id)
 
         cursor = await self.get_card_cursor(game_id)
 
@@ -346,11 +348,13 @@ class GameRepository:
         cursor_key = self._card_cursor_key(game_id)
         played_cards_key = self._played_cards_key(game_id)
         guessed_cards_key = self._guessed_cards_key(game_id)
+        timer_key = self._timer_key(game_id)
         async with self.redis_client.pipeline() as pipe:
             await pipe.delete(cards_key)
             await pipe.delete(cursor_key)
             await pipe.delete(played_cards_key)
             await pipe.delete(guessed_cards_key)
+            await pipe.delete(timer_key)
 
             await pipe.execute()
 
@@ -383,3 +387,12 @@ class GameRepository:
     async def increment_cursor(self, game_id: str) -> None:
         cursor_key = self._card_cursor_key(game_id)
         await self.redis_client.hincrby(cursor_key, 'cursor', 1)
+
+    async def set_timer(self, game_id: str, end_time: int) -> None:
+        timer_key = self._timer_key(game_id)
+        await self.redis_client.set(timer_key, str(end_time))
+
+    async def get_timer(self, game_id: str) -> int:
+        timer_key = self._timer_key(game_id)
+        end_time = await self.redis_client.get(timer_key)
+        return int(end_time)

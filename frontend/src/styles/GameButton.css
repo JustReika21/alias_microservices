@@ -1,0 +1,17 @@
+.action-container {
+  display: flex;
+  justify-content: center;
+  margin-top: var(--space-lg);
+}
+
+.action-button {
+  padding: 14px 28px;
+  font-size: 18px;
+  border-radius: var(--radius-md);
+  background: var(--primary);
+  box-shadow: var(--shadow-md);
+}
+
+.action-button:hover {
+  background: var(--primary-hover);
+}

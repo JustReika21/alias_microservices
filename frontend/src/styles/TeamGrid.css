@@ -37,12 +37,16 @@
   width: 100%;
 }
 
+
 .player {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
   overflow: hidden;
+  padding: 2px 4px;
+  border-radius: 6px;
+  transition: all 0.2s ease;
 }
 
 .player-name {
@@ -65,4 +69,14 @@
 .empty {
   opacity: 0.3;
   text-align: center;
+}
+
+.player.turn {
+  font-weight: 600;
+  color: #e8e6f0;
+}
+
+.player.me {
+  border: 1px solid var(--primary-focus);
+  background: rgba(30, 48, 30, 0.25);
 }

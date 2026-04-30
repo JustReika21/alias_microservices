@@ -1,4 +1,5 @@
 import asyncio
+from time import time
 from typing import Any, List
 
 from fastapi import WebSocket
@@ -61,12 +62,15 @@ class GameService:
                 'is_current': is_current
             },
             'status': game_status,
-            'cards': None
+            'cards': None,
+            'timer': None
         }
 
         if game_status == 'started':
             cards = await self.game_repository.get_played_cards(game_id)
             snapshot['cards'] = cards if is_current else cards[:-1]
+            end_time = await self.game_repository.get_timer(game_id)
+            snapshot['end_time'] = end_time
 
         elif game_status == 'calculating':
             cards = await self.game_repository.get_played_cards(game_id)
@@ -96,9 +100,11 @@ class GameService:
         await self.game_repository.set_game_cards(game_id, cards)
         await self.game_repository.set_card_cursor(game_id)
 
+        end_time = await self.set_timer(game_id, round_time)
+
         for ws in con.values():
-            await ws.send_json({'type': 'timer', 'time': round_time})
             await ws.send_json({'type': 'status', 'value': 'started'})
+            await ws.send_json({'type': 'timer', 'end_time': end_time})
 
         await self.send_card(game_id, con)
 
@@ -221,3 +227,9 @@ class GameService:
         current_player = con.get(current_player_id)
 
         return current_player and current_player == websocket
+
+    async def set_timer(self, game_id: str, round_time: int) -> int:
+        end_time = int(time()) + round_time
+        await self.game_repository.set_timer(game_id, end_time)
+
+        return end_time

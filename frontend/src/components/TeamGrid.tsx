@@ -1,6 +1,13 @@
-// /components/TeamGrid.tsx
 import { useMemo } from "react";
-import type { Player, Team, Props } from "../types/team";
+import type { Player, Team } from "../types/team";
+
+type Props = {
+  players: Player[];
+  teams: Team[];
+  status: string;
+  myId?: string | null;
+  currentPlayerId?: string | null;
+};
 
 const DEFAULT_TEAM_IDS = ["1", "2", "3", "4"];
 
@@ -23,6 +30,8 @@ export default function TeamGrid({
   players = [],
   teams = [],
   status,
+  myId,
+  currentPlayerId,
 }: Props) {
   const playersByTeam = useMemo(
     () => groupPlayersByTeam(players),
@@ -35,9 +44,7 @@ export default function TeamGrid({
   );
 
   const teamIds = useMemo(() => {
-    if (status === "setting_up") {
-      return DEFAULT_TEAM_IDS;
-    }
+    if (status === "setting_up") return DEFAULT_TEAM_IDS;
 
     return DEFAULT_TEAM_IDS.filter(
       (id) => (playersByTeam[id] || []).length > 0
@@ -60,14 +67,24 @@ export default function TeamGrid({
               {teamPlayers.length === 0 ? (
                 <div className="empty">—</div>
               ) : (
-                teamPlayers.map((p) => (
-                  <div key={p.id} className="player">
-                    <div className="player-name">{p.name}</div>
-                    <div className="player-score">
-                      {p.score} pts
+                teamPlayers.map((p) => {
+                  const isMe = p.id === myId;
+                  const isTurn = p.id === currentPlayerId;
+
+                  return (
+                    <div
+                      key={p.id}
+                      className={`player 
+                        ${isMe ? "me" : ""} 
+                        ${isTurn ? "turn" : ""}`}
+                    >
+                      <div className="player-name">{p.name}</div>
+                      <div className="player-score">
+                        {p.score} pts
+                      </div>
                     </div>
-                  </div>
-                ))
+                  );
+                })
               )}
             </div>
           </div>
