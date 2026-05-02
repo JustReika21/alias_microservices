@@ -199,11 +199,21 @@ class GameService:
             await ws.send_json({'type': 'status', 'value': 'waiting'})
 
 
-    async def switch_team(self, game_id: str, player_id: int, new_team_id: int):
+    async def switch_team(
+            self,
+            game_id: str,
+            player_id: int,
+            new_team_id: int,
+            con: dict[int, WebSocket]
+    ):
         if new_team_id < 0 or new_team_id > 4:
             raise TeamNotFoundError('Invalid team id')
 
         await self.game_repository.switch_team(game_id, player_id, new_team_id)
+
+        teams = await self.get_teams(game_id)
+        for ws in con.values():
+            await ws.send_json({'type': 'teams', 'teams': teams})
 
     async def get_current_player(self, game_id: str) -> int:
         return await self.game_repository.get_current_player_id(game_id)
@@ -233,3 +243,6 @@ class GameService:
         await self.game_repository.set_timer(game_id, end_time)
 
         return end_time
+
+    async def get_host(self, game_id: str) -> int:
+        return await self.game_repository.get_host(game_id)

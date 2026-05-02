@@ -1,6 +1,6 @@
 import { useEffect, useState } from "react";
 import { GameSocket } from "../services/gameService";
-import type { GuessData } from "../types/game";
+import type { GuessData, SwitchData } from "../types/game";
 import type { Player, Team } from "../types/team";
 
 export function useGame(gameId: string) {
@@ -10,6 +10,7 @@ export function useGame(gameId: string) {
   const [status, setStatus] = useState("setting_up");
 
   const [myId, setMyId] = useState<string | null>(null);
+  const [hostId, setHostId] = useState<string | null>(null);
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
 
   const [guessedMap, setGuessedMap] = useState<Record<number, boolean>>({});
@@ -17,7 +18,10 @@ export function useGame(gameId: string) {
   const [endTime, setEndTime] = useState<number | null>(null);
   const [socket, setSocket] = useState<GameSocket | null>(null);
 
-  const isMyTurn = myId !== null && currentPlayerId === myId;
+  const isMyTurn =
+    myId !== null &&
+    currentPlayerId !== null &&
+    String(currentPlayerId) === String(myId);
 
   function log(msg: string, data?: unknown) {
     const entry =
@@ -79,6 +83,10 @@ export function useGame(gameId: string) {
     switch (data.type) {
       case "my_id":
         setMyId(String(data.my_id));
+        break;
+
+      case "host":
+        setHostId(String(data.host));
         break;
 
       case "snapshot":
@@ -146,6 +154,11 @@ export function useGame(gameId: string) {
     log("send guess", guessData);
   }
 
+  function sendSwitch(data: SwitchData) {
+    socket?.send(data);
+    log("send switch", data);
+  }
+
   function sendAction(type: string) {
     socket?.send({ type });
     log("send action", type);
@@ -164,11 +177,13 @@ export function useGame(gameId: string) {
     status,
     isMyTurn,
     myId,
+    hostId,
     currentPlayerId,
     guessedMap,
     logs,
     endTime,
     sendGuess,
+    sendSwitch,
     sendAction,
   };
 }

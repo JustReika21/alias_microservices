@@ -1,11 +1,9 @@
-export type GameMessage =
-  | { type: "set_up" }
-  | { type: "start" }
-  | { type: "next" }
-  | { type: "calculated" }
-  | { type: "guess"; card: number; guessed: boolean };
-
 export type GuessData = {
   type: "guessed" | "not_guessed";
   card: number;
 };
+
+export type SwitchData = {
+  type: "switch_team";
+  new_team_id: number
+}

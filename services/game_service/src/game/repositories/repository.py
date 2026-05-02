@@ -396,3 +396,8 @@ class GameRepository:
         timer_key = self._timer_key(game_id)
         end_time = await self.redis_client.get(timer_key)
         return int(end_time)
+
+    async def get_host(self, game_id: str) -> int:
+        game_key = self._game_key(game_id)
+        host = await self.redis_client.hget(game_key, 'host')
+        return int(host)

@@ -16,11 +16,13 @@ export default function GameBoard({ gameId }: { gameId: string }) {
     status,
     isMyTurn,
     myId,
+    hostId,
     currentPlayerId,
     guessedMap,
     logs,
     endTime,
     sendGuess,
+    sendSwitch,
     sendAction,
   } = useGame(gameId);
 
@@ -60,7 +62,9 @@ export default function GameBoard({ gameId }: { gameId: string }) {
         teams={teams}
         status={status}
         myId={myId}
+        hostId={hostId}
         currentPlayerId={currentPlayerId}
+        sendSwitch={sendSwitch}
       />
 
       <Timer endTime={endTime} />

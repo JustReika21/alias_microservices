@@ -1,12 +1,15 @@
 import { useMemo } from "react";
 import type { Player, Team } from "../types/team";
+import type { SwitchData } from "../types/game";
 
 type Props = {
   players: Player[];
   teams: Team[];
   status: string;
   myId?: string | null;
+  hostId?: string | null;
   currentPlayerId?: string | null;
+  sendSwitch: (data: SwitchData) => void;
 };
 
 const DEFAULT_TEAM_IDS = ["1", "2", "3", "4"];
@@ -21,7 +24,7 @@ function groupPlayersByTeam(players: Player[]): Record<string, Player[]> {
 
 function buildTeamScores(teams: Team[]): Record<string, number> {
   return teams.reduce<Record<string, number>>((acc, t) => {
-    acc[t.id] = t.score;
+    acc[t.id] = Number(t.score);
     return acc;
   }, {});
 }
@@ -31,17 +34,34 @@ export default function TeamGrid({
   teams = [],
   status,
   myId,
+  hostId,
   currentPlayerId,
+  sendSwitch,
 }: Props) {
+  const normalizedPlayers = useMemo(() => {
+    return players.map((p: any) => ({
+      ...p,
+      teamId: p.teamId ?? p.team_id,
+      score: Number(p.score),
+    }));
+  }, [players]);
+
   const playersByTeam = useMemo(
-    () => groupPlayersByTeam(players),
-    [players]
+    () => groupPlayersByTeam(normalizedPlayers),
+    [normalizedPlayers]
   );
 
   const teamScores = useMemo(
     () => buildTeamScores(teams),
     [teams]
   );
+
+  const myTeamId = useMemo(() => {
+    const me = normalizedPlayers.find(
+      (p) => String(p.id) === String(myId)
+    );
+    return me ? String(me.teamId) : null;
+  }, [normalizedPlayers, myId]);
 
   const teamIds = useMemo(() => {
     if (status === "setting_up") return DEFAULT_TEAM_IDS;
@@ -57,6 +77,8 @@ export default function TeamGrid({
         const teamPlayers = playersByTeam[teamId] || [];
         const teamScore = teamScores[teamId] ?? 0;
 
+        const isMyTeam = myTeamId === teamId;
+
         return (
           <div key={teamId} className="team-box">
             <div className="team-title">
@@ -68,17 +90,26 @@ export default function TeamGrid({
                 <div className="empty">—</div>
               ) : (
                 teamPlayers.map((p) => {
-                  const isMe = p.id === myId;
-                  const isTurn = p.id === currentPlayerId;
+                  const isMe = String(p.id) === String(myId);
+                  const isTurn =
+                    String(p.id) === String(currentPlayerId);
+                  const isHost =
+                    String(p.id) === String(hostId);
 
                   return (
                     <div
                       key={p.id}
-                      className={`player 
-                        ${isMe ? "me" : ""} 
-                        ${isTurn ? "turn" : ""}`}
+                      className={`player ${isMe ? "me" : ""} ${
+                        isTurn ? "turn" : ""
+                      }`}
                     >
-                      <div className="player-name">{p.name}</div>
+                      <div className="player-name">
+                        {isHost && (
+                          <span className="host-icon">♔</span>
+                        )}
+                        <span className="name-text">{p.name}</span>
+                      </div>
+
                       <div className="player-score">
                         {p.score} pts
                       </div>
@@ -87,6 +118,20 @@ export default function TeamGrid({
                 })
               )}
             </div>
+
+            {status === "setting_up" && myTeamId && !isMyTeam && (
+              <button
+                className="join-btn"
+                onClick={() =>
+                  sendSwitch({
+                    type: "switch_team",
+                    new_team_id: Number(teamId),
+                  })
+                }
+              >
+                +
+              </button>
+            )}
           </div>
         );
       })}

@@ -14,8 +14,6 @@
   padding: 8px;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
-  align-items: center;
   overflow: hidden;
 }
 
@@ -32,43 +30,48 @@
   flex: 1;
   display: flex;
   flex-direction: column;
-  justify-content: flex-start;
   gap: 4px;
   width: 100%;
 }
-
 
 .player {
   display: flex;
   justify-content: space-between;
   align-items: center;
   width: 100%;
-  overflow: hidden;
   padding: 2px 4px;
   border-radius: 6px;
-  transition: all 0.2s ease;
 }
 
 .player-name {
-  text-align: left;
+  display: flex;
+  align-items: center;
+  gap: 6px;
   flex: 8;
+  min-width: 0;
+  line-height: 1;
+}
+
+.name-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  max-width: 80%;
 }
 
 .player-score {
-  text-align: right;
   flex: 2;
+  text-align: right;
   white-space: nowrap;
-  margin-left: 5%;
-  max-width: 100%;
 }
 
-.empty {
-  opacity: 0.3;
-  text-align: center;
+.host-icon {
+  font-size: 24px;
+  line-height: 1;
+  flex-shrink: 0;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  transform: translateY(-15%);
 }
 
 .player.turn {
@@ -79,4 +82,25 @@
 .player.me {
   border: 1px solid var(--primary-focus);
   background: rgba(30, 48, 30, 0.25);
+}
+
+.empty {
+  opacity: 0.3;
+  text-align: center;
+}
+
+.join-btn {
+  margin-top: auto;
+  padding: 4px;
+  font-size: 12px;
+  border-radius: 6px;
+  border: none;
+  background: var(--primary);
+  color: white;
+  cursor: pointer;
+}
+
+.join-btn:disabled {
+  opacity: 0.4;
+  cursor: default;
 }
