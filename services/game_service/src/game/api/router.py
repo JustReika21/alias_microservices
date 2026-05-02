@@ -2,10 +2,10 @@ from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette import status
 
-from game.dependencies import get_game_service
+from game.dependencies import get_orchestration_service
 from game.exc.exceptions import GameNotFoundError
 from game.schemas.schemas import GameCreate, Player
-from game.services.service import GameService
+from game.services.orchestration_service import GameOrchestrationService
 
 game_router = APIRouter(tags=['Games'])
 
@@ -18,21 +18,21 @@ game_router = APIRouter(tags=['Games'])
 async def game_create_api(
         game_data: GameCreate,
         credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
-        game_service: GameService = Depends(get_game_service),
+        game_service: GameOrchestrationService = Depends(get_orchestration_service),
 ):
     access_token = credentials.credentials
     user = await game_service.auth_client.get_user(access_token)
     player = Player(id=user.user_id, name=user.name, score=0)
-    return await game_service.create_game(game_data, player)
+    return await game_service.core.create_game(game_data, player)
 
 
 @game_router.post('/api/v1/game/{game_id}/player')
 async def join_game_api(
         game_id: str,
         player: Player,
-        game_service: GameService = Depends(get_game_service),
+        game_service: GameOrchestrationService = Depends(get_orchestration_service),
 ):
-    return await game_service.join_game(game_id, player)
+    return await game_service.core.join_game(game_id, player)
 
 
 connections: dict[str, dict[int, WebSocket]] = {}
@@ -41,13 +41,13 @@ connections: dict[str, dict[int, WebSocket]] = {}
 async def game_websocket(
         game_id: str,
         websocket: WebSocket,
-        game_service: GameService = Depends(get_game_service),
+        game_service: GameOrchestrationService = Depends(get_orchestration_service),
 ):
-    exist = await game_service.game_repository.is_game_exist(game_id)
+    exist = await game_service.repo.is_game_exist(game_id)
     if not exist:
         raise GameNotFoundError('Game not found')
 
-    game_status = await game_service.game_repository.get_game_status(game_id)
+    game_status = await game_service.repo.get_game_status(game_id)
 
     await websocket.accept()
 
@@ -55,17 +55,19 @@ async def game_websocket(
     user = await game_service.auth_client.verify_user_websocket(refresh_token)
     player = Player(id=user.user_id, name=user.name, score=0, team_id=1)
 
-    await game_service.join_game(game_id, player=player)
+    await game_service.core.join_game(game_id, player=player)
 
     if game_id not in connections:
         connections[game_id] = {}
 
     connections[game_id][user.user_id] = websocket
 
-    await game_service.load_snapshot(game_id, user.user_id, game_status, websocket)
+    await game_service.handle_snapshot(
+        game_id, user.user_id, game_status, websocket
+    )
 
-    players = await game_service.get_players(game_id)
-    host = await game_service.get_host(game_id)
+    players = await game_service.core.get_players(game_id)
+    host = await game_service.core.get_host(game_id)
 
     for ws in connections[game_id].values():
         await ws.send_json({'type': 'players', 'players': players})
@@ -73,23 +75,23 @@ async def game_websocket(
 
     await websocket.send_json({'type': 'my_id', 'my_id': user.user_id})
 
-    teams = await game_service.get_teams(game_id)
+    teams = await game_service.core.get_teams(game_id)
     await websocket.send_json({'type': 'teams', 'teams': teams})
 
     try:
         while True:
             data = await websocket.receive_json()
             con = connections[game_id]
-            game_status = await game_service.get_game_status(game_id)
+            game_status = await game_service.core.get_game_status(game_id)
 
             if data['type'] == 'set_up' and game_status == 'setting_up':
-                await game_service.game_repository.set_game_status(game_id, 'waiting')
+                await game_service.repo.set_game_status(game_id, 'waiting')
                 for ws in con.values():
                     await ws.send_json({'type': 'status', 'value': 'waiting'})
 
             if data['type'] == 'start' and game_status == 'waiting':
                 if await game_service.sender_is_current_player(game_id, websocket, con):
-                    await game_service.start_game(game_id, con)
+                    await game_service.handle_start_round(game_id, con)
 
             if data['type'] == 'next' and game_status == 'started':
                 if await game_service.sender_is_current_player(game_id, websocket, con):
@@ -97,19 +99,19 @@ async def game_websocket(
 
             if data['type'] == 'switch_team' and game_status == 'setting_up':
                 new_team_id = int(data['new_team_id'])
-                await game_service.switch_team(game_id, user.user_id, new_team_id, con)
+                await game_service.handle_switch_team(game_id, user.user_id, new_team_id, con)
 
             if data['type'] == 'guessed' and game_status == 'calculating':
                 card_id = int(data['card'])
-                await game_service.card_guessed(game_id, card_id, True, con)
+                await game_service.handle_card_guess(game_id, card_id, True, con)
 
             if data['type'] == 'not_guessed' and game_status == 'calculating':
                 card_id = int(data['card'])
-                await game_service.card_guessed(game_id, card_id, False, con)
+                await game_service.handle_card_guess(game_id, card_id, False, con)
 
             if data['type'] == 'calculated' and game_status == 'calculating':
                 if await game_service.sender_is_current_player(game_id, websocket, con):
-                    await game_service.set_scores(game_id, con)
+                    await game_service.handle_calculating(game_id, con)
 
             if data['type'] == 'kick':
                 for ws in con.values():

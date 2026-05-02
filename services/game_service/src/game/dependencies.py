@@ -1,12 +1,15 @@
-# app/dependencies.py
-
 from fastapi import Depends
 from game.database.db import async_session
 from game.grpc.clients.auth import AuthClient
 from game.grpc.clients.cards import CardsClient
 from game.grpc.clients.packs import PacksClient
 from game.repositories.repository import GameRepository
-from game.services.service import GameService
+from game.services.broadcast_service import GameBroadcastService
+from game.services.core import GameCoreService
+from game.services.orchestration_service import GameOrchestrationService
+from game.services.round_service import GameRoundService
+from game.services.score_service import GameScoreService
+from game.services.snapshot_service import GameSnapshotService
 from game.settings import settings
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -27,13 +30,11 @@ async def start_up_redis() -> Redis:
     )
     try:
         await redis_client.ping()
-        print("Redis is connected")
+        print('Redis is connected')
     except Exception as e:
-        print(f"Redis connection failed: {e}")
+        print(f'Redis connection failed: {e}')
     return redis_client
 
-
-# --- unified dependencies ---
 
 def get_packs_client(conn: HTTPConnection) -> PacksClient:
     return conn.app.state.packs_client
@@ -58,10 +59,53 @@ def get_game_repository(
     return GameRepository(db, redis_client)
 
 
-def get_game_service(
-    repository: GameRepository = Depends(get_game_repository),
-    packs_client: PacksClient = Depends(get_packs_client),
-    cards_client: CardsClient = Depends(get_cards_client),
+def get_broadcast_service() -> GameBroadcastService:
+    return GameBroadcastService()
+
+
+def get_core_service(
+    repo: GameRepository = Depends(get_game_repository),
+) -> GameCoreService:
+    return GameCoreService(repo)
+
+
+def get_round_service(
+    repo: GameRepository = Depends(get_game_repository),
+) -> GameRoundService:
+    return GameRoundService(repo)
+
+
+def get_score_service(
+    repo: GameRepository = Depends(get_game_repository),
+) -> GameScoreService:
+    return GameScoreService(repo)
+
+
+def get_snapshot_service(
+    repo: GameRepository = Depends(get_game_repository),
+) -> GameSnapshotService:
+    return GameSnapshotService(repo)
+
+
+def get_orchestration_service(
+    repo: GameRepository = Depends(get_game_repository),
+    broadcast: GameBroadcastService = Depends(get_broadcast_service),
+    core: GameCoreService = Depends(get_core_service),
+    round_service: GameRoundService = Depends(get_round_service),
+    score_service: GameScoreService = Depends(get_score_service),
+    snapshot_service: GameSnapshotService = Depends(get_snapshot_service),
     auth_client: AuthClient = Depends(get_auth_client),
-) -> GameService:
-    return GameService(repository, packs_client, cards_client, auth_client)
+    cards_client: CardsClient = Depends(get_cards_client),
+    packs_client: PacksClient = Depends(get_packs_client),
+) -> GameOrchestrationService:
+    return GameOrchestrationService(
+        repo=repo,
+        broadcast=broadcast,
+        core=core,
+        round_service=round_service,
+        score_service=score_service,
+        snapshot_service=snapshot_service,
+        auth_client=auth_client,
+        cards_client=cards_client,
+        packs_client=packs_client,
+    )
