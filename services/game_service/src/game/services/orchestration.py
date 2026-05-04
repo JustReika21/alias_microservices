@@ -1,0 +1,296 @@
+import asyncio
+from time import time
+from typing import List
+
+from starlette.websockets import WebSocket
+
+from game.database.models import generate_id
+from game.grpc.clients.auth import AuthClient
+from game.grpc.clients.packs import PacksClient
+from game.schemas.schemas import GameCreate, Player, Game
+from game.services.broadcast import GameBroadcastService
+from game.services.card import GameCardService
+from game.services.core import GameCoreService
+from game.services.player import GamePlayerService
+from game.services.round import GameRoundService
+from game.services.score import GameScoreService
+from game.services.snapshot import GameSnapshotService
+from game.services.team import GameTeamService
+from game.services.timer import GameTimerService
+
+DEFAULT_TEAM_ID = 1
+
+
+class GameOrchestrationService:
+    def __init__(
+            self,
+            broadcast_service: GameBroadcastService,
+            card_service: GameCardService,
+            core_service: GameCoreService,
+            player_service: GamePlayerService,
+            round_service: GameRoundService,
+            score_service: GameScoreService,
+            team_service: GameTeamService,
+            timer_service: GameTimerService,
+            snapshot_service: GameSnapshotService,
+
+            auth_client: AuthClient,
+            packs_client: PacksClient,
+    ):
+        self.broadcast_service = broadcast_service
+        self.card_service = card_service
+        self.core_service = core_service
+        self.player_service = player_service
+        self.round_service = round_service
+        self.score_service = score_service
+        self.team_service = team_service
+        self.timer_service = timer_service
+        self.snapshot_service = snapshot_service
+
+        self.auth_client = auth_client
+        self.packs_client = packs_client
+
+    async def create_game(self, game_data: GameCreate, player: Player) -> None:
+        game = Game(
+            id=generate_id(),
+            host=player.id,
+            rounds=game_data.rounds,
+            time=game_data.time,
+            pack=game_data.pack,
+            password=game_data.password or ''
+        )
+
+        await self.core_service.create_game(game)
+        await self.team_service.create_team(game.id, DEFAULT_TEAM_ID)
+        await self.player_service.join_game(game.id, player)
+
+    async def join_game(self, game_id: str, player: Player) -> None:
+        await self.player_service.join_game(game_id, player)
+
+    async def handle_snapshot(
+            self,
+            game_id: str,
+            user_id: int,
+            game_status: str,
+            ws: WebSocket,
+    ):
+        current_player_id = await self.get_current_player_id(game_id)
+        if game_status == 'started' or game_status == 'calculating':
+            played_cards = await self.card_service.get_played_cards(game_id)
+            end_time = await self.timer_service.get_timer(game_id)
+        else:
+            played_cards = None
+            end_time = None
+
+        snapshot = await self.snapshot_service.load_snapshot(
+            game_id, user_id, game_status, current_player_id, played_cards, end_time
+        )
+
+        await self.broadcast_service.send_to(ws, snapshot)
+
+    async def handle_start_round(self, game_id: str, con: dict[int, WebSocket]):
+        await self.core_service.set_game_status(game_id, 'started')
+        asyncio.create_task(self._run_round(game_id, con))
+
+    async def _run_round(
+            self,
+            game_id: str,
+            con: dict[int, WebSocket]
+    ):
+        round_time = await self.core_service.get_round_time(game_id)
+        pack_id = await self.core_service.get_pack_id(game_id)
+
+        await self.card_service.set_up_game_cards(game_id, pack_id)
+
+        end_time = int(time() + round_time)
+        await self.timer_service.set_timer(game_id, end_time)
+
+        await self.broadcast_service.broadcast(
+            con, {'type': 'status', 'value': 'started'}
+        )
+        await self.broadcast_service.broadcast(
+            con,{'type': 'timer', 'end_time': end_time}
+        )
+
+        await self.send_card(game_id, con)
+
+        await asyncio.sleep(round_time)
+
+        await self.core_service.set_game_status(game_id, 'calculating')
+
+        await self._send_final_card(game_id, con)
+
+        await self.card_service.set_guessed_cards(game_id)
+
+    async def handle_switch_team(
+            self,
+            game_id: str,
+            player_id: int,
+            new_team_id: int,
+            con: dict[int, WebSocket]
+    ):
+        old_team_id = await self.player_service.get_player_team_id(game_id, player_id)
+
+        teams = await self.team_service.switch_team(
+            game_id, player_id, new_team_id, old_team_id
+        )
+        payload = {'type': 'teams', 'teams': teams}
+
+        await self.broadcast_service.broadcast(con, payload)
+
+    async def _broadcast_card(self, card: dict, ws: WebSocket):
+        payload = {'type': 'card', 'card': card, 'guessed': True}
+        await self.broadcast_service.send_to(ws, payload)
+
+    async def send_card(self, game_id: str, con: dict[int, WebSocket]):
+        current_player_id = await self.get_current_player_id(game_id)
+
+        data = await self.card_service.get_card(game_id, current_player_id)
+
+        if data is None:
+            await self.core_service.set_game_status(game_id, 'calculating')
+            return
+        
+        for user_id, ws in con.items():
+            card = (
+                data['current_card']
+                if user_id == data['current_player_id']
+                else data['previous_card']
+            )
+            await self._broadcast_card(card, ws)
+
+    async def _send_final_card(self, game_id: str, con: dict[int, WebSocket]):
+        current_player_id = await self.get_current_player_id(game_id)
+
+        card = await self.card_service.get_final_card(game_id)
+
+        for user_id, ws in con.items():
+            if current_player_id != user_id:
+                await self._broadcast_card(card, ws)
+
+        await self.broadcast_service.broadcast(
+            con, {'type': 'status', 'value': 'calculating'}
+        )
+
+    async def handle_card_guess(
+            self,
+            game_id: str,
+            card_id: int,
+            guessed: bool,
+            con: dict[int, WebSocket]
+    ):
+        played_cards = await self.card_service.get_played_cards(game_id)
+
+        payload = await self.card_service.card_guessed(
+            game_id, card_id, guessed, played_cards
+        )
+
+        if payload is not None:
+            await self.broadcast_service.broadcast(con, payload)
+
+    async def handle_calculating(self, game_id: str, con: dict[int, WebSocket]):
+        await self.core_service.set_game_status(game_id, 'waiting')
+
+        guessed_card_ids = await self.card_service.get_guessed_cards(game_id)
+        current_player_id = await self.get_current_player_id(game_id)
+        current_team_id = await self.team_service.get_current_team_id(game_id)
+
+        points = len(guessed_card_ids)
+
+        player = await self.score_service.update_player_score(
+            game_id, current_player_id, points
+        )
+
+        team = await self.score_service.update_team_score(
+            game_id, current_team_id, points
+        )
+
+        for ws in con.values():
+            await self.broadcast_service.send_to(ws, {
+                'type': 'player_score_update',
+                'id': player.id,
+                'score': player.score
+            })
+            await self.broadcast_service.send_to(ws, {
+                'type': 'team_score_update',
+                'id': team.id,
+                'score': team.score
+            })
+
+        await self.round_service.cleanup_round(game_id)
+        await self._handle_next_round(game_id, con)
+
+    async def _handle_next_round(self, game_id, con: dict[int, WebSocket]):
+        team_ids = await self.team_service.get_team_ids(game_id)
+        team_offset = await self.team_service.increment_team_offset(game_id)
+
+        team_idx = int(team_offset) % len(team_ids)
+        team_id = team_ids[team_idx]
+
+        turn_offset = await self.round_service.resolve_turn_offset(
+            game_id, team_idx
+        )
+
+        team_player_ids = await self.team_service.get_team_player_ids(game_id, team_id)
+
+        idx = int(turn_offset) % len(team_player_ids)
+        next_player_id = int(team_player_ids[idx])
+
+        for user_id, ws in con.items():
+            payload = {
+                    'type': 'current_player',
+                    'player_id': next_player_id,
+                    'is_current': user_id == next_player_id
+                }
+            await self.broadcast_service.send_to(ws, payload)
+
+        await self.broadcast_service.broadcast(
+            con, {'type': 'status', 'value': 'waiting'}
+        )
+
+    async def sender_is_current_player(
+            self,
+            game_id: str,
+            websocket: WebSocket,
+            con: dict[int, WebSocket]
+    ) -> bool:
+        current_player_id = await self.get_current_player_id(game_id)
+        current_player = con.get(current_player_id)
+        return current_player and current_player == websocket
+
+    async def get_current_player_id(self, game_id: str) -> int:
+        team_id = await self.team_service.get_current_team_id(game_id)
+        team_players = await self.team_service.get_team_player_ids(game_id, team_id)
+
+        turn_offset = await self.round_service.get_current_round(game_id)
+
+        idx = int(turn_offset) % len(team_players)
+
+        current_player_id = team_players[idx]
+        return int(current_player_id)
+
+    async def get_players(self, game_id: str):
+        team_ids = await self.team_service.get_team_ids(game_id)
+        team_player_ids = await self.team_service.get_every_team_player_ids(game_id, team_ids)
+
+        players = await self.player_service.get_players(game_id, team_player_ids)
+        return players
+
+    async def is_game_exist(self, game_id: str) -> bool:
+        exists = await self.core_service.is_game_exist(game_id)
+        return exists
+
+    async def get_game_status(self, game_id: str) -> str:
+        status = await self.core_service.get_game_status(game_id)
+        return status
+
+    async def set_game_status(self, game_id: str, status: str) -> None:
+        await self.core_service.set_game_status(game_id, status)
+
+    async def get_host_id(self, game_id: str) -> int:
+        host = await self.core_service.get_host_id(game_id)
+        return host
+
+    async def get_teams(self, game_id: str) -> List[dict]:
+        teams = await self.team_service.get_teams(game_id)
+        return teams

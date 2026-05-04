@@ -1,0 +1,39 @@
+from typing import List
+
+from game.repositories.player import GamePlayerRepository
+from game.schemas.schemas import Player
+
+
+class GamePlayerService:
+    def __init__(
+            self,
+            player_repo: GamePlayerRepository,
+    ):
+        self.player_repo = player_repo
+
+    async def join_game(self, game_id: str, player: Player) -> None:
+        player_exists = await self.player_repo.is_player_exists(game_id, player.id)
+
+        if player_exists:
+            return
+
+        await self.player_repo.add_player(game_id, player)
+
+    async def get_player_team_id(self, game_id: str, player_id: int) -> int:
+        player_team = await self.player_repo.get_player_team_id(game_id, player_id)
+        return player_team
+
+    async def get_players(
+            self,
+            game_id: str,
+            team_player_ids: List[List[str]]
+    ) -> List[dict]:
+        player_ids = []
+        for team in team_player_ids:
+            player_ids.extend(pid for pid in team)
+
+        if not player_ids:
+            return []
+
+        players = await self.player_repo.get_players(game_id, player_ids)
+        return players

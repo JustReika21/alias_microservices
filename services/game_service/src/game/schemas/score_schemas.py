@@ -9,8 +9,3 @@ class PlayerScore(GameBase):
 class TeamScore(GameBase):
     id: int
     score: int
-
-
-class ScoreResult(GameBase):
-    player: PlayerScore
-    team: TeamScore

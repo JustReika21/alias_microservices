@@ -1,17 +1,16 @@
-from game.repositories.repository import GameRepository
+from typing import List
 
 
 class GameSnapshotService:
-    def __init__(self, repo: GameRepository):
-        self.repo = repo
-
     async def load_snapshot(
             self,
             game_id: str,
             user_id: int,
             game_status: str,
-            current_player_id: int
-    ):
+            current_player_id: int,
+            played_cards: List[dict] | None,
+            end_time: int | None,
+    ) -> dict:
         is_current = user_id == current_player_id
 
         snapshot = {
@@ -26,13 +25,10 @@ class GameSnapshotService:
         }
 
         if game_status == 'started':
-            cards = await self.repo.get_played_cards(game_id)
-            snapshot['cards'] = cards if is_current else cards[:-1]
-            end_time = await self.repo.get_timer(game_id)
+            snapshot['cards'] = played_cards if is_current else played_cards[:-1]
             snapshot['end_time'] = end_time
 
         elif game_status == 'calculating':
-            cards = await self.repo.get_played_cards(game_id)
-            snapshot['cards'] = cards
+            snapshot['cards'] = played_cards
 
         return snapshot
