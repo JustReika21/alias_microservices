@@ -1,3 +1,4 @@
+import time
 from typing import List
 
 from redis.asyncio import Redis
@@ -13,7 +14,6 @@ class GameTeamRepository(RedisConfig):
             redis_client: Redis
     ):
         self.db = db
-
         self.redis_client = redis_client
 
     async def create_team(self, game_id: str, team_id: int) -> None:
@@ -25,12 +25,11 @@ class GameTeamRepository(RedisConfig):
                 team_key,
                 mapping={
                     'id': team_id,
-                    'total_players': 0,
                     'score': 0
                 }
             )
 
-            await pipe.zadd(teams_key,{str(team_id): team_id})
+            await pipe.zadd(teams_key, {str(team_id): team_id})
 
             await pipe.expire(teams_key, self.EXPIRE_TIME)
             await pipe.expire(team_key, self.EXPIRE_TIME)
@@ -43,61 +42,50 @@ class GameTeamRepository(RedisConfig):
             player_id: int,
             old_team_id: int,
             new_team_id: int,
-    ) -> dict:
-        old_team_key = self._team_key(game_id, old_team_id)
-        new_team_key = self._team_key(game_id, new_team_id)
-
+    ) -> None:
         old_team_players = self._team_players_key(game_id, old_team_id)
         new_team_players = self._team_players_key(game_id, new_team_id)
 
         player_key = self._player_key(game_id, player_id)
 
+        now = time.time()
+
         async with self.redis_client.pipeline() as pipe:
-            await pipe.lrem(old_team_players, 0, str(player_id))
-            await pipe.hincrby(old_team_key, "total_players", -1)
+            await pipe.zrem(old_team_players, str(player_id))
 
-            await pipe.rpush(new_team_players, str(player_id))
-            await pipe.hincrby(new_team_key, "total_players", 1)
+            await pipe.zadd(
+                new_team_players,
+                {str(player_id): now}
+            )
 
-            await pipe.hset(player_key, 'team_id', str(new_team_id))
+            await pipe.hset(player_key, "team_id", str(new_team_id))
 
-            _, old_count, _, new_count, _ = await pipe.execute()
+            await pipe.execute()
 
-        old_team_players_count = int(old_count)
-        new_team_players_count = int(new_count)
+        await self._update_team_metadata(game_id, old_team_id, new_team_id)
 
-        return {
-            'old_team_players_count': old_team_players_count,
-            'new_team_players_count': new_team_players_count
-        }
-
-    async def update_team_metadata(
+    async def _update_team_metadata(
             self,
             game_id: str,
             old_team_id: int,
             new_team_id: int,
-            old_team_players_count,
-            new_team_players_count
     ) -> None:
-        game_key = self._game_key(game_id)
         teams_key = self._teams_key(game_id)
 
-        old_team_key = self._team_key(game_id, old_team_id)
+        old_team_players = self._team_players_key(game_id, old_team_id)
+        new_team_players = self._team_players_key(game_id, new_team_id)
 
-        updates = 0
+        old_size = await self.redis_client.zcard(old_team_players)
+        new_size = await self.redis_client.zcard(new_team_players)
 
         async with self.redis_client.pipeline() as pipe:
-            if new_team_players_count == 1:
-                updates += 1
+
+            if new_size == 1:
                 await pipe.zadd(teams_key, {str(new_team_id): new_team_id})
 
-            if old_team_players_count == 0:
-                updates -= 1
-                await pipe.delete(old_team_key)
+            if old_size == 0:
+                await pipe.delete(self._team_key(game_id, old_team_id))
                 await pipe.zrem(teams_key, str(old_team_id))
-
-            if updates != 0:
-                await pipe.hincrby(game_key, 'total_teams', updates)
 
             await pipe.execute()
 
@@ -137,18 +125,19 @@ class GameTeamRepository(RedisConfig):
 
     async def get_team_player_ids(self, game_id: str, team_id: str | int) -> List[str]:
         team_players_key = self._team_players_key(game_id, int(team_id))
-        players = await self.redis_client.lrange(team_players_key, 0, -1)
+
+        players = await self.redis_client.zrange(team_players_key, 0, -1)
         return players
 
     async def get_every_team_player_ids(
             self,
             game_id: str,
             team_ids: List[str]
-    ) ->List[List[str]]:
+    ) -> List[List[str]]:
         async with self.redis_client.pipeline() as pipe:
             for team_id in team_ids:
                 team_players_key = self._team_players_key(game_id, int(team_id))
-                await pipe.lrange(team_players_key, 0, -1)
+                await pipe.zrange(team_players_key, 0, -1)
 
             team_player_ids = await pipe.execute()
 

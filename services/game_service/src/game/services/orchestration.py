@@ -5,9 +5,10 @@ from typing import List
 from starlette.websockets import WebSocket
 
 from game.database.models import generate_id
+from game.exc.exceptions import GameAlreadyStartedError
 from game.grpc.clients.auth import AuthClient
 from game.grpc.clients.packs import PacksClient
-from game.schemas.schemas import GameCreate, Player, Game
+from game.schemas.schemas import GameCreate, Player, Game, GameCreated
 from game.services.broadcast import GameBroadcastService
 from game.services.card import GameCardService
 from game.services.core import GameCoreService
@@ -50,7 +51,7 @@ class GameOrchestrationService:
         self.auth_client = auth_client
         self.packs_client = packs_client
 
-    async def create_game(self, game_data: GameCreate, player: Player) -> None:
+    async def create_game(self, game_data: GameCreate, player: Player) -> GameCreated:
         game = Game(
             id=generate_id(),
             host=player.id,
@@ -64,17 +65,32 @@ class GameOrchestrationService:
         await self.team_service.create_team(game.id, DEFAULT_TEAM_ID)
         await self.player_service.join_game(game.id, player)
 
-    async def join_game(self, game_id: str, player: Player) -> None:
-        await self.player_service.join_game(game_id, player)
+        game = GameCreated(id=game.id)
+        return game
+
+    async def join_game(self, game_id: str, player: Player, game_status: str) -> None:
+        player_exists = await self.is_player_exist(game_id, player.id)
+
+        if player_exists:
+            pass
+        elif game_status == 'setting_up':
+            await self.player_service.join_game(game_id, player)
+        else:
+            raise GameAlreadyStartedError('Game already started')
 
     async def handle_snapshot(
             self,
             game_id: str,
             user_id: int,
             game_status: str,
+            my_id: int,
             ws: WebSocket,
     ):
+        players = await self.get_players(game_id)
         current_player_id = await self.get_current_player_id(game_id)
+        host = await self.get_host_id(game_id)
+        teams = await self.get_teams(game_id)
+
         if game_status == 'started' or game_status == 'calculating':
             played_cards = await self.card_service.get_played_cards(game_id)
             end_time = await self.timer_service.get_timer(game_id)
@@ -83,7 +99,8 @@ class GameOrchestrationService:
             end_time = None
 
         snapshot = await self.snapshot_service.load_snapshot(
-            game_id, user_id, game_status, current_player_id, played_cards, end_time
+            user_id, game_status, players, my_id, current_player_id, host, teams,
+            played_cards, end_time
         )
 
         await self.broadcast_service.send_to(ws, snapshot)
@@ -131,10 +148,18 @@ class GameOrchestrationService:
     ):
         old_team_id = await self.player_service.get_player_team_id(game_id, player_id)
 
-        teams = await self.team_service.switch_team(
+        await self.team_service.switch_team(
             game_id, player_id, new_team_id, old_team_id
         )
-        payload = {'type': 'teams', 'teams': teams}
+
+        current_player_id = await self.get_current_player_id(game_id)
+
+        payload = {
+            'type': 'player_switch_team',
+            'player_id': player_id,
+            'new_team_id': new_team_id,
+            'current_player_id': current_player_id,
+        }
 
         await self.broadcast_service.broadcast(con, payload)
 
@@ -148,7 +173,6 @@ class GameOrchestrationService:
         data = await self.card_service.get_card(game_id, current_player_id)
 
         if data is None:
-            await self.core_service.set_game_status(game_id, 'calculating')
             return
         
         for user_id, ws in con.items():
@@ -269,7 +293,7 @@ class GameOrchestrationService:
         current_player_id = team_players[idx]
         return int(current_player_id)
 
-    async def get_players(self, game_id: str):
+    async def get_players(self, game_id: str) -> List[dict]:
         team_ids = await self.team_service.get_team_ids(game_id)
         team_player_ids = await self.team_service.get_every_team_player_ids(game_id, team_ids)
 
@@ -294,3 +318,7 @@ class GameOrchestrationService:
     async def get_teams(self, game_id: str) -> List[dict]:
         teams = await self.team_service.get_teams(game_id)
         return teams
+
+    async def is_player_exist(self, game_id: str, player_id: int) -> bool:
+        player_exists = await self.player_service.is_player_exist(game_id, player_id)
+        return player_exists

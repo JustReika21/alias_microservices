@@ -28,16 +28,10 @@ class GameTeamService:
         if not new_team_exists:
             await self.team_repo.create_team(game_id, new_team_id)
 
-        result = await self.team_repo.move_player(
+        await self.team_repo.move_player(
             game_id, player_id, old_team_id, new_team_id
         )
 
-        old_count = result['old_team_players_count']
-        new_count = result['new_team_players_count']
-
-        await self.team_repo.update_team_metadata(
-            game_id, old_team_id, new_team_id, old_count, new_count
-        )
 
     async def create_team(self, game_id: str, team_id: int) -> None:
         await self.team_repo.create_team(game_id, team_id)

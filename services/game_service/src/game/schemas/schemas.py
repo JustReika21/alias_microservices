@@ -17,7 +17,6 @@ class Player(GameBase):
 class Team(GameBase):
     id: int
     players_ids: List[int] = []
-    total_players: int = 0
     score: int = 0
 
 
@@ -31,7 +30,6 @@ class GameCreate(BaseModel):
 class Game(GameBase):
     id: str
     host: int
-    total_teams: int = 1
     team_offset: int = 0
     mode: str = 'solo'
     rounds: int
@@ -40,4 +38,6 @@ class Game(GameBase):
     pack: int
     password: str | None = None
     status: str = 'setting_up'
-    total_players: int = 1
+
+class GameCreated(GameBase):
+    id: str

@@ -1,3 +1,4 @@
+import time
 from typing import List
 
 from redis.asyncio import Redis
@@ -20,9 +21,10 @@ class GamePlayerRepository(RedisConfig):
     async def add_player(self, game_id: str, player: Player) -> None:
         player_key = self._player_key(game_id, player.id)
 
-        team_key = self._team_key(game_id, player.team_id)
         player_in_team_key = self._team_players_key(game_id, player.team_id)
         teams_key = self._teams_key(game_id)
+
+        now = time.time()
 
         async with self.redis_client.pipeline() as pipe:
             await pipe.hset(
@@ -30,11 +32,15 @@ class GamePlayerRepository(RedisConfig):
                 mapping=Player.model_dump(player)
             )
 
-            await pipe.rpush(player_in_team_key, player.id)
+            await pipe.zadd(
+                player_in_team_key,
+                {str(player.id): now}
+            )
 
-            await pipe.hincrby(team_key, 'total_players', 1)
-
-            await pipe.zadd(teams_key, {str(player.team_id): player.team_id})
+            await pipe.zadd(
+                teams_key,
+                {str(player.team_id): player.team_id}
+            )
 
             await pipe.expire(player_in_team_key, self.EXPIRE_TIME)
             await pipe.expire(player_key, self.EXPIRE_TIME)
@@ -42,6 +48,9 @@ class GamePlayerRepository(RedisConfig):
             await pipe.execute()
 
     async def get_players(self, game_id: str, player_ids: List[str]) -> List[dict]:
+        if not player_ids:
+            return []
+
         async with self.redis_client.pipeline() as pipe:
             for pid in player_ids:
                 await pipe.hgetall(self._player_key(game_id, int(pid)))
@@ -59,4 +68,3 @@ class GamePlayerRepository(RedisConfig):
         player_key = self._player_key(game_id, player_id)
         player_exists = await self.redis_client.exists(player_key)
         return player_exists
-

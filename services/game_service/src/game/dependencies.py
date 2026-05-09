@@ -1,5 +1,6 @@
 from fastapi import Depends
 from game.database.db import async_session
+from game.services.connection_manager import GameConnectionManager
 from game.settings import settings
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -51,6 +52,10 @@ async def start_up_redis() -> Redis:
 
 def get_redis_from_app(conn: HTTPConnection) -> Redis:
     return conn.app.state.redis_client
+
+
+def get_connection_manager():
+    return GameConnectionManager()
 
 
 # =========================

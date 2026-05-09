@@ -7,7 +7,15 @@ export interface CreateGamePayload {
   password?: string | null;
 }
 
-export async function createGame(data: CreateGamePayload) {
+export interface GameCreated {
+  id: string;
+  rounds: number;
+  time: number;
+  pack: number;
+  password?: string | null;
+}
+
+export async function createGame(data: CreateGamePayload): Promise<GameCreated> {
   const res = await apiFetch("/api/v1/game", {
     method: "POST",
     headers: {
@@ -28,18 +36,17 @@ export class GameSocket {
   private socket: WebSocket;
 
   constructor(gameId: string, onMessage: (data: any) => void) {
-    if (!gameId) throw new Error("gameId is required for WebSocket");
+    if (!gameId) throw new Error("gameId is required");
 
     const url = `/ws/game/${gameId}`;
-
     this.socket = new WebSocket(url);
 
     this.socket.onmessage = (event) => {
       try {
         const data = JSON.parse(event.data);
         onMessage(data);
-      } catch (err) {
-        console.log("RAW WS data:", event.data);
+      } catch {
+        console.log("RAW WS:", event.data);
       }
     };
   }

@@ -4,7 +4,7 @@ from starlette import status
 
 from game.dependencies import get_orchestration_service
 from game.exc.exceptions import GameNotFoundError
-from game.schemas.schemas import GameCreate, Player
+from game.schemas.schemas import GameCreate, Player, GameCreated
 from game.services.orchestration import GameOrchestrationService
 
 game_router = APIRouter(tags=['Games'])
@@ -13,6 +13,7 @@ game_router = APIRouter(tags=['Games'])
 @game_router.post(
     '/api/v1/game',
     status_code=status.HTTP_201_CREATED,
+    response_model=GameCreated,
 )
 async def game_create_api(
         game_data: GameCreate,
@@ -25,15 +26,6 @@ async def game_create_api(
     return await game_service.create_game(game_data, player)
 
 
-@game_router.post('/api/v1/game/{game_id}/player')
-async def join_game_api(
-        game_id: str,
-        player: Player,
-        game_service: GameOrchestrationService = Depends(get_orchestration_service),
-):
-    return await game_service.join_game(game_id, player)
-
-
 connections: dict[str, dict[int, WebSocket]] = {}
 
 @game_router.websocket('/ws/game/{game_id}')
@@ -42,11 +34,9 @@ async def game_websocket(
         websocket: WebSocket,
         game_service: GameOrchestrationService = Depends(get_orchestration_service),
 ):
-    exist = await game_service.is_game_exist(game_id)
-    if not exist:
-        raise GameNotFoundError('Game not found')
-
     game_status = await game_service.get_game_status(game_id)
+    if game_status is None:
+        raise GameNotFoundError('Game not found')
 
     await websocket.accept()
 
@@ -54,30 +44,23 @@ async def game_websocket(
     user = await game_service.auth_client.verify_user_websocket(refresh_token)
     player = Player(id=user.user_id, name=user.name, score=0, team_id=1)
 
-    await game_service.join_game(game_id, player=player)
+    await game_service.join_game(game_id, player, game_status)
 
     if game_id not in connections:
         connections[game_id] = {}
 
     connections[game_id][user.user_id] = websocket
 
-    await game_service.handle_snapshot(
-        game_id, user.user_id, game_status, websocket
-    )
-
-    players = await game_service.get_players(game_id)
-    host = await game_service.get_host_id(game_id)
-
-    for ws in connections[game_id].values():
-        await ws.send_json({'type': 'players', 'players': players})
-        await ws.send_json({'type': 'host', 'host': host})
-
-    await websocket.send_json({'type': 'my_id', 'my_id': user.user_id})
-
-    teams = await game_service.get_teams(game_id)
-    await websocket.send_json({'type': 'teams', 'teams': teams})
-
     try:
+        con = connections[game_id]
+        await game_service.broadcast_service.broadcast(
+            con, {'type': 'player_joined', 'player': player.model_dump()}
+        )
+
+        await game_service.handle_snapshot(
+            game_id, user.user_id, game_status, user.user_id, websocket
+        )
+
         while True:
             data = await websocket.receive_json()
             con = connections[game_id]

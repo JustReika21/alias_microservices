@@ -10,6 +10,10 @@ class GameNotFoundError(GameException):
     pass
 
 
+class GameAlreadyStartedError(GameException):
+    pass
+
+
 class GameClosedError(GameException):
     pass
 

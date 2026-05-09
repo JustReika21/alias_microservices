@@ -1,4 +1,5 @@
 import { useState } from "react";
+import { useNavigate } from "react-router-dom";
 import { createGame } from "../services/gameService";
 
 export default function CreateGame() {
@@ -9,20 +10,22 @@ export default function CreateGame() {
   const [result, setResult] = useState<string | null>(null);
   const [loading, setLoading] = useState(false);
 
+  const navigate = useNavigate();
+
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     setLoading(true);
     setResult(null);
 
     try {
-      await createGame({
+      const game = await createGame({
         rounds,
         time,
         pack,
         password: password || null,
       });
 
-      setResult("Game created!");
+      navigate(`/game/${game.id}`);
     } catch (e: any) {
       if (e.message === "Failed to fetch") {
         setResult("Session expired");
@@ -38,7 +41,7 @@ export default function CreateGame() {
     <div className={"panel default-box"}>
       <h2>Create Game</h2>
 
-      <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+      <form onSubmit={handleSubmit} style={{ display: "contents" }}>
         <input
           type="number"
           placeholder="Rounds"

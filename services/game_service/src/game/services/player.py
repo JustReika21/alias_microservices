@@ -37,3 +37,7 @@ class GamePlayerService:
 
         players = await self.player_repo.get_players(game_id, player_ids)
         return players
+
+    async def is_player_exist(self, game_id: str, player_id: int) -> bool:
+        player_exists = await self.player_repo.is_player_exists(game_id, player_id)
+        return player_exists
