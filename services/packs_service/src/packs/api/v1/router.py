@@ -3,7 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends, Query, status
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from packs.dependencies import get_pack_service
-from packs.schemas.schemas import PackCreate, PackRead, PackUpdate
+from packs.schemas.schemas import PackCreate, PackRead, PackUpdate, \
+    PackPreview, PaginatedPacksPreview, PaginatedInfiniteScroll
 from packs.services.service import PackService
 
 pack_router = APIRouter(tags=['Packs'], prefix='/packs')
@@ -27,15 +28,15 @@ async def pack_create_api(
 @pack_router.get(
     '/my',
     status_code=status.HTTP_200_OK,
-    response_model=List[PackRead],
+    response_model=PaginatedPacksPreview,
 )
 async def get_my_packs_api(
-        offset: int = Query(0, ge=0),
+        page: int = Query(1, ge=1),
         credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
         pack_service: PackService = Depends(get_pack_service)
 ):
     access_token = credentials.credentials
-    return await pack_service.get_my_packs(access_token, offset)
+    return await pack_service.get_my_packs(access_token, page)
 
 
 @pack_router.get(
@@ -53,16 +54,16 @@ async def get_pack_for_update(
     return await pack_service.get_pack(pack_id)
 
 
-@pack_router.get(
-    '',
-    status_code=status.HTTP_200_OK,
-    response_model=List[PackRead],
-)
-async def get_packs_api(
-        offset: int = Query(0, ge=0),
-        pack_service: PackService = Depends(get_pack_service)
-):
-    return await pack_service.get_packs(offset)
+# @pack_router.get(
+#     '',
+#     status_code=status.HTTP_200_OK,
+#     response_model=PaginatedPacksPreview,
+# )
+# async def get_packs_api(
+#         page: int = Query(1, ge=1),
+#         pack_service: PackService = Depends(get_pack_service)
+# ):
+#     return await pack_service.get_packs(page)
 
 
 @pack_router.get(
@@ -75,6 +76,19 @@ async def get_pack_api(
         pack_service: PackService = Depends(get_pack_service)
 ):
     return await pack_service.get_pack(pack_id)
+
+
+@pack_router.get(
+    '',
+    status_code=status.HTTP_200_OK,
+    response_model=PaginatedInfiniteScroll,
+)
+async def get_packs_by_name(
+        pack_name: str = Query(default=None, max_length=127),
+        page: int = Query(1, ge=1),
+        pack_service: PackService = Depends(get_pack_service)
+):
+    return await pack_service.get_packs_by_name(pack_name, page)
 
 
 @pack_router.delete('/{pack_id}', status_code=status.HTTP_204_NO_CONTENT)

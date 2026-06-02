@@ -1,20 +1,19 @@
-import { BrowserRouter, Routes, Route } from "react-router-dom";
-import PrivateRoute from "./components/PrivateRoute";
+import { Routes, Route } from "react-router-dom"
+import PrivateRoute from "./components/PrivateRoute"
+import Navbar from "./components/Navbar"
 
-import Navbar from "./components/Navbar.tsx";
-
-import Register from "./pages/Register";
-import Main from "./pages/Main";
-import Login from "./pages/Login";
-import CreatePack from "./pages/CreatePack.tsx";
-import EditPack from "./pages/EditPack.tsx";
-import CreateGame from "./pages/CreateGame.tsx";
-import GamePage from "./pages/GamePage.tsx";
-
+import Register from "./pages/Register"
+import Main from "./pages/Main"
+import Login from "./pages/Login"
+import CreatePack from "./pages/CreatePack"
+import EditPack from "./pages/EditPack"
+import CreateGame from "./pages/CreateGame"
+import GamePage from "./pages/GamePage"
+import MyPacks from "./pages/MyPacks.tsx";
 
 function App() {
   return (
-    <BrowserRouter>
+    <>
       <Navbar />
 
       <Routes>
@@ -31,6 +30,14 @@ function App() {
           }
         />
         <Route
+          path="/packs/my"
+          element={
+            <PrivateRoute>
+              <MyPacks />
+            </PrivateRoute>
+          }
+        />
+        <Route
           path="/pack/edit/:packId"
           element={
             <PrivateRoute>
@@ -38,7 +45,6 @@ function App() {
             </PrivateRoute>
           }
         />
-
         <Route
           path="/game/create"
           element={
@@ -56,8 +62,8 @@ function App() {
           }
         />
       </Routes>
-    </BrowserRouter>
-  );
+    </>
+  )
 }
 
-export default App;
+export default App

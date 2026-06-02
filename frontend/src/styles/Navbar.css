@@ -35,3 +35,21 @@
   color: var(--primary);
   border-bottom-color: var(--primary);
 }
+
+.navbar-link {
+  color: var(--text);
+  text-decoration: none;
+  font-size: 15px;
+  transition: color 0.2s ease;
+  padding: var(--space-xs) 0;
+  border-bottom: 2px solid transparent;
+}
+
+.navbar-link:hover {
+  color: var(--primary-hover);
+}
+
+.navbar-link.active {
+  color: var(--primary);
+  border-bottom-color: var(--primary);
+}

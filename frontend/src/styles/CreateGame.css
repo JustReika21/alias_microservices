@@ -1,0 +1,156 @@
+.create-game-layout {
+  width: 100%;
+  height: 90%;
+  display: flex;
+  align-items: flex-start;
+  justify-content: center;
+  padding: 10px;
+  box-sizing: border-box;
+}
+
+.create-game-window {
+  width: 90%;
+  max-width: 1280px;
+  height: 100%;
+  max-height: 100%;
+  display: flex;
+  flex-direction: column;
+  background: #0c0d12;
+  border: 1px solid #23242c;
+  overflow: hidden;
+}
+
+.create-game-header {
+  height: 78px;
+  display: flex;
+  align-items: center;
+  justify-content: space-between;
+  padding: 0 1.5rem;
+  border-bottom: 1px solid #2a2c35;
+  background: #101118;
+}
+
+.create-game-header h2 {
+  font-size: clamp(20px, 2vw, 28px); /* адаптивный размер */
+  font-weight: 500;
+  color: #f1f1f1;
+}
+
+.create-game-info {
+  color: #d0d0d0;
+  font-size: clamp(14px, 1.5vw, 18px);
+}
+
+.create-game-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 2fr;
+  min-height: 0;
+}
+
+.packs-panel {
+  border-right: 1px solid #2a2c35;
+  display: flex;
+  flex-direction: column;
+  min-height: 0;
+}
+
+.packs-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+}
+
+.pack-item {
+  padding: 1rem 1.5rem;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  color: #ececec;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 600;
+  cursor: pointer;
+  transition: background 0.15s ease;
+}
+
+.pack-item:hover {
+  background: rgba(255, 255, 255, 0.03);
+}
+
+.pack-item.active {
+  background: rgba(209, 0, 209, 0.08);
+}
+
+.packs-loader {
+  height: 60px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  color: #7b7d87;
+}
+
+.create-game-content {
+  flex: 1;
+  display: grid;
+  grid-template-columns: minmax(250px, 1fr) 2fr;
+  min-height: 0;
+}
+
+.cards-panel {
+  display: flex;
+  flex-direction: column;
+  min-width: 0;
+  min-height: 0;
+}
+
+.cards-list {
+  flex: 1;
+  min-height: 0;
+  overflow-y: auto;
+  padding: 24px 28px;
+}
+
+.card-chip {
+  color: #f1f1f1;
+  font-size: clamp(18px, 2vw, 24px);
+  font-weight: 600;
+  line-height: 1.45;
+}
+
+.game-form {
+  flex-shrink: 0;
+  display: flex;
+  gap: 12px;
+  padding: 20px 24px;
+  border-top: 1px solid #2a2c35;
+  background: #0f1016;
+}
+
+.game-form input {
+  flex: 1 1 120px;
+  min-width: 80px;
+  height: 44px;
+  background: #171923;
+  border: 1px solid #2b2d36;
+  border-radius: 0;
+  color: #f1f1f1;
+}
+
+.game-form button {
+  flex: 0 0 140px;
+  height: 44px;
+  border-radius: 0;
+}
+
+.packs-search {
+  padding: 12px;
+  border-bottom: 1px solid #2a2c35;
+}
+
+.packs-search input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  background: #171923;
+  border: 1px solid #2b2d36;
+  color: #f1f1f1;
+  box-sizing: border-box;
+}

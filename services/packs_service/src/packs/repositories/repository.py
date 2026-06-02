@@ -3,7 +3,7 @@ from typing import Sequence
 from packs.database.models import Pack
 from packs.schemas.schemas import PackCreate
 from sqlalchemy.ext.asyncio import AsyncSession
-from sqlalchemy.sql import delete, exists, select, update
+from sqlalchemy.sql import delete, exists, select, update, func
 
 
 class PackRepository:
@@ -38,14 +38,20 @@ class PackRepository:
         result = await self.db.scalar(stmt)
         return result
 
-    async def get_packs(self, offset: int, limit: int) -> Sequence[Pack]:
+    async def get_packs(self, page: int, limit: int) -> Sequence[Pack]:
         stmt = (
             select(Pack)
-            .offset(offset * limit)
+            .offset((page - 1) * limit)
             .limit(limit)
+            .order_by(Pack.id)
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def get_total_packs(self) -> int:
+        stmt = (select(func.count(Pack.id)))
+        result = await self.db.execute(stmt)
+        return result.scalar()
 
     async def get_pack(self, pack_id: int) -> Pack | None:
         stmt = (
@@ -55,20 +61,45 @@ class PackRepository:
         result = await self.db.scalar(stmt)
         return result
 
+    async def get_packs_by_name(
+            self,
+            pack_name: str,
+            page: int,
+            limit: int
+    ) -> Sequence[Pack]:
+        stmt = (
+            select(Pack)
+            .where(Pack.name.icontains(pack_name))
+            .offset((page - 1) * limit)
+            .limit(limit)
+            .order_by(Pack.id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalars().all()
+
     async def get_packs_by_creator_id(
             self,
             creator_id: int,
-            offset: int,
+            page: int,
             limit: int
     ) -> Sequence[Pack]:
         stmt = (
             select(Pack)
             .where(Pack.creator == creator_id)
-            .offset(offset * limit)
+            .offset((page - 1) * limit)
             .limit(limit)
+            .order_by(Pack.id)
         )
         result = await self.db.execute(stmt)
         return result.scalars().all()
+
+    async def get_total_user_packs(self, user_id: int) -> int:
+        stmt = (
+            select(func.count(Pack.id))
+            .where(Pack.creator == user_id)
+        )
+        result = await self.db.execute(stmt)
+        return result.scalar()
 
     async def delete_pack(self, pack_id: int) -> int | None:
         stmt = (

@@ -1,0 +1,83 @@
+.edit-pack-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.cards-panel {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-md);
+}
+
+.cards-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.tags-input {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 8px;
+  padding: 8px;
+  border: 1px solid var(--border);
+  border-radius: 8px;
+  background: var(--input-bg);
+}
+
+.tags-input input {
+  border: none;
+  outline: none;
+  background: transparent;
+  flex: 1;
+  min-width: 120px;
+}
+
+.cards-list {
+  display: flex;
+  flex-wrap: wrap;
+  gap: var(--space-sm);
+}
+
+.card-tag {
+  display: flex;
+  align-items: center;
+  gap: 6px;
+
+  padding: 6px 10px;
+  border-radius: 999px;
+  background: var(--input-bg);
+  border: 1px solid var(--border);
+
+  font-size: 14px;
+  cursor: pointer;
+}
+
+.card-tag.selected {
+  background: var(--primary);
+  color: var(--text-on-dark);
+}
+
+.card-tag .remove {
+  cursor: pointer;
+  opacity: 0.6;
+}
+
+.card-tag .remove:hover {
+  opacity: 1;
+}
+
+.actions {
+  display: flex;
+  gap: var(--space-sm);
+  margin-top: var(--space-md);
+}
+
+.danger-btn {
+  background: var(--error);
+}
+
+.danger-btn:hover {
+  background: #dc2626;
+}

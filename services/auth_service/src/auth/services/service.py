@@ -79,6 +79,11 @@ class UserService:
             await self.db.rollback()
             raise UserLoginError('User login error')
 
+    async def delete_refresh_token(self, token: str) -> None:
+        if token:
+            await self.user_repository.delete_refresh_token(token)
+            await self.db.commit()
+
     async def validate_refresh_token(self, token: str) -> int:
         payload = decode_jwt(token)
 

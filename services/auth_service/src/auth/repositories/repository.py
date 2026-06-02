@@ -46,6 +46,13 @@ class UserRepository:
 
         await self.db.execute(delete_stmt)
 
+    async def delete_refresh_token(self, token: str) -> None:
+        stmt = (
+            delete(RefreshToken)
+            .where(RefreshToken.token == token)
+        )
+        await self.db.execute(stmt)
+
     async def save_refresh_token_in_db(self, user_id, token: str) -> RefreshToken:
         expires_at = datetime.now(timezone.utc) + timedelta(
             minutes=settings.auth_jwt.refresh_token_expire_minutes

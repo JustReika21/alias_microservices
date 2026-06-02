@@ -1,0 +1,47 @@
+.my-packs-page {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-lg);
+}
+
+.packs-list {
+  display: flex;
+  flex-direction: column;
+  gap: var(--space-sm);
+}
+
+.pack-card {
+  padding: var(--space-md);
+  border-radius: var(--radius-md);
+  background: var(--card);
+  border: 1px solid var(--border);
+  cursor: pointer;
+  transition: transform 0.15s ease, border-color 0.15s ease;
+}
+
+.pack-card:hover {
+  transform: translateY(-2px);
+  border-color: var(--primary);
+}
+
+.pack-name {
+  font-size: 16px;
+  color: var(--text-strong);
+}
+
+.pack-meta {
+  font-size: 13px;
+  color: var(--text);
+  margin-top: 4px;
+}
+
+.pagination {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  margin-top: var(--space-lg);
+}
+
+.page-info {
+  color: var(--text);
+}

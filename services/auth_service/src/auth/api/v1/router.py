@@ -12,7 +12,10 @@ auth_router = APIRouter(tags=['Authentication'])
 security = HTTPBearer()
 
 
-@auth_router.post('/register')
+@auth_router.post(
+    '/register',
+    status_code=status.HTTP_201_CREATED,
+)
 async def user_create_view(
         data: UserCreate,
         user_service: UserService = Depends(get_user_service)
@@ -20,7 +23,11 @@ async def user_create_view(
     await user_service.create_user(data)
 
 
-@auth_router.post('/login', response_model=TokenInfo)
+@auth_router.post(
+    '/login',
+    status_code=status.HTTP_200_OK,
+    response_model=TokenInfo
+)
 async def user_login(
         data: UserLogin,
         response: Response,
@@ -44,7 +51,32 @@ async def user_login(
     return TokenInfo(access_token=access_token, token_type="Bearer")
 
 
-@auth_router.get('/me', response_model=UserRead)
+@auth_router.post(
+    '/logout',
+    status_code=status.HTTP_204_NO_CONTENT,
+)
+async def user_logout(
+        request: Request,
+        response: Response,
+        user_service: UserService = Depends(get_user_service)
+):
+    refresh_token = request.cookies.get('refresh_token')
+
+    await user_service.delete_refresh_token(refresh_token)
+
+    response.delete_cookie(
+        key='refresh_token',
+        httponly=True,
+        secure=False,
+        samesite='lax'
+    )
+
+
+@auth_router.get(
+    '/me',
+    status_code=status.HTTP_200_OK,
+    response_model=UserRead
+)
 async def get_current_user(
         credentials: HTTPAuthorizationCredentials = Depends(security),
         user_service: UserService = Depends(get_user_service)
@@ -54,7 +86,11 @@ async def get_current_user(
     return user
 
 
-@auth_router.post('/refresh', response_model=TokenInfo)
+@auth_router.post(
+    '/refresh',
+    status_code=status.HTTP_200_OK,
+    response_model=TokenInfo
+)
 async def refresh_jwt(
         request: Request,
         user_service: UserService = Depends(get_user_service)
@@ -66,7 +102,10 @@ async def refresh_jwt(
     return access_token
 
 
-@auth_router.get('/verify')
+@auth_router.get(
+    '/verify',
+    status_code=status.HTTP_200_OK
+)
 async def verify(
         response: Response,
         credentials: HTTPAuthorizationCredentials = Depends(HTTPBearer()),
@@ -79,7 +118,11 @@ async def verify(
     return JSONResponse(content={'X-User-Id': str(payload["sub"])}, status_code=status.HTTP_200_OK)
 
 
-@auth_router.get('/wsverify', response_model=UserRead)
+@auth_router.get(
+    '/wsverify',
+    status_code=status.HTTP_200_OK,
+    response_model=UserRead
+)
 async def websocket_verify(
         refresh_token: str,
         user_service: UserService = Depends(get_user_service)
