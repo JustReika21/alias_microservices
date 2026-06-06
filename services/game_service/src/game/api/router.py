@@ -1,3 +1,4 @@
+from aiormq.tools import awaitable
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette import status
@@ -67,9 +68,8 @@ async def game_websocket(
             game_status = await game_service.get_game_status(game_id)
 
             if data['type'] == 'set_up' and game_status == 'setting_up':
-                await game_service.set_game_status(game_id, 'waiting')
-                for ws in con.values():
-                    await ws.send_json({'type': 'status', 'value': 'waiting'})
+                if await game_service.sender_is_host(game_id, websocket, con):
+                    await game_service.handle_set_up(game_id, con)
 
             if data['type'] == 'start' and game_status == 'waiting':
                 if await game_service.sender_is_current_player(game_id, websocket, con):
@@ -94,6 +94,10 @@ async def game_websocket(
             if data['type'] == 'calculated' and game_status == 'calculating':
                 if await game_service.sender_is_current_player(game_id, websocket, con):
                     await game_service.handle_calculating(game_id, con)
+
+            if data['type'] == 'restart' and game_status == 'finished':
+                if await game_service.sender_is_host(game_id, websocket, con):
+                    await game_service.restart_game(game_id, con)
 
             if data['type'] == 'kick':
                 for ws in con.values():

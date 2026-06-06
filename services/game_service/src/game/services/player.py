@@ -23,7 +23,7 @@ class GamePlayerService:
         player_team = await self.player_repo.get_player_team_id(game_id, player_id)
         return player_team
 
-    async def get_players(
+    async def _get_players(
             self,
             game_id: str,
             team_player_ids: List[List[str]]

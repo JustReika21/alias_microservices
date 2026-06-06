@@ -31,7 +31,6 @@ class Game(GameBase):
     id: str
     host: int
     team_offset: int = 0
-    mode: str = 'solo'
     rounds: int
     current_round: int = 0
     time: int = 60

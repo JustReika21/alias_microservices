@@ -13,6 +13,7 @@ class GameSnapshotService:
             teams: List[dict],
             played_cards: List[dict] | None,
             end_time: int | None,
+            winners: List[str] | None,
     ) -> dict:
         is_current = user_id == current_player_id
 
@@ -28,14 +29,16 @@ class GameSnapshotService:
             'host': host,
             'teams': teams,
             'cards': None,
-            'timer': None
+            'timer': None,
+            'winners': None
         }
 
         if game_status == 'started':
             snapshot['cards'] = played_cards if is_current else played_cards[:-1]
             snapshot['end_time'] = end_time
-
         elif game_status == 'calculating':
             snapshot['cards'] = played_cards
+        elif game_status == 'finished':
+            snapshot['winners'] = winners
 
         return snapshot

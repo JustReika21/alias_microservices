@@ -1,3 +1,5 @@
+from typing import List
+
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
 
@@ -21,3 +23,14 @@ class GameScoreRepository(RedisConfig):
     async def update_team_score(self, game_id: str, team_id: int, points: int) -> int:
         team_key = self._team_key(game_id, team_id)
         return await self.redis_client.hincrby(team_key, 'score', points)
+
+    async def reset_scores(self, game_id: str, players: List[str], teams: List[str]):
+        async with self.redis_client.pipeline() as pipe:
+            for player in players:
+                player_key = self._player_key(game_id, int(player))
+                await pipe.hset(player_key, 'score', '0')
+            for team in teams:
+                team_key = self._team_key(game_id, int(team))
+                await pipe.hset(team_key, 'score', '0')
+
+            await pipe.execute()

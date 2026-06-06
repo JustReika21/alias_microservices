@@ -1,3 +1,5 @@
+from typing import List
+
 from game.repositories.score import GameScoreRepository
 from game.schemas.score_schemas import PlayerScore, TeamScore
 
@@ -22,3 +24,6 @@ class GameScoreService:
         )
         result = TeamScore(id=current_team_id, score=team_score)
         return result
+
+    async def reset_scores(self, game_id: str, player_ids: List[str], team_ids: List[str]):
+        await self.score_repo.reset_scores(game_id, player_ids, team_ids)

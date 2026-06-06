@@ -9,6 +9,7 @@ type Props = {
   myId?: string | null;
   hostId?: string | null;
   currentPlayerId?: string | null;
+  winners?: string[];
   sendSwitch: (data: SwitchData) => void;
 };
 
@@ -36,6 +37,7 @@ export default function TeamGrid({
   myId,
   hostId,
   currentPlayerId,
+  winners = [],
   sendSwitch,
 }: Props) {
   const normalizedPlayers = useMemo(() => {
@@ -51,15 +53,13 @@ export default function TeamGrid({
     [normalizedPlayers]
   );
 
-  const teamScores = useMemo(
-    () => buildTeamScores(teams),
-    [teams]
-  );
+  const teamScores = useMemo(() => buildTeamScores(teams), [teams]);
 
   const myTeamId = useMemo(() => {
     const me = normalizedPlayers.find(
       (p) => String(p.id) === String(myId)
     );
+
     return me ? String(me.teamId) : null;
   }, [normalizedPlayers, myId]);
 
@@ -79,8 +79,15 @@ export default function TeamGrid({
 
         const isMyTeam = myTeamId === teamId;
 
+        const isWinner =
+          status === "finished" &&
+          winners.includes(String(teamId));
+
         return (
-          <div key={teamId} className="team-box">
+          <div
+            key={teamId}
+            className={`team-box ${isWinner ? "winner" : ""}`}
+          >
             <div className="team-title">
               T{teamId} - {teamScore} pts
             </div>
@@ -107,7 +114,10 @@ export default function TeamGrid({
                         {isHost && (
                           <span className="host-icon">♔</span>
                         )}
-                        <span className="name-text">{p.name}</span>
+
+                        <span className="name-text">
+                          {p.name}
+                        </span>
                       </div>
 
                       <div className="player-score">
@@ -119,19 +129,21 @@ export default function TeamGrid({
               )}
             </div>
 
-            {status === "setting_up" && myTeamId && !isMyTeam && (
-              <button
-                className="join-btn"
-                onClick={() =>
-                  sendSwitch({
-                    type: "switch_team",
-                    new_team_id: Number(teamId),
-                  })
-                }
-              >
-                +
-              </button>
-            )}
+            {status === "setting_up" &&
+              myTeamId &&
+              !isMyTeam && (
+                <button
+                  className="join-btn"
+                  onClick={() =>
+                    sendSwitch({
+                      type: "switch_team",
+                      new_team_id: Number(teamId),
+                    })
+                  }
+                >
+                  +
+                </button>
+              )}
           </div>
         );
       })}

@@ -1,15 +1,8 @@
-import { Link, useLocation } from "react-router-dom"
+import { Link } from "react-router-dom"
 import { useAuth } from "../context/AuthContext"
 
 export default function Navbar() {
-  const location = useLocation()
   const { user, logout, loading } = useAuth()
-
-  const isActive = (path: string) =>
-    location.pathname.startsWith(path)
-
-  const linkClass = (path?: string) =>
-    `navbar-link${path && isActive(path) ? " active" : ""}`
 
   if (loading) return null
 
@@ -18,27 +11,26 @@ export default function Navbar() {
       <Link to="/" className="navbar-brand">Alias</Link>
 
       <div className="navbar-links">
-
-        <Link to="/pack/create" className={linkClass("/pack/create")}>
+        <Link to="/pack/create" className="navbar-link">
           Create pack
         </Link>
 
-        <Link to="/game/create" className={linkClass("/game/create")}>
+        <Link to="/game/create" className="navbar-link">
           Create game
         </Link>
 
         {user && (
-          <Link to="/packs/my" className={linkClass("/packs/my")}>
+          <Link to="/packs/my" className="navbar-link">
             My packs
           </Link>
         )}
 
         {!user ? (
           <>
-            <Link to="/register" className={linkClass("/register")}>
+            <Link to="/register" className="navbar-link">
               Register
             </Link>
-            <Link to="/login" className={linkClass("/login")}>
+            <Link to="/login" className="navbar-link">
               Login
             </Link>
           </>

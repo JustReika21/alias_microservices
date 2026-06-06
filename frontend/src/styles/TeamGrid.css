@@ -104,3 +104,19 @@
   opacity: 0.4;
   cursor: default;
 }
+
+.team-box.winner {
+  border-color: var(--success);
+  box-shadow: 0 0 20px rgba(34, 197, 94, 0.35);
+}
+
+.team-box.winner .team-title {
+  color: var(--success);
+}
+
+.game-result {
+  margin: 16px 0;
+  text-align: center;
+  color: var(--text-strong);
+  font-size: 20px;
+}

@@ -1,4 +1,4 @@
-export type Status = "setting_up" | "waiting" | "started" | "calculating";
+export type Status = "setting_up" | "waiting" | "started" | "calculating" | "finished";
 
 export type ActionConfig = {
   label: string;
@@ -11,4 +11,5 @@ export const STATUS_CONFIG: Record<Status, ActionConfig> = {
   waiting: { label: "Start", action: "start", clickDelay: 100 },
   started: { label: "Next", action: "next", clickDelay: 100 },
   calculating: { label: "Calculated", action: "calculated", clickDelay: 1000 },
+  finished: { label: "Restart", action: "restart", clickDelay: 100 },
 };

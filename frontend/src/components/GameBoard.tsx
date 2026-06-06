@@ -8,7 +8,11 @@ import CardStack from "./CardStack";
 import Timer from "./Timer";
 import GameButton from "./GameButton";
 
-export default function GameBoard({ gameId }: { gameId: string }) {
+export default function GameBoard({
+  gameId,
+}: {
+  gameId: string;
+}) {
   const {
     players,
     teams,
@@ -21,6 +25,8 @@ export default function GameBoard({ gameId }: { gameId: string }) {
     guessedMap,
     logs,
     endTime,
+    winners,
+    isDraw,
     sendGuess,
     sendSwitch,
     sendAction,
@@ -29,12 +35,24 @@ export default function GameBoard({ gameId }: { gameId: string }) {
   const [disabled, setDisabled] = useState(false);
   const timeoutRef = useRef<number | null>(null);
 
+  const canUseActionButton =
+    (status === "setting_up" &&
+      String(myId) === String(hostId)) ||
+    (status === "finished" &&
+      String(myId) === String(hostId)) ||
+    ((status === "waiting" ||
+      status === "started" ||
+      status === "calculating") &&
+      isMyTurn);
+
   useEffect(() => {
     if (status !== "calculating") return;
 
     setDisabled(true);
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
     timeoutRef.current = window.setTimeout(() => {
       setDisabled(false);
@@ -42,11 +60,14 @@ export default function GameBoard({ gameId }: { gameId: string }) {
   }, [status]);
 
   const handleAction = (action: string) => {
-    const delay = STATUS_CONFIG[status as Status].clickDelay;
+    const delay =
+      STATUS_CONFIG[status as Status].clickDelay;
 
     setDisabled(true);
 
-    if (timeoutRef.current) clearTimeout(timeoutRef.current);
+    if (timeoutRef.current) {
+      clearTimeout(timeoutRef.current);
+    }
 
     timeoutRef.current = window.setTimeout(() => {
       setDisabled(false);
@@ -64,8 +85,17 @@ export default function GameBoard({ gameId }: { gameId: string }) {
         myId={myId}
         hostId={hostId}
         currentPlayerId={currentPlayerId}
+        winners={winners}
         sendSwitch={sendSwitch}
       />
+
+      {status === "finished" && (
+        <div className="game-result">
+          {isDraw
+            ? "Ничья"
+            : `Победила команда ${winners[0]}`}
+        </div>
+      )}
 
       <Timer endTime={endTime} />
 
@@ -76,9 +106,9 @@ export default function GameBoard({ gameId }: { gameId: string }) {
         sendAction={sendGuess}
       />
 
-      {isMyTurn && (
+      {canUseActionButton && (
         <GameButton
-          status={status}
+          status={status as Status}
           onAction={handleAction}
           disabled={disabled}
         />

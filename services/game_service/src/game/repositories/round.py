@@ -29,6 +29,11 @@ class GameRoundRepository(RedisConfig):
 
             await pipe.execute()
 
+    async def get_total_rounds(self, game_id: str) -> int:
+        game_key = self._game_key(game_id)
+        total_rounds = await self.redis_client.hget(game_key, 'rounds')
+        return int(total_rounds)
+
     async def get_current_round(self, game_id: str) -> int:
         game_key = self._game_key(game_id)
         current_round = await self.redis_client.hget(game_key, 'current_round')
@@ -38,3 +43,7 @@ class GameRoundRepository(RedisConfig):
         game_key = self._game_key(game_id)
         current_round = await self.redis_client.hincrby(game_key, 'current_round', 1)
         return current_round
+
+    async def reset_rounds(self, game_id: str) -> None:
+        game_key = self._game_key(game_id)
+        await self.redis_client.hset(game_key, 'current_round', '0')

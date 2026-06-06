@@ -48,8 +48,3 @@
 .navbar-link:hover {
   color: var(--primary-hover);
 }
-
-.navbar-link.active {
-  color: var(--primary);
-  border-bottom-color: var(--primary);
-}
