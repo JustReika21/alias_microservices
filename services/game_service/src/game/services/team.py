@@ -59,3 +59,6 @@ class GameTeamService:
     async def increment_team_offset(self, game_id: str) -> int:
         team_offset = await self.team_repo.increment_team_offset(game_id)
         return team_offset
+
+    async def remove_player_from_team(self, game_id: str, player: dict):
+        await self.team_repo.remove_player_from_team(game_id, player)

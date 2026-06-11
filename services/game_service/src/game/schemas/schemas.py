@@ -12,6 +12,7 @@ class Player(GameBase):
     name: str
     score: int = 0
     team_id: int = 1
+    connected: bool = 1
 
 
 class Team(GameBase):

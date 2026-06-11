@@ -68,15 +68,20 @@ class GameOrchestrationService:
         game = GameCreated(id=game.id)
         return game
 
-    async def join_game(self, game_id: str, player: Player, game_status: str) -> None:
-        player_exists = await self.is_player_exist(game_id, player.id)
+    async def join_game(self, game_id: str, user, game_status: str) -> Player:
+        player_exists = await self.is_player_exist(game_id, user.user_id)
 
         if player_exists:
-            pass
+            player = await self.player_service.get_player(game_id, user.user_id)
+            player = Player.model_validate(player)
+            await self.player_service.connect_player(game_id, user.user_id)
         elif game_status == 'setting_up':
+            player = Player(id=user.user_id, name=user.name)
             await self.player_service.join_game(game_id, player)
         else:
             raise GameAlreadyStartedError('Game already started')
+
+        return player
 
     async def handle_snapshot(
             self,
@@ -392,3 +397,48 @@ class GameOrchestrationService:
     async def is_player_exist(self, game_id: str, player_id: int) -> bool:
         player_exists = await self.player_service.is_player_exist(game_id, player_id)
         return player_exists
+
+    async def disconnect_user(self, game_id: str, user_id: str, con: dict[int, WebSocket]) -> None:
+        if user_id in con:
+            ws = con.pop(int(user_id))
+
+            try:
+                await ws.close()
+            except Exception:
+                pass
+
+            await self.player_service.disconnect_player(game_id, user_id)
+            await self.broadcast_service.broadcast(
+                con, {'type': 'player_disconnected', 'user_id': user_id}
+            )
+
+    async def kick_player(self, game_id: str, user_id: str, con: dict[int, WebSocket]) -> None:
+        player = await self.player_service.get_player(game_id, user_id)
+
+        await self.team_service.remove_player_from_team(game_id, player)
+        await self.player_service.remove_player(game_id, player.get('id'))
+
+        ws = con.get(int(user_id))
+
+        if ws:
+            try:
+                await ws.send_json({'type': 'you_have_been_kicked', 'user_id': user_id})
+                await ws.close()
+            except Exception:
+                pass
+
+            con.pop(int(user_id), None)
+
+        await self.broadcast_service.broadcast(
+            con, {'type': 'player_kicked', 'user_id': user_id}
+        )
+
+        current_player = await self.get_current_player_id(game_id)
+        for user_id, ws in con.items():
+            payload = {
+                'type': 'current_player',
+                'player_id': current_player,
+                'is_current': user_id == current_player
+            }
+            await self.broadcast_service.send_to(ws, payload)
+        

@@ -1,9 +1,10 @@
-export interface Player {
+export type Player = {
   id: string;
   name: string;
   score: number;
   teamId: string;
-}
+  connected?: boolean;
+};
 
 export interface Team {
   id: string;

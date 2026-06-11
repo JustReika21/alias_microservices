@@ -58,7 +58,7 @@ class GameTeamRepository(RedisConfig):
                 {str(player_id): now}
             )
 
-            await pipe.hset(player_key, "team_id", str(new_team_id))
+            await pipe.hset(player_key, 'team_id', str(new_team_id))
 
             await pipe.execute()
 
@@ -152,3 +152,18 @@ class GameTeamRepository(RedisConfig):
         team_key = self._team_key(game_id, team_id)
         team_exists = await self.redis_client.exists(team_key)
         return team_exists
+
+    async def remove_player_from_team(self, game_id: str, player: dict) -> None:
+        team_id = player.get('team_id')
+        team_players = self._team_players_key(game_id, team_id)
+        teams_key = self._teams_key(game_id)
+        await self.redis_client.zrem(team_players, str(player.get('id')))
+
+        team_size = await self.redis_client.zcard(team_players)
+
+        if team_size == 0:
+            async with self.redis_client.pipeline() as pipe:
+                await pipe.delete(self._team_key(game_id, team_id))
+                await pipe.zrem(teams_key, str(team_id))
+                
+                await pipe.execute()

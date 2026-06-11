@@ -1,4 +1,3 @@
-from aiormq.tools import awaitable
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
 from starlette import status
@@ -43,9 +42,8 @@ async def game_websocket(
 
     refresh_token = websocket.cookies.get('refresh_token')
     user = await game_service.auth_client.verify_user_websocket(refresh_token)
-    player = Player(id=user.user_id, name=user.name, score=0, team_id=1)
 
-    await game_service.join_game(game_id, player, game_status)
+    player = await game_service.join_game(game_id, user, game_status)
 
     if game_id not in connections:
         connections[game_id] = {}
@@ -100,9 +98,12 @@ async def game_websocket(
                     await game_service.restart_game(game_id, con)
 
             if data['type'] == 'kick':
-                for ws in con.values():
-                    await ws.send_json({'type': 'kick'})
-                pass
+                if await game_service.sender_is_host(game_id, websocket, con):
+                    await game_service.kick_player(game_id, data['id'], con)
 
     except WebSocketDisconnect:
-        connections[game_id].pop(user.user_id)
+        pass
+    except Exception as e:
+        print(f'Unexpected WS error: {e}')
+    finally:
+        await game_service.disconnect_user(game_id, user.user_id, connections[game_id])

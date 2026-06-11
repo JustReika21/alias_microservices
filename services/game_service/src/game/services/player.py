@@ -38,6 +38,19 @@ class GamePlayerService:
         players = await self.player_repo.get_players(game_id, player_ids)
         return players
 
+    async def get_player(self, game_id: str, player_id: str) -> dict:
+        player = await self.player_repo.get_player(game_id, player_id)
+        return player
+
     async def is_player_exist(self, game_id: str, player_id: int) -> bool:
         player_exists = await self.player_repo.is_player_exists(game_id, player_id)
         return player_exists
+
+    async def remove_player(self, game_id: str, player_id: str) -> None:
+        await self.player_repo.remove_player(game_id, player_id)
+
+    async def disconnect_player(self, game_id: str, player_id: str) -> None:
+        await self.player_repo.disconnect_player(game_id, player_id)
+
+    async def connect_player(self, game_id: str, player_id: str) -> None:
+        await self.player_repo.connect_player(game_id, player_id)

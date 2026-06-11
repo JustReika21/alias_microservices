@@ -59,6 +59,11 @@ class GamePlayerRepository(RedisConfig):
 
         return players
 
+    async def get_player(self, game_id: str, player_id: str) -> dict:
+        player_key = self._player_key(game_id, int(player_id))
+        player = await self.redis_client.hgetall(player_key)
+        return player
+
     async def get_player_team_id(self, game_id: str, player_id: int) -> int:
         player_key = self._player_key(game_id, player_id)
         team_id = await self.redis_client.hget(player_key, 'team_id')
@@ -68,3 +73,15 @@ class GamePlayerRepository(RedisConfig):
         player_key = self._player_key(game_id, player_id)
         player_exists = await self.redis_client.exists(player_key)
         return player_exists
+
+    async def remove_player(self, game_id: str, player_id: str) -> None:
+        player_key = self._player_key(game_id, int(player_id))
+        await self.redis_client.delete(player_key)
+
+    async def disconnect_player(self, game_id: str, player_id: str) -> None:
+        player_key = self._player_key(game_id, int(player_id))
+        await self.redis_client.hset(player_key, 'connected', '0')
+
+    async def connect_player(self, game_id: str, player_id: str) -> None:
+        player_key = self._player_key(game_id, int(player_id))
+        await self.redis_client.hset(player_key, 'connected', '1')

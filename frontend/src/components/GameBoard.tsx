@@ -30,6 +30,7 @@ export default function GameBoard({
     sendGuess,
     sendSwitch,
     sendAction,
+    sendKick,
   } = useGame(gameId);
 
   const [disabled, setDisabled] = useState(false);
@@ -87,6 +88,7 @@ export default function GameBoard({
         currentPlayerId={currentPlayerId}
         winners={winners}
         sendSwitch={sendSwitch}
+        sendKick={sendKick}
       />
 
       {status === "finished" && (

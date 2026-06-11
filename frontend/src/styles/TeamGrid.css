@@ -31,41 +31,51 @@
   display: flex;
   flex-direction: column;
   gap: 4px;
-  width: 100%;
 }
 
 .player {
   display: flex;
   justify-content: space-between;
   align-items: center;
-  width: 100%;
   padding: 2px 4px;
   border-radius: 6px;
+}
+
+.player.turn {
+  font-weight: 600;
+  border: 1px solid rgba(160, 160, 160, 0.6);
+  background: rgba(120, 80, 180, 0.12);
 }
 
 .player-name {
   display: flex;
   align-items: center;
   gap: 6px;
-  flex: 8;
+  flex: 1;
   min-width: 0;
-  line-height: 1;
+  position: relative;
 }
 
 .name-text {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
+  color: #fff;
 }
 
-.player-score {
-  flex: 2;
-  text-align: right;
-  white-space: nowrap;
+.name-text.offline {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.me-tag {
+  font-size: 11px;
+  opacity: 0.8;
+  color: #fff;
 }
 
 .host-icon {
   font-size: 24px;
+  color: white;
   line-height: 1;
   flex-shrink: 0;
   display: flex;
@@ -74,14 +84,67 @@
   transform: translateY(-15%);
 }
 
-.player.turn {
-  font-weight: 600;
-  color: #e8e6f0;
+.host-icon.offline {
+  color: rgba(255, 255, 255, 0.35);
 }
 
-.player.me {
-  border: 1px solid var(--primary-focus);
-  background: rgba(30, 48, 30, 0.25);
+.player-right {
+  display: flex;
+  align-items: center;
+  justify-content: flex-end;
+  min-width: 34px;
+  position: relative;
+}
+
+/* очки */
+.player-score {
+  color: #fff;
+  white-space: nowrap;
+}
+
+.player-score.offline {
+  color: rgba(255, 255, 255, 0.35);
+}
+
+.kick-btn {
+  all: unset;
+  cursor: pointer;
+
+  display: inline-flex;
+  align-items: center;
+  justify-content: center;
+
+  width: auto;
+  height: auto;
+  padding: 0;
+  margin: 0;
+
+  color: var(--primary);
+  font-size: 14px;
+  line-height: 1;
+
+  text-shadow: 0 0 6px var(--primary-hover);
+  transition: color 0.15s ease, text-shadow 0.15s ease;
+
+  user-select: none;
+  background: transparent !important;
+  border: none !important;
+  box-shadow: none !important;
+}
+
+.kick-btn:hover {
+  color: var(--primary-hover);
+  text-shadow: 0 0 10px var(--primary-hover);
+}
+
+.kick-btn:active {
+  transform: scale(0.9);
+}
+
+.player.disconnected .name-text,
+.player.disconnected .player-score,
+.player.disconnected .host-icon {
+  color: rgba(255, 255, 255, 0.35);
 }
 
 .empty {
@@ -100,11 +163,6 @@
   cursor: pointer;
 }
 
-.join-btn:disabled {
-  opacity: 0.4;
-  cursor: default;
-}
-
 .team-box.winner {
   border-color: var(--success);
   box-shadow: 0 0 20px rgba(34, 197, 94, 0.35);
@@ -112,11 +170,4 @@
 
 .team-box.winner .team-title {
   color: var(--success);
-}
-
-.game-result {
-  margin: 16px 0;
-  text-align: center;
-  color: var(--text-strong);
-  font-size: 20px;
 }
