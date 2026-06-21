@@ -26,7 +26,11 @@ export default function CreateGame() {
   const [loading, setLoading] = useState(false);
   const [packsLoading, setPacksLoading] = useState(false);
 
-  async function loadPacks(p: number, query: string, replace = false) {
+  async function loadPacks(
+    p: number,
+    query: string,
+    replace = false
+  ) {
     if (packsLoading || (!hasMore && !replace)) return;
 
     setPacksLoading(true);
@@ -34,7 +38,7 @@ export default function CreateGame() {
     try {
       const res = await fetchPacksByName(query, p);
 
-      setPacks(prev =>
+      setPacks((prev) =>
         replace ? res.items : [...prev, ...res.items]
       );
 
@@ -56,12 +60,15 @@ export default function CreateGame() {
 
   async function selectPack(id: number) {
     setSelectedPack(id);
+
     const cards = await fetchCards(id);
+
     setCards(cards);
   }
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
+
     if (!selectedPack) return;
 
     setLoading(true);
@@ -100,15 +107,12 @@ export default function CreateGame() {
 
   useEffect(() => {
     const loader = loaderRef.current;
+
     if (!loader) return;
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (
-          entry.isIntersecting &&
-          !packsLoading &&
-          hasMore
-        ) {
+        if (entry.isIntersecting && !packsLoading && hasMore) {
           loadPacks(page + 1, debouncedSearch, false);
         }
       },
@@ -127,9 +131,10 @@ export default function CreateGame() {
     <div className="create-game-layout">
       <div className="create-game-window">
         <div className="create-game-header">
-          <h2>Custom word packs</h2>
+          <h2>Пользовательские паки</h2>
+
           <div className="create-game-info">
-            <span>Words {cards.length}</span>
+            <span>Слов: {cards.length}</span>
           </div>
         </div>
 
@@ -139,12 +144,12 @@ export default function CreateGame() {
               <input
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                placeholder="Search pack..."
+                placeholder="Поиск набора..."
               />
             </div>
 
             <div className="packs-list">
-              {packs.map(p => (
+              {packs.map((p) => (
                 <div
                   key={p.id}
                   className={`pack-item ${
@@ -157,14 +162,14 @@ export default function CreateGame() {
               ))}
 
               <div ref={loaderRef} className="packs-loader">
-                {packsLoading && "Loading..."}
+                {packsLoading && "Загрузка..."}
               </div>
             </div>
           </div>
 
           <div className="cards-panel">
             <div className="cards-list">
-              {cards.map(c => (
+              {cards.map((c) => (
                 <div key={c.id} className="card-chip">
                   {c.word}
                 </div>
@@ -172,23 +177,41 @@ export default function CreateGame() {
             </div>
 
             <form onSubmit={handleSubmit} className="game-form">
-              <input
-                type="number"
-                value={rounds}
-                onChange={(e) => setRounds(Number(e.target.value))}
-              />
-              <input
-                type="number"
-                value={time}
-                onChange={(e) => setTime(Number(e.target.value))}
-              />
-              <input
-                type="text"
-                value={password}
-                onChange={(e) => setPassword(e.target.value)}
-              />
-              <button disabled={!selectedPack || loading}>
-                {loading ? "Creating..." : "Create"}
+              <div className="game-field">
+                <label>Раунды</label>
+
+                <input
+                  type="number"
+                  min={1}
+                  value={rounds}
+                  onChange={(e) => setRounds(Number(e.target.value))}
+                />
+              </div>
+
+              <div className="game-field">
+                <label>Время (сек)</label>
+
+                <input
+                  type="number"
+                  min={1}
+                  value={time}
+                  onChange={(e) => setTime(Number(e.target.value))}
+                />
+              </div>
+
+              <div className="game-field game-field-password">
+                <label>Пароль</label>
+
+                <input
+                  type="text"
+                  value={password}
+                  onChange={(e) => setPassword(e.target.value)}
+                  placeholder="Необязательно"
+                />
+              </div>
+
+              <button type="submit" disabled={!selectedPack || loading}>
+                {loading ? "Создание..." : "Создать"}
               </button>
             </form>
           </div>

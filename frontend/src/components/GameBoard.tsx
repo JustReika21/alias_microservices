@@ -23,7 +23,6 @@ export default function GameBoard({
     hostId,
     currentPlayerId,
     guessedMap,
-    logs,
     endTime,
     winners,
     isDraw,
@@ -115,12 +114,6 @@ export default function GameBoard({
           disabled={disabled}
         />
       )}
-
-      <div style={{ height: 200, overflowY: "auto" }}>
-        {logs.map((l, i) => (
-          <div key={i}>{l}</div>
-        ))}
-      </div>
     </div>
   );
 }

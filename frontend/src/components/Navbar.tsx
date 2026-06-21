@@ -8,30 +8,37 @@ export default function Navbar() {
 
   return (
     <nav className="navbar">
-      <Link to="/" className="navbar-brand">Alias</Link>
+      <Link to="/" className="navbar-brand">Алиас</Link>
+
+      <input id="nav-toggle" type="checkbox" />
+
+      <label htmlFor="nav-toggle" className="navbar-burger">
+        ☰
+      </label>
 
       <div className="navbar-links">
         <Link to="/pack/create" className="navbar-link">
-          Create pack
+          Создать пак
         </Link>
 
         <Link to="/game/create" className="navbar-link">
-          Create game
+          Создать игру
         </Link>
 
         {user && (
           <Link to="/packs/my" className="navbar-link">
-            My packs
+            Мои паки
           </Link>
         )}
 
         {!user ? (
           <>
             <Link to="/register" className="navbar-link">
-              Register
+              Регистрация
             </Link>
+
             <Link to="/login" className="navbar-link">
-              Login
+              Вход
             </Link>
           </>
         ) : (
@@ -46,7 +53,7 @@ export default function Navbar() {
               cursor: "pointer",
             }}
           >
-            Logout
+            Выход
           </button>
         )}
       </div>

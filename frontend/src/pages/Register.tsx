@@ -10,35 +10,40 @@ export default function Register() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMsg("Loading...");
+    setMsg("Загрузка...");
+
     try {
       await registerUser(name, password);
-      setMsg("Registered successfully! Redirecting to login...");
+      setMsg("Регистрация успешна! Переход к входу...");
       navigate("/login");
     } catch (err: any) {
-      setMsg("Error: " + err.message);
+      setMsg("Ошибка: " + (err.message || "Не удалось зарегистрироваться"));
     }
   };
 
   return (
     <div className="panel default-box">
-      <h2>Register</h2>
-      <form onSubmit={handleRegister} style={{display: 'contents'}}>
+      <h2>Регистрация</h2>
+
+      <form onSubmit={handleRegister} style={{ display: "contents" }}>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
+          placeholder="Имя"
           required
         />
+
         <input
           type="password"
           value={password}
           onChange={(e) => setPassword(e.target.value)}
-          placeholder="Password"
+          placeholder="Пароль"
           required
         />
-        <button type="submit">Create account</button>
+
+        <button type="submit">Создать аккаунт</button>
       </form>
+
       <div className="msg">{msg}</div>
     </div>
   );

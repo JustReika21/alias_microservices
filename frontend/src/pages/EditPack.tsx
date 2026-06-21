@@ -29,7 +29,9 @@ export default function EditPack() {
   const navigate = useNavigate();
   const { packId } = useParams<{ packId: string }>();
 
-  if (!packId) return <div className="container">Invalid pack ID</div>;
+  if (!packId)
+    return <div className="container">Некорректный ID пака</div>;
+
   const numericPackId = Number(packId);
 
   const [pack, setPack] = useState<Pack | null>(null);
@@ -48,7 +50,7 @@ export default function EditPack() {
       ]);
 
       setPack(packData);
-      setCards(cardsData);
+      setCards([...cardsData].reverse());
       setLoading(false);
     }
 
@@ -63,11 +65,16 @@ export default function EditPack() {
       const exists = prev.some(
         (c) => c.word.toLowerCase() === trimmed.toLowerCase()
       );
+
       if (exists) return prev;
 
       return [
+        {
+          id: generateId(),
+          word: trimmed,
+          isNew: true,
+        },
         ...prev,
-        { id: generateId(), word: trimmed, isNew: true },
       ];
     });
   }
@@ -85,6 +92,7 @@ export default function EditPack() {
 
     if (value.includes(",")) {
       const parts = value.split(",");
+
       parts.slice(0, -1).forEach(addWord);
       setInputValue(parts[parts.length - 1]);
     } else {
@@ -113,7 +121,7 @@ export default function EditPack() {
           isNew: true,
         }));
 
-      return [...prev, ...newCards];
+      return [...newCards, ...prev];
     });
   }
 
@@ -123,22 +131,25 @@ export default function EditPack() {
 
   function toggleCardSelect(id: number) {
     const newSet = new Set(selectedCards);
+
     newSet.has(id) ? newSet.delete(id) : newSet.add(id);
+
     setSelectedCards(newSet);
   }
 
   async function handleAdd() {
-    const words = cards
-      .filter((c) => c.isNew)
-      .map((c) => c.word);
+    const words = cards.filter((c) => c.isNew).map((c) => c.word);
 
     if (!words.length) return;
 
     setSaving(true);
+
     try {
       await createCards(numericPackId, words);
+
       const fresh = await fetchCards(numericPackId);
-      setCards(fresh);
+      setCards([...fresh].reverse());
+
       setInputValue("");
     } finally {
       setSaving(false);
@@ -149,10 +160,13 @@ export default function EditPack() {
     if (selectedCards.size === 0) return;
 
     setSaving(true);
+
     try {
       await deleteCards(numericPackId, Array.from(selectedCards));
+
       const fresh = await fetchCards(numericPackId);
-      setCards(fresh);
+      setCards([...fresh].reverse());
+
       setSelectedCards(new Set());
     } finally {
       setSaving(false);
@@ -163,6 +177,7 @@ export default function EditPack() {
     if (!pack) return;
 
     setSaving(true);
+
     try {
       await updatePack(numericPackId, {
         name: pack.name,
@@ -174,114 +189,125 @@ export default function EditPack() {
   }
 
   async function handleDeletePack() {
-    if (!confirm("Delete this pack?")) return;
+    if (!confirm("Удалить этот пак?")) return;
+
     await deletePack(numericPackId);
     navigate("/");
   }
 
-  if (loading) return <div className="container">Loading...</div>;
-  if (!pack) return <div className="container">Error</div>;
+  if (loading)
+    return <div className="container">Загрузка...</div>;
+
+  if (!pack)
+    return <div className="container">Ошибка</div>;
 
   return (
-    <div className="container edit-pack-page">
-      <div className="card">
-        <h2>Edit Pack</h2>
+    <div className="edit-pack-layout">
+      <div className="edit-pack-window">
+        <div className="edit-pack-header">
+          <h2>Редактирование пака</h2>
 
-        <div className="form-group">
-          <label>Name</label>
-          <input
-            value={pack.name}
-            onChange={(e) =>
-              setPack({ ...pack, name: e.target.value })
-            }
-          />
+          <div className="edit-pack-info">
+            <span>Слов: {cards.length}</span>
+          </div>
         </div>
 
-        <div className="form-group">
-          <label>Description</label>
-          <textarea
-            rows={3}
-            value={pack.description || ""}
-            onChange={(e) =>
-              setPack({
-                ...pack,
-                description: e.target.value,
-              })
-            }
-          />
-        </div>
+        <div className="edit-pack-content">
+          <div className="pack-panel">
+            <div className="pack-form">
+              <label>Название</label>
 
-        <div className="actions">
-          <button onClick={handleSavePack} disabled={saving}>
-            Save
-          </button>
+              <input
+                value={pack.name}
+                onChange={(e) =>
+                  setPack({ ...pack, name: e.target.value })
+                }
+              />
 
-          <button
-            className="danger-btn"
-            onClick={handleDeletePack}
-          >
-            Delete Pack
-          </button>
-        </div>
-      </div>
+              <label>Описание</label>
 
-      <div className="panel cards-panel">
-        <div className="cards-header">
-          <h3>Cards ({cards.length})</h3>
-        </div>
-
-        <div className="tags-input">
-          {cards.map((card) => (
-            <div
-              key={card.id}
-              className={`card-tag ${
-                typeof card.id === "number" &&
-                selectedCards.has(card.id)
-                  ? "selected"
-                  : ""
-              }`}
-              onClick={() =>
-                typeof card.id === "number" &&
-                toggleCardSelect(card.id)
-              }
-            >
-              {card.word}
-
-              {card.isNew && (
-                <span
-                  className="remove"
-                  onClick={(e) => {
-                    e.stopPropagation();
-                    removeNewCard(card.id);
-                  }}
-                >
-                  ✕
-                </span>
-              )}
+              <textarea
+                rows={5}
+                value={pack.description || ""}
+                onChange={(e) =>
+                  setPack({ ...pack, description: e.target.value })
+                }
+              />
             </div>
-          ))}
 
-          <input
-            value={inputValue}
-            onChange={handleChange}
-            onKeyDown={handleKeyDown}
-            onPaste={handlePaste}
-            placeholder="Type word, press Enter or comma"
-          />
-        </div>
+            <div className="pack-actions">
+              <button onClick={handleSavePack} disabled={saving}>
+                Сохранить
+              </button>
 
-        <div className="actions">
-          <button onClick={handleAdd} disabled={saving}>
-            Add
-          </button>
+              <button className="danger-btn" onClick={handleDeletePack}>
+                Удалить пак
+              </button>
+            </div>
+          </div>
 
-          <button
-            className="danger-btn"
-            onClick={handleDeleteSelected}
-            disabled={selectedCards.size === 0 || saving}
-          >
-            Delete Selected ({selectedCards.size})
-          </button>
+          <div className="words-panel">
+            <div className="words-input">
+              <input
+                value={inputValue}
+                onChange={handleChange}
+                onKeyDown={handleKeyDown}
+                onPaste={handlePaste}
+                placeholder="Введите слово..."
+              />
+
+              <div className="input-hint">
+                Нажмите <b>Enter</b> или поставьте <b>запятую</b>, чтобы добавить слово
+              </div>
+            </div>
+
+            <div className="words-list">
+              {cards.map((card) => (
+                <div
+                  key={card.id}
+                  className={`word-item ${
+                    typeof card.id === "number" &&
+                    selectedCards.has(card.id)
+                      ? "active"
+                      : ""
+                  }`}
+                  onClick={() =>
+                    typeof card.id === "number" &&
+                    toggleCardSelect(card.id)
+                  }
+                >
+                  <span>{card.word}</span>
+
+                  {card.isNew && (
+                    <button
+                      type="button"
+                      className="remove-word"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        removeNewCard(card.id);
+                      }}
+                    >
+                      ✕
+                    </button>
+                  )}
+                </div>
+              ))}
+            </div>
+
+            <div className="words-actions">
+              <button onClick={handleAdd} disabled={saving}>
+                Добавить
+              </button>
+
+              <button
+                className="danger-btn"
+                onClick={handleDeleteSelected}
+                disabled={selectedCards.size === 0 || saving}
+              >
+                Удалить ({selectedCards.size})
+              </button>
+            </div>
+          </div>
         </div>
       </div>
     </div>

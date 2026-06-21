@@ -48,3 +48,37 @@
 .navbar-link:hover {
   color: var(--primary-hover);
 }
+
+#nav-toggle {
+  display: none;
+}
+
+.navbar-burger {
+  display: none;
+  font-size: 22px;
+  cursor: pointer;
+  color: var(--text-strong);
+}
+
+@media (max-width: 640px) {
+  .navbar {
+    flex-wrap: wrap;
+  }
+
+  .navbar-burger {
+    display: block;
+  }
+
+  .navbar-links {
+      width: 100%;
+      display: none;
+      flex-direction: column;
+      gap: var(--space-sm);
+      padding-top: var(--space-sm);
+      align-items: flex-start;
+    }
+
+  #nav-toggle:checked ~ .navbar-links {
+    display: flex;
+  }
+}

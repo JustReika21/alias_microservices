@@ -1,37 +1,37 @@
 .create-game-layout {
   width: 100%;
-  height: 90%;
+  min-height: 100dvh;
   display: flex;
-  align-items: flex-start;
   justify-content: center;
-  padding: 10px;
+  padding: 16px;
   box-sizing: border-box;
 }
 
 .create-game-window {
-  width: 90%;
-  max-width: 1280px;
-  height: 100%;
-  max-height: 100%;
+  width: min(1280px, 100%);
+  height: calc(90dvh - 32px);
   display: flex;
   flex-direction: column;
   background: #0c0d12;
   border: 1px solid #23242c;
+  border-radius: 8px;
   overflow: hidden;
 }
 
 .create-game-header {
+  flex-shrink: 0;
   height: 78px;
   display: flex;
   align-items: center;
   justify-content: space-between;
-  padding: 0 1.5rem;
+  padding: 0 24px;
   border-bottom: 1px solid #2a2c35;
   background: #101118;
 }
 
 .create-game-header h2 {
-  font-size: clamp(20px, 2vw, 28px); /* адаптивный размер */
+  margin: 0;
+  font-size: clamp(20px, 2vw, 28px);
   font-weight: 500;
   color: #f1f1f1;
 }
@@ -43,16 +43,33 @@
 
 .create-game-content {
   flex: 1;
-  display: grid;
-  grid-template-columns: minmax(250px, 1fr) 2fr;
   min-height: 0;
+  display: grid;
+  grid-template-columns: 320px 1fr;
 }
 
 .packs-panel {
-  border-right: 1px solid #2a2c35;
   display: flex;
   flex-direction: column;
   min-height: 0;
+  border-right: 1px solid #2a2c35;
+}
+
+.packs-search {
+  flex-shrink: 0;
+  padding: 12px;
+  border-bottom: 1px solid #2a2c35;
+}
+
+.packs-search input {
+  width: 100%;
+  height: 42px;
+  padding: 0 12px;
+  background: #171923;
+  border: 1px solid #2b2d36;
+  border-radius: 6px;
+  color: #f1f1f1;
+  box-sizing: border-box;
 }
 
 .packs-list {
@@ -62,10 +79,10 @@
 }
 
 .pack-item {
-  padding: 1rem 1.5rem;
-  border-bottom: 1px solid rgba(255, 255, 255, 0.03);
+  padding: 16px 20px;
+  border-bottom: 1px solid rgba(255, 255, 255, 0.04);
   color: #ececec;
-  font-size: clamp(18px, 2vw, 24px);
+  font-size: 18px;
   font-weight: 600;
   cursor: pointer;
   transition: background 0.15s ease;
@@ -87,13 +104,6 @@
   color: #7b7d87;
 }
 
-.create-game-content {
-  flex: 1;
-  display: grid;
-  grid-template-columns: minmax(250px, 1fr) 2fr;
-  min-height: 0;
-}
-
 .cards-panel {
   display: flex;
   flex-direction: column;
@@ -105,52 +115,271 @@
   flex: 1;
   min-height: 0;
   overflow-y: auto;
-  padding: 24px 28px;
+
+  display: flex;
+  flex-wrap: wrap;
+  align-content: flex-start;
+  gap: 10px;
+
+  padding: 24px;
 }
 
 .card-chip {
+  display: inline-flex;
+  align-items: center;
+  padding: 8px 14px;
+  background: #171923;
+  border: 1px solid #2b2d36;
+  border-radius: 6px;
   color: #f1f1f1;
-  font-size: clamp(18px, 2vw, 24px);
-  font-weight: 600;
-  line-height: 1.45;
+  font-size: 14px;
+  font-weight: 500;
+  line-height: 1;
 }
 
 .game-form {
   flex-shrink: 0;
+
   display: flex;
-  gap: 12px;
+  align-items: flex-end;
+  gap: 16px;
+
   padding: 20px 24px;
+
   border-top: 1px solid #2a2c35;
   background: #0f1016;
 }
 
-.game-form input {
-  flex: 1 1 120px;
-  min-width: 80px;
+.game-field {
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  min-width: 120px;
+}
+
+.game-field-password {
+  flex: 1;
+}
+
+.game-field label {
+  color: #8f93a1;
+  font-size: 12px;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.08em;
+}
+
+.game-field input {
+  width: 100%;
   height: 44px;
+  padding: 0 12px;
+
   background: #171923;
   border: 1px solid #2b2d36;
-  border-radius: 0;
+  border-radius: 6px;
+
   color: #f1f1f1;
+  box-sizing: border-box;
+}
+
+.game-field input:focus {
+  outline: none;
+  border-color: var(--primary);
 }
 
 .game-form button {
-  flex: 0 0 140px;
+  flex: 0 0 160px;
   height: 44px;
-  border-radius: 0;
+  margin-left: auto;
+  border-radius: 6px;
 }
 
-.packs-search {
-  padding: 12px;
-  border-bottom: 1px solid #2a2c35;
+/* ========================= */
+/* TABLET                    */
+/* ========================= */
+
+@media (max-width: 900px) {
+  .card-chip {
+    max-width: 100%;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    line-height: 1.3;
+  }
+
+  .create-game-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .packs-panel {
+    flex: 0 0 260px;
+    min-height: 260px;
+    max-height: 260px;
+
+    display: flex;
+    flex-direction: column;
+
+    border-right: none;
+    border-bottom: 1px solid #2a2c35;
+  }
+
+  .packs-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .pack-item {
+    min-height: 52px;
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+    font-size: 16px;
+  }
+
+  .cards-panel {
+    flex: 1;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cards-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
 }
 
-.packs-search input {
-  width: 100%;
-  height: 42px;
-  padding: 0 12px;
-  background: #171923;
-  border: 1px solid #2b2d36;
-  color: #f1f1f1;
-  box-sizing: border-box;
+/* ========================= */
+/* MOBILE                    */
+/* ========================= */
+
+@media (max-width: 640px) {
+  .create-game-layout {
+    padding: 8px;
+  }
+
+  .create-game-window {
+    width: 100%;
+    height: calc(100dvh - 16px);
+    border-radius: 8px;
+  }
+
+  .create-game-header {
+    height: auto;
+    padding: 12px;
+    flex-direction: column;
+    align-items: flex-start;
+    gap: 4px;
+  }
+
+  .create-game-header h2 {
+    font-size: 20px;
+  }
+
+  .create-game-content {
+    display: flex;
+    flex-direction: column;
+    min-height: 0;
+  }
+
+  .packs-panel {
+    flex: 0 0 220px;
+    min-height: 220px;
+    max-height: 220px;
+
+    display: flex;
+    flex-direction: column;
+
+    border-right: none;
+    border-bottom: 1px solid #2a2c35;
+  }
+
+  .packs-search {
+    flex-shrink: 0;
+    padding: 8px;
+  }
+
+  .packs-search input {
+    height: 36px;
+  }
+
+  .packs-list {
+    flex: 1;
+    min-height: 0;
+    overflow-y: auto;
+  }
+
+  .pack-item {
+    min-height: 48px;
+    padding: 0 12px;
+
+    display: flex;
+    align-items: center;
+    box-sizing: border-box;
+
+    font-size: 14px;
+
+    white-space: nowrap;
+    overflow: hidden;
+    text-overflow: ellipsis;
+  }
+
+  .cards-panel {
+    flex: 1;
+    min-height: 0;
+
+    display: flex;
+    flex-direction: column;
+  }
+
+  .cards-list {
+    flex: 1;
+    min-height: 0;
+
+    overflow-y: auto;
+
+    padding: 12px;
+    gap: 6px;
+  }
+
+  .card-chip {
+    max-width: 100%;
+
+    font-size: 13px;
+    padding: 6px 10px;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+  }
+
+  .game-form {
+    flex-shrink: 0;
+
+    display: grid;
+    grid-template-columns: 1fr 1fr;
+    gap: 10px;
+
+    padding: 12px;
+  }
+
+  .game-field {
+    min-width: 0;
+  }
+
+  .game-field-password {
+    grid-column: 1 / -1;
+  }
+
+  .game-form button {
+    grid-column: 1 / -1;
+    width: 100%;
+    margin-left: 0;
+  }
 }

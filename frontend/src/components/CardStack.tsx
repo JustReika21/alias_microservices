@@ -1,5 +1,4 @@
 import { useCardSlider } from "../hooks/useCardSlider";
-import { useSwipe } from "../hooks/useSwipe";
 import { useEffect, useRef } from "react";
 
 interface CardStackProps {
@@ -13,9 +12,11 @@ export default function CardStack({
   cards,
   guessedMap,
   status,
-  sendAction
+  sendAction,
 }: CardStackProps) {
-  const { index, next, prev, setIndex } = useCardSlider(cards.length);
+  const { index, next, prev, setIndex } =
+    useCardSlider(cards.length);
+
   const prevLengthRef = useRef(cards.length);
 
   const hasCards = cards.length > 0;
@@ -30,8 +31,6 @@ export default function CardStack({
     prev();
   };
 
-  const swipe = useSwipe(safeNext, safePrev);
-
   useEffect(() => {
     if (cards.length === 0) {
       setIndex(0);
@@ -40,7 +39,10 @@ export default function CardStack({
         setIndex(cards.length - 1);
       }
 
-      if (cards.length > prevLengthRef.current) {
+      if (
+        cards.length >
+        prevLengthRef.current
+      ) {
         setIndex(cards.length - 1);
       }
     }
@@ -48,7 +50,10 @@ export default function CardStack({
     prevLengthRef.current = cards.length;
   }, [cards.length, index, setIndex]);
 
-  const getCardClass = (card: any, offset: number) => {
+  const getCardClass = (
+    card: any,
+    offset: number
+  ) => {
     let cls = "card-item";
 
     if (offset < 0) cls += " left";
@@ -67,50 +72,77 @@ export default function CardStack({
   };
 
   return (
-    <div className="card-stack-wrapper" {...swipe}>
+    <div
+      className="card-stack-wrapper"
+    >
       <div className="card-stack">
         {cards.map((card, i) => {
           const offset = i - index;
 
-          if (Math.abs(offset) > 2) return null;
+          if (Math.abs(offset) > 2)
+            return null;
 
           return (
             <div
               key={card.id}
-              className={getCardClass(card, offset)}
+              className={getCardClass(
+                card,
+                offset
+              )}
               style={{
-                transform: `translateX(${offset * 120}%) scale(${offset === 0 ? 1 : 0.85})`,
-                zIndex: 100 - Math.abs(offset),
+                transform: `translateX(${
+                  offset * 120
+                }%) scale(${
+                  offset === 0 ? 1 : 0.85
+                })`,
+                zIndex:
+                  100 - Math.abs(offset),
                 opacity:
                   Math.abs(offset) > 1
                     ? 0
                     : Math.abs(offset) === 1
                     ? 0.6
                     : 1,
-                filter: offset !== 0 ? "blur(2px)" : "none",
-                transition: "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
+                filter:
+                  offset !== 0
+                    ? "blur(2px)"
+                    : "none",
+                transition:
+                  "all 0.4s cubic-bezier(0.4, 0, 0.2, 1)",
               }}
             >
-              <div className="card-word">{card.word}</div>
+              <div className="card-word">
+                {card.word}
+              </div>
 
-              {status === "calculating" && i === index && (
-                <div className="card-actions">
-                  <button
-                    onClick={() =>
-                      sendAction({ type: "guessed", card: card.id })
-                    }
-                  >
-                    GUESSED
-                  </button>
-                  <button
-                    onClick={() =>
-                      sendAction({ type: "not_guessed", card: card.id })
-                    }
-                  >
-                    NOT GUESSED
-                  </button>
-                </div>
-              )}
+              {status ===
+                "calculating" &&
+                i === index && (
+                  <div className="card-actions">
+                    <button
+                      onClick={() =>
+                        sendAction({
+                          type: "guessed",
+                          card: card.id,
+                        })
+                      }
+                    >
+                      GUESSED
+                    </button>
+
+                    <button
+                      onClick={() =>
+                        sendAction({
+                          type:
+                            "not_guessed",
+                          card: card.id,
+                        })
+                      }
+                    >
+                      NOT GUESSED
+                    </button>
+                  </div>
+                )}
             </div>
           );
         })}
@@ -119,18 +151,25 @@ export default function CardStack({
       <div className="card-nav">
         <button
           onClick={safePrev}
-          disabled={!hasCards || index === 0}
+          disabled={
+            !hasCards || index === 0
+          }
         >
           ←
         </button>
 
         <span>
-          {hasCards ? `${index + 1} / ${cards.length}` : "0 / 0"}
+          {hasCards
+            ? `${index + 1} / ${cards.length}`
+            : "0 / 0"}
         </span>
 
         <button
           onClick={safeNext}
-          disabled={!hasCards || index === cards.length - 1}
+          disabled={
+            !hasCards ||
+            index === cards.length - 1
+          }
         >
           →
         </button>

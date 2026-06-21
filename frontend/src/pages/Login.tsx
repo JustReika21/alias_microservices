@@ -11,30 +11,35 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
-    setMsg("Loading...")
+    setMsg("Загрузка...")
+
     try {
       await login(name, password)
       navigate("/")
     } catch (err: any) {
-      setMsg("Error: " + err.message)
+      setMsg("Ошибка: " + (err.message || "Не удалось войти"))
     }
   }
 
   return (
     <div className="panel default-box">
-      <h2>Login</h2>
+      <h2>Вход</h2>
+
       <input
         value={name}
         onChange={(e) => setName(e.target.value)}
-        placeholder="Name"
+        placeholder="Имя"
       />
+
       <input
         type="password"
         value={password}
         onChange={(e) => setPassword(e.target.value)}
-        placeholder="Password"
+        placeholder="Пароль"
       />
-      <button onClick={handleLogin}>Login</button>
+
+      <button onClick={handleLogin}>Войти</button>
+
       <div className="msg">{msg}</div>
     </div>
   )

@@ -10,34 +10,41 @@ export default function CreatePack() {
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMsg("Loading...");
+    setMsg("Загрузка...");
 
-    const packData = { name: name.trim(), description: description.trim() || null };
+    const packData = {
+      name: name.trim(),
+      description: description.trim() || null,
+    };
 
     try {
       const data = await createPack(packData);
       navigate(`/pack/edit/${data.id}`);
     } catch (err: any) {
-      setMsg("Error: " + err.message || "Session expired");
+      setMsg("Ошибка: " + (err.message || "Сессия истекла"));
     }
   };
 
   return (
     <div className="panel default-box">
-      <h2>Create pack</h2>
-      <form onSubmit={handleSubmit} style={{ display: 'contents' }}>
+      <h2>Создать пак</h2>
+
+      <form onSubmit={handleSubmit} style={{ display: "contents" }}>
         <input
           value={name}
           onChange={(e) => setName(e.target.value)}
-          placeholder="Name"
+          placeholder="Название"
           required
         />
+
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
-          placeholder="Description"
+          placeholder="Описание"
         />
-        <button type="submit">Create Pack</button>
+
+        <button type="submit">Создать пак</button>
+
         <div>{msg}</div>
       </form>
     </div>

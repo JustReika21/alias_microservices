@@ -171,3 +171,95 @@
 .team-box.winner .team-title {
   color: var(--success);
 }
+
+@media (max-width: 900px) {
+  .team-grid {
+    flex-wrap: wrap;
+    width: 100%;
+    max-width: 720px;
+    gap: 12px;
+    padding: 0 12px;
+    box-sizing: border-box;
+  }
+
+  .team-box {
+    width: 160px;
+  }
+}
+
+@media (max-width: 640px) {
+  .team-grid {
+    flex-wrap: wrap;
+    justify-content: center;
+
+    width: 100%;
+
+    gap: 8px;
+
+    padding: 0 8px;
+    box-sizing: border-box;
+  }
+
+  .team-box {
+    width: calc(50% - 4px);
+    min-width: 140px;
+
+    height: 160px;
+  }
+
+  .team-title {
+    font-size: 13px;
+    margin-bottom: 6px;
+  }
+
+  .team-players {
+    font-size: 11px;
+    gap: 2px;
+  }
+
+  .player {
+    padding: 2px;
+  }
+
+  .host-icon {
+    font-size: 18px;
+  }
+
+  .player-score {
+    font-size: 11px;
+  }
+
+  .me-tag {
+    font-size: 10px;
+  }
+
+  .join-btn {
+    height: 28px;
+    font-size: 11px;
+  }
+}
+
+@media (max-width: 420px) {
+  .team-grid {
+    gap: 6px;
+    padding: 0 6px;
+  }
+
+  .team-box {
+    width: calc(50% - 3px);
+    min-width: 0;
+  }
+
+  .team-title {
+    font-size: 12px;
+  }
+
+  .host-icon {
+    font-size: 16px;
+  }
+
+  .player-score,
+  .name-text {
+    font-size: 10px;
+  }
+}

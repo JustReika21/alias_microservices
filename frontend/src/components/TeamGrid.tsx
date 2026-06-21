@@ -18,8 +18,9 @@ const DEFAULT_TEAM_IDS = ["1", "2", "3", "4"];
 
 function groupPlayersByTeam(players: Player[]) {
   return players.reduce<Record<string, Player[]>>((acc, p) => {
-    if (!acc[p.teamId]) acc[p.teamId] = [];
-    acc[p.teamId].push(p);
+    const key = (p as any).teamId;
+    if (!acc[key]) acc[key] = [];
+    acc[key].push(p);
     return acc;
   }, {});
 }
@@ -69,7 +70,6 @@ export default function TeamGrid({
 
   const isHost = String(hostId) === String(myId);
 
-  // ✅ ВОЗВРАЩЕННАЯ ЛОГИКА СКРЫТИЯ ПУСТЫХ КОМАНД
   const teamIds = useMemo(() => {
     if (status === "setting_up") return DEFAULT_TEAM_IDS;
 
@@ -136,13 +136,14 @@ export default function TeamGrid({
                         </span>
                       )}
 
+                      {isMe && <span className="me-tag">(Вы)</span>}
+
                       <span
                         className={`name-text ${
                           isOffline ? "offline" : ""
                         }`}
                       >
                         {p.name}
-                        {isMe && <span className="me-tag"> (Вы)</span>}
                       </span>
                     </div>
 

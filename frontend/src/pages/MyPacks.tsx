@@ -31,7 +31,7 @@ export default function MyPacks() {
   }, []);
 
   if (loading && !data) {
-    return <div className="container">Loading...</div>;
+    return <div className="container">Загрузка...</div>;
   }
 
   if (error) {
@@ -39,51 +39,58 @@ export default function MyPacks() {
   }
 
   if (!data) {
-    return <div className="container">No data</div>;
+    return <div className="container">Нет данных</div>;
   }
+
+  const isEmpty = data.items.length === 0;
 
   return (
     <div className="container my-packs-page">
-      <h1>My Packs</h1>
+      <h1>Мои паки</h1>
 
-      {data.items.length === 0 && <p>No packs yet</p>}
+      {isEmpty ? (
+        <div className="empty-state">Паков пока нет</div>
+      ) : (
+        <>
+          <div className="packs-list">
+            {data.items.map((pack) => (
+              <div
+                key={pack.id}
+                className="pack-card"
+                onClick={() => navigate(`/pack/edit/${pack.id}`)}
+              >
+                <div className="pack-name">{pack.name}</div>
 
-      <div className="packs-list">
-        {data.items.map((pack) => (
-          <div
-            key={pack.id}
-            className="pack-card"
-            onClick={() =>
-              navigate(`/pack/edit/${pack.id}`)
-            }
-          >
-            <div className="pack-name">{pack.name}</div>
-            <div className="pack-meta">
-              {pack.total} cards
-            </div>
+                <div className="pack-meta">
+                  {pack.total} карт
+                </div>
+              </div>
+            ))}
           </div>
-        ))}
-      </div>
 
-      <div className="pagination">
-        <button
-          disabled={page <= 1}
-          onClick={() => load(page - 1)}
-        >
-          Prev
-        </button>
+          <div className="pagination">
+            <button
+              disabled={page <= 1}
+              onClick={() => load(page - 1)}
+            >
+              Назад
+            </button>
 
-        <div className="page-info">
-          Page {data.page} / {data.pages}
-        </div>
+            <div className="page-info">
+              {data.pages <= 1
+                ? "1 / 1"
+                : `Страница ${data.page} / ${data.pages}`}
+            </div>
 
-        <button
-          disabled={page >= data.pages}
-          onClick={() => load(page + 1)}
-        >
-          Next
-        </button>
-      </div>
+            <button
+              disabled={page >= data.pages}
+              onClick={() => load(page + 1)}
+            >
+              Вперёд
+            </button>
+          </div>
+        </>
+      )}
     </div>
   );
 }

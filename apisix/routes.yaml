@@ -1,0 +1,165 @@
+routes:
+  - id: 1
+    name: cards
+    uri: /api/v1/cards/*
+    methods: [GET, POST, DELETE]
+    status: 1
+    upstream:
+      type: roundrobin
+      nodes:
+        "aliasmicro-cards-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+  - id: 2
+    name: game_ws
+    uri: /ws/game/*
+    methods:
+      - GET
+    enable_websocket: true
+    status: 1
+    plugins:
+      forward-auth:
+        uri: http://auth-service:8080/auth
+        request_headers:
+          - Authorization
+          - Cookie
+        upstream_headers:
+          - X-User-ID
+          - X-Role
+      limit-conn:
+        conn: 3
+        burst: 5
+        default_conn_delay: 0.1
+        rejected_code: 429
+        key_type: var
+        key: remote_addr
+      limit-req:
+        rate: 5
+        burst: 10
+        key_type: var
+        key: remote_addr
+        rejected_code: 429
+    upstream:
+      nodes:
+        "aliasmicro-game-1:8000": 1
+      type: roundrobin
+      timeout:
+        connect: 5
+        send: 3600
+        read: 3600
+      keepalive_pool:
+        idle_timeout: 60
+        requests: 10000
+
+  - id: 3
+    name: auth
+    uri: /api/v1/auth/*
+    methods: [GET, POST, PUT, DELETE, PATCH]
+    upstream:
+      nodes:
+        "aliasmicro-auth-1:8000": 1
+
+  - id: 4
+    name: register
+    uri: /api/v1/auth/register/
+    methods: [POST]
+    upstream:
+      nodes:
+        "aliasmicro-auth-1:8000": 1
+
+  - id: 5
+    name: game
+    uri: /api/v1/game
+    methods: [GET, POST, PUT, DELETE, PATCH]
+    upstream:
+      nodes:
+        "aliasmicro-game-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+  - id: 6
+    name: game_wildcard
+    uri: /api/v1/game/*
+    methods: [GET, POST, PUT, DELETE, PATCH]
+    upstream:
+      nodes:
+        "aliasmicro-game-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+  - id: 7
+    name: packs
+    uri: /api/v1/packs
+    methods: [GET, POST, PUT, DELETE, PATCH]
+    upstream:
+      nodes:
+        "aliasmicro-packs-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+  - id: 8
+    name: packs_wildcard
+    uri: /api/v1/packs/*
+    methods: [GET, POST, PUT, DELETE, PATCH]
+    upstream:
+      nodes:
+        "aliasmicro-packs-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+  - id: 9
+    name: cards_get
+    uri: /api/v1/cards
+    methods: [GET]
+    upstream:
+      nodes:
+        "aliasmicro-cards-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+        _meta:
+          disable: true
+
+  - id: 10
+    name: cards_write
+    uri: /api/v1/cards
+    methods: [POST, DELETE]
+    upstream:
+      nodes:
+        "aliasmicro-cards-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+  - id: 11
+    name: auth_me
+    uri: /api/v1/auth/me
+    methods: [GET]
+    upstream:
+      nodes:
+        "aliasmicro-auth-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]

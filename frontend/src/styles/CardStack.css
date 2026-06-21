@@ -46,12 +46,26 @@
 .card-word {
   font-size: 22px;
   color: var(--text-strong);
+
+  max-width: 100%;
+  padding: 0 16px;
+  box-sizing: border-box;
+
   text-align: center;
+
+  white-space: normal;
+  overflow-wrap: anywhere;
+  word-break: break-word;
+  hyphens: auto;
 }
 
 .card-item.guessed {
   border-color: var(--success);
   box-shadow: 0 0 15px rgba(76, 175, 80, 0.3);
+}
+
+.card-item.not-guessed {
+  border-color: #f44336;
 }
 
 .card-actions {
@@ -70,7 +84,7 @@
 }
 
 .card-actions button:first-child {
-  background: #4CAF50;
+  background: #4caf50;
   color: white;
 }
 
@@ -98,10 +112,107 @@
   cursor: not-allowed;
 }
 
-.card-item.guessed {
-  border-color: #4CAF50;
+/* ========================= */
+/* TABLET                    */
+/* ========================= */
+
+@media (max-width: 900px) {
+  .card-stack {
+    width: 280px;
+    height: 280px;
+  }
+
+  .card-word {
+    font-size: 20px;
+    padding: 0 14px;
+  }
+
+  .card-actions {
+    flex-wrap: wrap;
+    justify-content: center;
+  }
 }
 
-.card-item.not-guessed {
-  border-color: #f44336;
+/* ========================= */
+/* MOBILE                    */
+/* ========================= */
+
+@media (max-width: 640px) {
+  .card-stack {
+    width: min(85vw, 260px);
+    height: min(85vw, 260px);
+  }
+
+  /* скрываем боковые карты,
+     но не удаляем их из DOM */
+  .card-item.left,
+  .card-item.right {
+    opacity: 0 !important;
+    pointer-events: none;
+    visibility: hidden;
+  }
+
+  .card-item.center {
+    opacity: 1 !important;
+    visibility: visible;
+    transform: translateX(0) scale(1) !important;
+    filter: none !important;
+  }
+
+  .card-word {
+    font-size: 18px;
+    line-height: 1.3;
+    padding: 0 12px;
+
+    white-space: normal;
+    overflow-wrap: anywhere;
+    word-break: break-word;
+    hyphens: auto;
+  }
+
+  .card-actions {
+    width: 100%;
+    padding: 0 12px;
+    box-sizing: border-box;
+
+    flex-direction: column;
+    gap: 8px;
+  }
+
+  .card-actions button {
+    width: 100%;
+    padding: 10px;
+  }
+
+  .card-nav {
+    gap: 8px;
+  }
+
+  .card-nav button {
+    padding: 6px 12px;
+  }
+}
+
+/* ========================= */
+/* SMALL MOBILE              */
+/* ========================= */
+
+@media (max-width: 420px) {
+  .card-stack {
+    width: min(90vw, 220px);
+    height: min(90vw, 220px);
+  }
+
+  .card-word {
+    font-size: 16px;
+    padding: 0 10px;
+  }
+
+  .card-actions button {
+    font-size: 13px;
+  }
+
+  .card-nav {
+    font-size: 13px;
+  }
 }

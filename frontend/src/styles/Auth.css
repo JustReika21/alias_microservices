@@ -1,7 +1,8 @@
 .default-box {
-  width: 360px;
+  width: min(360px, 100%);
   margin: 100px auto;
   padding: 24px;
+  box-sizing: border-box;
 
   background: var(--panel-bg);
   border-radius: 12px;
@@ -18,27 +19,65 @@
 }
 
 .default-box input {
+  width: 100%;
+
   padding: 10px;
-  border-radius: 8px;
+  box-sizing: border-box;
+
   border: none;
+  border-radius: 8px;
 
   background: var(--input-bg);
   color: var(--text-on-dark);
 }
 
 .default-box button {
+  width: 100%;
+
   padding: 10px;
-  border-radius: 8px;
+
   border: none;
+  border-radius: 8px;
 
   color: var(--text-on-dark);
   cursor: pointer;
 }
 
-
 .msg {
+  min-height: 20px;
+
   text-align: center;
   font-size: 14px;
-  min-height: 20px;
+
   color: var(--text-on-dark);
+
+  overflow-wrap: anywhere;
+  word-break: break-word;
+}
+
+@media (max-width: 640px) {
+  .default-box {
+    width: calc(100% - 16px);
+
+    margin: 24px auto;
+
+    padding: 16px;
+    gap: 10px;
+
+    border-radius: 10px;
+  }
+
+  .default-box h2 {
+    font-size: 20px;
+  }
+
+  .default-box input,
+  .default-box button {
+    height: 42px;
+    font-size: 14px;
+  }
+
+  .msg {
+    font-size: 13px;
+  }
 }
