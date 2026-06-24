@@ -36,23 +36,34 @@ export class GameSocket {
   private socket: WebSocket;
 
   constructor(gameId: string, onMessage: (data: any) => void) {
-    if (!gameId) throw new Error("gameId is required");
-
     const url = `/ws/game/${gameId}`;
     this.socket = new WebSocket(url);
 
+    this.socket.onopen = () => {
+      console.log("WS OPEN");
+    };
+
     this.socket.onmessage = (event) => {
       try {
-        const data = JSON.parse(event.data);
-        onMessage(data);
+        onMessage(JSON.parse(event.data));
       } catch {
         console.log("RAW WS:", event.data);
       }
     };
+
+    this.socket.onerror = (e) => {
+      console.log("WS ERROR", e);
+    };
+
+    this.socket.onclose = (e) => {
+      console.log("WS CLOSE", e.code, e.reason);
+    };
   }
 
   send(message: any) {
-    this.socket.send(JSON.stringify(message));
+    if (this.socket.readyState === WebSocket.OPEN) {
+      this.socket.send(JSON.stringify(message));
+    }
   }
 
   close() {

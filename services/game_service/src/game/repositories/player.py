@@ -27,23 +27,24 @@ class GamePlayerRepository(RedisConfig):
         now = time.time()
 
         async with self.redis_client.pipeline() as pipe:
-            await pipe.hset(
+            pipe.hset(
                 player_key,
                 mapping=Player.model_dump(player)
             )
 
-            await pipe.zadd(
+            pipe.zadd(
                 player_in_team_key,
                 {str(player.id): now}
             )
 
-            await pipe.zadd(
+            pipe.zadd(
                 teams_key,
                 {str(player.team_id): player.team_id}
             )
 
-            await pipe.expire(player_in_team_key, self.EXPIRE_TIME)
-            await pipe.expire(player_key, self.EXPIRE_TIME)
+            pipe.expire(player_in_team_key, self.EXPIRE_TIME)
+            pipe.expire(player_key, self.EXPIRE_TIME)
+            pipe.expire(teams_key, self.EXPIRE_TIME)
 
             await pipe.execute()
 
@@ -53,7 +54,7 @@ class GamePlayerRepository(RedisConfig):
 
         async with self.redis_client.pipeline() as pipe:
             for pid in player_ids:
-                await pipe.hgetall(self._player_key(game_id, int(pid)))
+                pipe.hgetall(self._player_key(game_id, int(pid)))
 
             players = await pipe.execute()
 
@@ -80,8 +81,14 @@ class GamePlayerRepository(RedisConfig):
 
     async def disconnect_player(self, game_id: str, player_id: str) -> None:
         player_key = self._player_key(game_id, int(player_id))
-        await self.redis_client.hset(player_key, 'connected', '0')
+        async with self.redis_client.pipeline() as pipe:
+            pipe.hset(player_key, 'connected', '0')
+            pipe.expire(player_key, self.EXPIRE_TIME)
+            await pipe.execute()
 
     async def connect_player(self, game_id: str, player_id: str) -> None:
         player_key = self._player_key(game_id, int(player_id))
-        await self.redis_client.hset(player_key, 'connected', '1')
+        async with self.redis_client.pipeline() as pipe:
+            pipe.hset(player_key, 'connected', '1')
+            pipe.expire(player_key, self.EXPIRE_TIME)
+            await pipe.execute()

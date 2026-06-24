@@ -44,11 +44,11 @@ export function useGame(gameId: string) {
     String(currentPlayerId) === String(myId);
 
   function log(msg: string, data?: unknown) {
-    setLogs((prev) => [
-      ...prev,
+    const entry =
       `[${new Date().toLocaleTimeString()}] ${msg}` +
-        (data ? ` ${JSON.stringify(data)}` : ""),
-    ]);
+      (data ? ` ${JSON.stringify(data)}` : "");
+
+    setLogs((prev) => [...prev, entry]);
   }
 
   function resetGameState() {
@@ -82,6 +82,8 @@ export function useGame(gameId: string) {
   }
 
   function applySnapshot(snapshot: Snapshot) {
+    log("snapshot received", snapshot);
+
     resetGameState();
 
     setStatus(snapshot.status as Status);
@@ -109,8 +111,6 @@ export function useGame(gameId: string) {
       setWinners(winnerIds);
       setIsDraw(winnerIds.length > 1);
     }
-
-    log("snapshot", snapshot);
   }
 
   function handleMessage(data: any) {
@@ -122,69 +122,31 @@ export function useGame(gameId: string) {
         break;
 
       case "player_joined": {
-        if (!data.player) return;
+        log("player_joined", data.player);
 
-        const incoming = normalizePlayer(data.player);
+        if (data.player) {
+          const newPlayer = normalizePlayer(data.player);
 
-        setPlayers((prev) => {
-          const exists = prev.some((p) => p.id === incoming.id);
+          setPlayers((prev) => {
+            const exists = prev.some(
+              (p) => p.id === newPlayer.id
+            );
 
-          if (!exists) return [...prev, incoming];
+            if (!exists) return [...prev, newPlayer];
 
-          return prev.map((p) =>
-            p.id === incoming.id
-              ? { ...p, ...incoming, connected: true }
-              : p
-          );
-        });
-
+            return prev.map((p) =>
+              p.id === newPlayer.id
+                ? {...p, ...newPlayer, connected: true}
+                : p
+            );
+          });
+        }
         break;
       }
 
-      case "player_disconnected":
-        setPlayers((prev) =>
-          prev.map((p) =>
-            p.id === String(data.user_id)
-              ? { ...p, connected: false }
-              : p
-          )
-        );
-        break;
-
-      case "player_kicked":
-        setPlayers((prev) => {
-          const updated = prev.filter(
-            (p) => p.id !== String(data.user_id)
-          );
-
-          setTeams((tprev) =>
-            tprev.map((t) => ({
-              ...t,
-              totalPlayers: updated.filter(
-                (p) => p.teamId === t.id
-              ).length,
-            }))
-          );
-
-          return updated;
-        });
-
-        if (currentPlayerId === String(data.user_id)) {
-          setCurrentPlayerId(null);
-        }
-
-        if (hostId === String(data.user_id)) {
-          setHostId(null);
-        }
-
-        break;
-
-      case "you_have_been_kicked":
-        socket?.close();
-        window.location.href = "/";
-        break;
-
       case "player_switch_team":
+        log("player_switch_team", data);
+
         setPlayers((prev) => {
           const player = prev.find(
             (p) => p.id === String(data.player_id)
@@ -192,70 +154,103 @@ export function useGame(gameId: string) {
 
           if (!player) return prev;
 
+          const movedPlayer = {
+            ...player,
+            teamId: String(data.new_team_id),
+          };
+
           return prev.map((p) =>
             p.id === String(data.player_id)
-              ? { ...p, teamId: String(data.new_team_id) }
+              ? movedPlayer
               : p
           );
         });
 
         if (data.current_player_id !== undefined) {
-          setCurrentPlayerId(String(data.current_player_id));
+          setCurrentPlayerId(
+            String(data.current_player_id)
+          );
         }
-
         break;
 
       case "players":
-        setPlayers((data.players || []).map(normalizePlayer));
+        log("players update", data.players);
+
+        setPlayers(
+          (data.players || []).map(normalizePlayer)
+        );
         break;
 
       case "teams":
-        setTeams((data.teams || []).map(normalizeTeam));
+        log("teams update", data.teams);
+
+        setTeams(
+          (data.teams || []).map(normalizeTeam)
+        );
         break;
 
       case "team_score_update":
+        log("team_score_update", data);
+
         setTeams((prev) =>
           prev.map((t) =>
             t.id === String(data.id)
-              ? { ...t, score: Number(data.score) }
+              ? {
+                ...t,
+                score: Number(data.score),
+              }
               : t
           )
         );
         break;
 
       case "player_score_update":
+        log("player_score_update", data);
+
         setPlayers((prev) =>
           prev.map((p) =>
             p.id === String(data.id)
-              ? { ...p, score: Number(data.score) }
+              ? {
+                ...p,
+                score: Number(data.score),
+              }
               : p
           )
         );
         break;
 
       case "current_player":
+        log("current_player", data);
+
         setCurrentPlayerId(String(data.player_id));
         break;
 
       case "status":
+        log("status", data.value);
+
         setStatus(data.value as Status);
 
         if (
-          ["setting_up", "waiting", "started"].includes(
-            data.value
-          )
+          data.value === "setting_up" ||
+          data.value === "waiting" ||
+          data.value === "started"
         ) {
           resetGameState();
         }
+
         break;
 
       case "card":
+        log("card", data.card);
+
         if (data.card) {
           setCards((prev) => [...prev, data.card]);
         }
         break;
 
       case "guess":
+        log("guess", data);
+
         setGuessedMap((prev) => ({
           ...prev,
           [data.card]: data.guessed,
@@ -263,46 +258,106 @@ export function useGame(gameId: string) {
         break;
 
       case "timer":
+        log("timer", data.end_time);
+
         setEndTime(data.end_time);
         break;
 
       case "end_game": {
-        const winnerIds = (data.winners || []).map(String);
+        log("end_game", data.winners);
+
+        const winnerIds = (data.winners || []).map(
+          String
+        );
+
         setStatus("finished");
         setWinners(winnerIds);
         setIsDraw(winnerIds.length > 1);
+
         break;
       }
 
       case "restart":
+        log("restart");
+
         resetGameState();
+
         setStatus("setting_up");
 
         setPlayers((prev) =>
-          prev.map((p) => ({ ...p, score: 0 }))
+          prev.map((p) => ({
+            ...p,
+            score: 0,
+          }))
         );
 
         setTeams((prev) =>
-          prev.map((t) => ({ ...t, score: 0 }))
+          prev.map((t) => ({
+            ...t,
+            score: 0,
+          }))
+        );
+
+        break;
+
+      case "player_kicked": {
+        setPlayers((prev) =>
+          prev.filter((p) => p.id !== String(data.kicked_user_id))
         );
         break;
+      }
+
+      case "you_have_been_kicked": {
+        alert("Вас исключили из игры :(");
+        window.location.href = "/";
+        break;
+      }
+
+      case "player_disconnected": {
+        log("player_disconnected", data);
+
+        const id = String(data.disconnected_user_id);
+
+        setPlayers((prev) =>
+          prev.map((p) =>
+            p.id === id
+              ? {
+                  ...p,
+                  connected: false,
+                }
+              : p
+          )
+        );
+
+        break;
+      }
     }
   }
 
-  function sendGuess(data: GuessData) {
-    socket?.send(data);
+  function sendGuess(guessData: GuessData) {
+    socket?.send(guessData);
+    log("send guess", guessData);
   }
 
   function sendSwitch(data: SwitchData) {
     socket?.send(data);
+    log("send switch", data);
   }
 
   function sendAction(type: string) {
     socket?.send({ type });
+    log("send action", type);
   }
 
   function sendKick(playerId: string) {
-    socket?.send({ type: "kick", id: playerId });
+    const payload = {
+      type: "kick",
+      id: Number(playerId),
+    };
+
+    socket?.send(payload);
+
+    log("send kick", payload);
   }
 
   useEffect(() => {

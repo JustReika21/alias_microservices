@@ -1,8 +1,9 @@
 from fastapi import APIRouter, Depends, WebSocket, WebSocketDisconnect
 from fastapi.security import HTTPAuthorizationCredentials, HTTPBearer
+from game.services.connection_manager import ConnectionManager
 from starlette import status
 
-from game.dependencies import get_orchestration_service
+from game.dependencies import get_orchestration_service, get_connection_manager
 from game.exc.exceptions import GameNotFoundError
 from game.schemas.schemas import GameCreate, Player, GameCreated
 from game.services.orchestration import GameOrchestrationService
@@ -26,13 +27,12 @@ async def game_create_api(
     return await game_service.create_game(game_data, player)
 
 
-connections: dict[str, dict[int, WebSocket]] = {}
-
 @game_router.websocket('/ws/game/{game_id}')
 async def game_websocket(
         game_id: str,
         websocket: WebSocket,
         game_service: GameOrchestrationService = Depends(get_orchestration_service),
+        manager: ConnectionManager = Depends(get_connection_manager)
 ):
     game_status = await game_service.get_game_status(game_id)
     if game_status is None:
@@ -45,65 +45,61 @@ async def game_websocket(
 
     player = await game_service.join_game(game_id, user, game_status)
 
-    if game_id not in connections:
-        connections[game_id] = {}
-
-    connections[game_id][user.user_id] = websocket
-
     try:
-        con = connections[game_id]
-        await game_service.broadcast_service.broadcast(
-            con, {'type': 'player_joined', 'player': player.model_dump()}
+        await manager.connect(game_id, user.user_id, websocket)
+
+        await game_service.event_publisher.publish(
+            game_id, {'type': 'player_joined', 'player': player.model_dump()}
         )
 
         await game_service.handle_snapshot(
-            game_id, user.user_id, game_status, user.user_id, websocket
+            game_id, user.user_id, game_status, user.user_id
         )
 
         while True:
             data = await websocket.receive_json()
-            con = connections[game_id]
             game_status = await game_service.get_game_status(game_id)
 
             if data['type'] == 'set_up' and game_status == 'setting_up':
-                if await game_service.sender_is_host(game_id, websocket, con):
-                    await game_service.handle_set_up(game_id, con)
+                if await game_service.sender_is_host(game_id, user.user_id):
+                    await game_service.handle_set_up(game_id)
 
             if data['type'] == 'start' and game_status == 'waiting':
-                if await game_service.sender_is_current_player(game_id, websocket, con):
-                    await game_service.handle_start_round(game_id, con)
+                if await game_service.sender_is_current_player(game_id, user.user_id):
+                    await game_service.handle_start_round(game_id)
 
             if data['type'] == 'next' and game_status == 'started':
-                if await game_service.sender_is_current_player(game_id, websocket, con):
-                    await game_service.send_card(game_id, con)
+                if await game_service.sender_is_current_player(game_id, user.user_id):
+                    await game_service.send_card(game_id)
 
             if data['type'] == 'switch_team' and game_status == 'setting_up':
                 new_team_id = int(data['new_team_id'])
-                await game_service.handle_switch_team(game_id, user.user_id, new_team_id, con)
+                await game_service.handle_switch_team(game_id, user.user_id, new_team_id)
 
             if data['type'] == 'guessed' and game_status == 'calculating':
                 card_id = int(data['card'])
-                await game_service.handle_card_guess(game_id, card_id, True, con)
+                await game_service.handle_card_guess(game_id, card_id, True)
 
             if data['type'] == 'not_guessed' and game_status == 'calculating':
                 card_id = int(data['card'])
-                await game_service.handle_card_guess(game_id, card_id, False, con)
+                await game_service.handle_card_guess(game_id, card_id, False)
 
             if data['type'] == 'calculated' and game_status == 'calculating':
-                if await game_service.sender_is_current_player(game_id, websocket, con):
-                    await game_service.handle_calculating(game_id, con)
+                if await game_service.sender_is_current_player(game_id, user.user_id):
+                    await game_service.handle_calculating(game_id)
 
             if data['type'] == 'restart' and game_status == 'finished':
-                if await game_service.sender_is_host(game_id, websocket, con):
-                    await game_service.restart_game(game_id, con)
+                if await game_service.sender_is_host(game_id, user.user_id):
+                    await game_service.restart_game(game_id)
 
             if data['type'] == 'kick':
-                if await game_service.sender_is_host(game_id, websocket, con):
-                    await game_service.kick_player(game_id, data['id'], con)
+                if await game_service.sender_is_host(game_id, user.user_id):
+                    await game_service.kick_player(game_id, data['id'])
 
     except WebSocketDisconnect:
         pass
     except Exception as e:
         print(f'Unexpected WS error: {e}')
     finally:
-        await game_service.disconnect_user(game_id, user.user_id, connections[game_id])
+        manager.disconnect(game_id, user.user_id)
+        await game_service.disconnect_user(game_id, user.user_id)

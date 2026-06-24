@@ -1,5 +1,7 @@
 from fastapi import Depends
 from game.database.db import async_session
+from game.services.connection_manager import ConnectionManager
+from game.services.event_publisher import GameEventPublisher
 from game.settings import settings
 from redis.asyncio import Redis
 from sqlalchemy.ext.asyncio import AsyncSession
@@ -51,6 +53,10 @@ async def start_up_redis() -> Redis:
 
 def get_redis_from_app(conn: HTTPConnection) -> Redis:
     return conn.app.state.redis_client
+
+
+def get_connection_manager(conn: HTTPConnection) -> ConnectionManager:
+    return conn.app.state.connection_manager
 
 # =========================
 # CLIENTS
@@ -176,6 +182,12 @@ def get_game_snapshot_service() -> GameSnapshotService:
     return GameSnapshotService()
 
 
+def get_game_event_publisher_service(
+    redis: Redis = Depends(get_redis_from_app)
+):
+    return GameEventPublisher(redis)
+
+
 # =========================
 # ORCHESTRATION
 # =========================
@@ -184,6 +196,7 @@ def get_orchestration_service(
     broadcast: GameBroadcastService = Depends(get_broadcast_service),
     card: GameCardService = Depends(get_game_card_service),
     core: GameCoreService = Depends(get_game_core_service),
+    event_publisher: GameEventPublisher = Depends(get_game_event_publisher_service),
     player: GamePlayerService = Depends(get_game_player_service),
     round_svc: GameRoundService = Depends(get_game_round_service),
     score: GameScoreService = Depends(get_game_score_service),
@@ -197,6 +210,7 @@ def get_orchestration_service(
         broadcast_service=broadcast,
         card_service=card,
         core_service=core,
+        event_publisher=event_publisher,
         player_service=player,
         round_service=round_svc,
         score_service=score,

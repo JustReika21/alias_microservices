@@ -21,28 +21,6 @@ routes:
       - GET
     enable_websocket: true
     status: 1
-    plugins:
-      forward-auth:
-        uri: http://auth-service:8080/auth
-        request_headers:
-          - Authorization
-          - Cookie
-        upstream_headers:
-          - X-User-ID
-          - X-Role
-      limit-conn:
-        conn: 3
-        burst: 5
-        default_conn_delay: 0.1
-        rejected_code: 429
-        key_type: var
-        key: remote_addr
-      limit-req:
-        rate: 5
-        burst: 10
-        key_type: var
-        key: remote_addr
-        rejected_code: 429
     upstream:
       nodes:
         "aliasmicro-game-1:8000": 1

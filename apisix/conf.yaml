@@ -4,24 +4,22 @@ apisix:
 
   enable_control: true
   control:
-    ip: "127.0.0.1"
+    ip: "0.0.0.0"
     port: 9092
 
 deployment:
   admin:
-    admin_listen:
-      ip: "0.0.0.0"
-      port: 9180
-
     allow_admin:
-      - 127.0.0.1/32
-      - 172.16.0.0/12
-      - 10.0.0.0/8
+      - 0.0.0.0/0
 
     admin_key:
       - name: "admin"
-        key: "SuperSecretADMINapiKeyFORAPisix"
+        key: edd1c9f034335f136f87ad84b625c8f1
         role: admin
+
+      - name: "viewer"
+        key: 4054f7cf07e344346cd3f287985e76a2
+        role: viewer
 
   etcd:
     host:
@@ -29,35 +27,11 @@ deployment:
     prefix: "/apisix"
     timeout: 30
 
-nginx_config:
-  http:
-    lua_shared_dicts:
-      prometheus-metrics: 50m
-      prometheus-cache: 10m
-
-      limit-req: 50m
-      limit-count: 50m
-
-      ws-conn-mgr: 20m
-
-    keepalive_timeout: 65s
-    client_max_body_size: 10m
-
 plugin_attr:
   prometheus:
     export_addr:
-      ip: "127.0.0.1"
+      ip: "0.0.0.0"
       port: 9091
 
 plugins:
   - forward-auth
-
-  - request-id
-  - prometheus
-
-  - cors
-
-  - limit-req
-  - limit-count
-
-  - ip-restriction

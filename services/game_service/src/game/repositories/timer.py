@@ -16,7 +16,10 @@ class GameTimerRepository(RedisConfig):
 
     async def set_timer(self, game_id: str, end_time: int) -> None:
         timer_key = self._timer_key(game_id)
-        await self.redis_client.set(timer_key, str(end_time))
+        async with self.redis_client.pipeline() as pipe:
+            pipe.set(timer_key, str(end_time))
+            pipe.expire(timer_key, self.EXPIRE_TIME)
+            await pipe.execute()
 
     async def get_timer(self, game_id: str) -> int:
         timer_key = self._timer_key(game_id)

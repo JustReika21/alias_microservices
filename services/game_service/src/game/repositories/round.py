@@ -20,12 +20,13 @@ class GameRoundRepository(RedisConfig):
         played_cards_key = self._played_cards_key(game_id)
         guessed_cards_key = self._guessed_cards_key(game_id)
         timer_key = self._timer_key(game_id)
+
         async with self.redis_client.pipeline() as pipe:
-            await pipe.delete(cards_key)
-            await pipe.delete(cursor_key)
-            await pipe.delete(played_cards_key)
-            await pipe.delete(guessed_cards_key)
-            await pipe.delete(timer_key)
+            pipe.delete(cards_key)
+            pipe.delete(cursor_key)
+            pipe.delete(played_cards_key)
+            pipe.delete(guessed_cards_key)
+            pipe.delete(timer_key)
 
             await pipe.execute()
 
@@ -41,9 +42,15 @@ class GameRoundRepository(RedisConfig):
 
     async def increment_current_round(self, game_id: str) -> int:
         game_key = self._game_key(game_id)
-        current_round = await self.redis_client.hincrby(game_key, 'current_round', 1)
-        return current_round
+        async with self.redis_client.pipeline() as pipe:
+            pipe.hincrby(game_key, 'current_round', 1)
+            pipe.expire(game_key, self.EXPIRE_TIME)
+            result = await pipe.execute()
+        return int(result[0])
 
     async def reset_rounds(self, game_id: str) -> None:
         game_key = self._game_key(game_id)
-        await self.redis_client.hset(game_key, 'current_round', '0')
+        async with self.redis_client.pipeline() as pipe:
+            pipe.hset(game_key, 'current_round', '0')
+            pipe.expire(game_key, self.EXPIRE_TIME)
+            await pipe.execute()

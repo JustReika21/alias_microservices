@@ -21,7 +21,7 @@ class GameTeamRepository(RedisConfig):
             team_key = self._team_key(game_id, team_id)
             teams_key = self._teams_key(game_id)
 
-            await pipe.hset(
+            pipe.hset(
                 team_key,
                 mapping={
                     'id': team_id,
@@ -29,10 +29,10 @@ class GameTeamRepository(RedisConfig):
                 }
             )
 
-            await pipe.zadd(teams_key, {str(team_id): team_id})
+            pipe.zadd(teams_key, {str(team_id): team_id})
 
-            await pipe.expire(teams_key, self.EXPIRE_TIME)
-            await pipe.expire(team_key, self.EXPIRE_TIME)
+            pipe.expire(teams_key, self.EXPIRE_TIME)
+            pipe.expire(team_key, self.EXPIRE_TIME)
 
             await pipe.execute()
 
@@ -51,14 +51,15 @@ class GameTeamRepository(RedisConfig):
         now = time.time()
 
         async with self.redis_client.pipeline() as pipe:
-            await pipe.zrem(old_team_players, str(player_id))
+            pipe.zrem(old_team_players, str(player_id))
 
-            await pipe.zadd(
-                new_team_players,
-                {str(player_id): now}
-            )
+            pipe.zadd(new_team_players, {str(player_id): now})
 
-            await pipe.hset(player_key, 'team_id', str(new_team_id))
+            pipe.hset(player_key, 'team_id', str(new_team_id))
+
+            pipe.expire(old_team_players, self.EXPIRE_TIME)
+            pipe.expire(new_team_players, self.EXPIRE_TIME)
+            pipe.expire(player_key, self.EXPIRE_TIME)
 
             await pipe.execute()
 
@@ -81,12 +82,13 @@ class GameTeamRepository(RedisConfig):
         async with self.redis_client.pipeline() as pipe:
 
             if new_size == 1:
-                await pipe.zadd(teams_key, {str(new_team_id): new_team_id})
+                pipe.expire(teams_key, self.EXPIRE_TIME)
 
             if old_size == 0:
-                await pipe.delete(self._team_key(game_id, old_team_id))
-                await pipe.zrem(teams_key, str(old_team_id))
+                pipe.delete(self._team_key(game_id, old_team_id))
+                pipe.zrem(teams_key, str(old_team_id))
 
+            pipe.expire(teams_key, self.EXPIRE_TIME)
             await pipe.execute()
 
     async def get_teams(self, game_id: str) -> List[dict]:
@@ -96,7 +98,7 @@ class GameTeamRepository(RedisConfig):
         async with self.redis_client.pipeline() as pipe:
             for team_id in team_ids:
                 team_key = self._team_key(game_id, team_id)
-                await pipe.hgetall(team_key)
+                pipe.hgetall(team_key)
 
             teams = await pipe.execute()
 
@@ -112,8 +114,8 @@ class GameTeamRepository(RedisConfig):
         teams_key = self._teams_key(game_id)
 
         async with self.redis_client.pipeline() as pipe:
-            await pipe.zrange(teams_key, 0, -1)
-            await pipe.hget(game_key, 'team_offset')
+            pipe.zrange(teams_key, 0, -1)
+            pipe.hget(game_key, 'team_offset')
 
             team_ids, team_offset = await pipe.execute()
 
@@ -125,7 +127,6 @@ class GameTeamRepository(RedisConfig):
 
     async def get_team_player_ids(self, game_id: str, team_id: str | int) -> List[str]:
         team_players_key = self._team_players_key(game_id, int(team_id))
-
         players = await self.redis_client.zrange(team_players_key, 0, -1)
         return players
 
@@ -137,7 +138,7 @@ class GameTeamRepository(RedisConfig):
         async with self.redis_client.pipeline() as pipe:
             for team_id in team_ids:
                 team_players_key = self._team_players_key(game_id, int(team_id))
-                await pipe.zrange(team_players_key, 0, -1)
+                pipe.zrange(team_players_key, 0, -1)
 
             team_player_ids = await pipe.execute()
 
@@ -145,8 +146,11 @@ class GameTeamRepository(RedisConfig):
 
     async def increment_team_offset(self, game_id: str) -> int:
         game_key = self._game_key(game_id)
-        team_offset = await self.redis_client.hincrby(game_key, 'team_offset', 1)
-        return team_offset
+        async with self.redis_client.pipeline() as pipe:
+            pipe.hincrby(game_key, 'team_offset', 1)
+            pipe.expire(game_key, self.EXPIRE_TIME)
+            result = await pipe.execute()
+        return int(result[0])
 
     async def is_team_exists(self, game_id: str, team_id: int) -> bool:
         team_key = self._team_key(game_id, team_id)
@@ -157,13 +161,16 @@ class GameTeamRepository(RedisConfig):
         team_id = player.get('team_id')
         team_players = self._team_players_key(game_id, team_id)
         teams_key = self._teams_key(game_id)
+
         await self.redis_client.zrem(team_players, str(player.get('id')))
+
+        await self.redis_client.expire(team_players, self.EXPIRE_TIME)
 
         team_size = await self.redis_client.zcard(team_players)
 
         if team_size == 0:
             async with self.redis_client.pipeline() as pipe:
-                await pipe.delete(self._team_key(game_id, team_id))
-                await pipe.zrem(teams_key, str(team_id))
-                
+                pipe.delete(self._team_key(game_id, team_id))
+                pipe.zrem(teams_key, str(team_id))
+
                 await pipe.execute()

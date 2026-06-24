@@ -17,11 +17,11 @@ class GameCoreRepository(RedisConfig):
 
     async def create_game(self, game: Game) -> None:
         async with self.redis_client.pipeline() as pipe:
-            await pipe.hset(
+            pipe.hset(
                 self._game_key(game.id),
                 mapping=Game.model_dump(game)
             )
-            await pipe.expire(self._game_key(game.id), self.EXPIRE_TIME)
+            pipe.expire(self._game_key(game.id), self.EXPIRE_TIME)
             await pipe.execute()
 
     async def is_game_exist(self, game_id: str) -> bool:
@@ -40,7 +40,10 @@ class GameCoreRepository(RedisConfig):
 
     async def set_game_status(self, game_id: str, status: str) -> None:
         game_key = self._game_key(game_id)
-        await self.redis_client.hset(game_key, 'status', status)
+        async with self.redis_client.pipeline() as pipe:
+            pipe.hset(game_key, 'status', status)
+            pipe.expire(game_key, self.EXPIRE_TIME)
+            await pipe.execute()
 
     async def get_pack_id(self, game_id: str) -> int:
         game_key = self._game_key(game_id)

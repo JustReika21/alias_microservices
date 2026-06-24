@@ -23,6 +23,7 @@ class GameSnapshotService:
                 'player_id': current_player_id,
                 'is_current': is_current
             },
+            'user_id': user_id,
             'players': players,
             'my_id': my_id,
             'status': game_status,

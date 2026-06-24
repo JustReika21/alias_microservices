@@ -79,7 +79,14 @@ export default function TeamGrid({
   }, [playersByTeam, status]);
 
   function handleKick(playerId: string) {
-    if (!window.confirm("Кикнуть игрока?")) return;
+    const player = normalizedPlayers.find(
+      (p) => String(p.id) === String(playerId)
+    );
+
+    const name = player?.name ?? "игрок";
+
+    if (!window.confirm(`Исключить игрока: ${name}?`)) return;
+
     sendKick(playerId);
   }
 

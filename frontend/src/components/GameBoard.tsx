@@ -26,6 +26,7 @@ export default function GameBoard({
     endTime,
     winners,
     isDraw,
+    logs,
     sendGuess,
     sendSwitch,
     sendAction,
@@ -114,6 +115,11 @@ export default function GameBoard({
           disabled={disabled}
         />
       )}
+      <div style={{ height: 200, overflowY: "auto" }}>
+        {logs.map((l, i) => (
+          <div key={i}>{l}</div>
+        ))}
+      </div>
     </div>
   );
 }
