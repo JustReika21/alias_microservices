@@ -107,21 +107,40 @@ export async function fetchMyPacks(page = 1): Promise<PacksResponse> {
   return res.json();
 }
 
-export async function fetchPacks(page = 1): Promise<PacksResponse> {
-  const res = await apiFetch(`/api/v1/packs?page=${page}`);
+let nextRequestTime = 0;
 
-  if (!res.ok) {
-    throw new Error("Failed to fetch packs");
+export async function fetchPacksByName(
+  packName: string,
+  page = 1
+): Promise<PacksResponse> {
+  if (Date.now() < nextRequestTime) {
+    throw new Error("Server temporarily unavailable");
   }
 
-  return res.json();
-}
-
-export async function fetchPacksByName(packName: string, page = 1): Promise<PacksResponse> {
   const params = new URLSearchParams();
-  if (packName) params.append("pack_name", packName);
+
+  if (packName.trim()) {
+    params.append("pack_name", packName);
+  }
+
   params.append("page", page.toString());
-  const res = await apiFetch(`/api/v1/packs?${params.toString()}`);
-  if (!res.ok) throw new Error("Failed to fetch packs");
-  return res.json();
+
+  try {
+    const res = await apiFetch(`/api/v1/packs?${params}`);
+
+    if (!res.ok) {
+      if (res.status >= 500) {
+        nextRequestTime = Date.now() + 3000;
+      }
+
+      throw new Error("Failed to fetch packs");
+    }
+
+    nextRequestTime = 0;
+
+    return await res.json();
+  } catch (err) {
+    nextRequestTime = Date.now() + 3000;
+    throw err;
+  }
 }

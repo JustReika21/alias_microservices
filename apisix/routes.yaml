@@ -1,9 +1,8 @@
 routes:
   - id: 1
-    name: cards
+    name: cards_post_wildcard
     uri: /api/v1/cards/*
-    methods: [GET, POST, DELETE]
-    status: 1
+    methods: [POST]
     upstream:
       type: roundrobin
       nodes:
@@ -14,46 +13,97 @@ routes:
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
+      limit-req:
+        rate: 15
+        burst: 30
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 300
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
   - id: 2
     name: game_ws
     uri: /ws/game/*
-    methods:
-      - GET
+    methods: [ GET ]
     enable_websocket: true
-    status: 1
+
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-game-1:8000": 1
-      type: roundrobin
+
       timeout:
         connect: 5
         send: 3600
         read: 3600
+
       keepalive_pool:
+        size: 20
         idle_timeout: 60
         requests: 10000
+
+    plugins:
+      limit-req:
+        rate: 10
+        burst: 20
+        key: remote_addr
+        rejected_code: 429
 
   - id: 3
     name: auth
     uri: /api/v1/auth/*
-    methods: [GET, POST, PUT, DELETE, PATCH]
+    methods: [GET, POST]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-auth-1:8000": 1
+    plugins:
+      limit-req:
+        rate: 15
+        burst: 30
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 300
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
 
   - id: 4
     name: register
     uri: /api/v1/auth/register/
     methods: [POST]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-auth-1:8000": 1
+    plugins:
+      limit-req:
+        rate: 5
+        burst: 10
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 30
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
 
   - id: 5
     name: game
     uri: /api/v1/game
-    methods: [GET, POST, PUT, DELETE, PATCH]
+    methods: [POST]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-game-1:8000": 1
     plugins:
@@ -61,25 +111,53 @@ routes:
         uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
+
+      limit-req:
+        rate: 15
+        burst: 30
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 300
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
 
   - id: 6
-    name: game_wildcard
-    uri: /api/v1/game/*
-    methods: [GET, POST, PUT, DELETE, PATCH]
+    name: packs_get
+    uri: /api/v1/packs
+    methods: [GET]
     upstream:
+      type: roundrobin
       nodes:
-        "aliasmicro-game-1:8000": 1
+        "aliasmicro-packs-1:8000": 1
     plugins:
       forward-auth:
         uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
+
+      limit-req:
+        rate: 30
+        burst: 60
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 600
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
 
   - id: 7
-    name: packs
+    name: packs_post
     uri: /api/v1/packs
-    methods: [GET, POST, PUT, DELETE, PATCH]
+    methods: [POST]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-packs-1:8000": 1
     plugins:
@@ -87,12 +165,26 @@ routes:
         uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
+
+      limit-req:
+        rate: 15
+        burst: 30
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 300
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
 
   - id: 8
-    name: packs_wildcard
+    name: packs_get_wildcard
     uri: /api/v1/packs/*
-    methods: [GET, POST, PUT, DELETE, PATCH]
+    methods: [GET]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-packs-1:8000": 1
     plugins:
@@ -101,11 +193,79 @@ routes:
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
+      limit-req:
+        rate: 30
+        burst: 60
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 600
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
   - id: 9
+    name: packs_put_wildcard
+    uri: /api/v1/packs/*
+    methods: [PUT]
+    upstream:
+      type: roundrobin
+      nodes:
+        "aliasmicro-packs-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+      limit-req:
+        rate: 15
+        burst: 30
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 300
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 10
+    name: packs_delete_wildcard
+    uri: /api/v1/packs/*
+    methods: [DELETE]
+    upstream:
+      type: roundrobin
+      nodes:
+        "aliasmicro-packs-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+      limit-req:
+        rate: 5
+        burst: 10
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 100
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 11
     name: cards_get
     uri: /api/v1/cards
     methods: [GET]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-cards-1:8000": 1
     plugins:
@@ -113,14 +273,26 @@ routes:
         uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-        _meta:
-          disable: true
 
-  - id: 10
-    name: cards_write
+      limit-req:
+        rate: 30
+        burst: 60
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 600
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 12
+    name: cards_post
     uri: /api/v1/cards
-    methods: [POST, DELETE]
+    methods: [POST]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-cards-1:8000": 1
     plugins:
@@ -129,11 +301,52 @@ routes:
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
-  - id: 11
+      limit-req:
+        rate: 15
+        burst: 30
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 300
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 13
+    name: cards_delete
+    uri: /api/v1/cards
+    methods: [DELETE]
+    upstream:
+      type: roundrobin
+      nodes:
+        "aliasmicro-cards-1:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        request_headers: [Authorization]
+        upstream_headers: [X-User-Id]
+
+      limit-req:
+        rate: 5
+        burst: 10
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 100
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 14
     name: auth_me
     uri: /api/v1/auth/me
     methods: [GET]
     upstream:
+      type: roundrobin
       nodes:
         "aliasmicro-auth-1:8000": 1
     plugins:
@@ -141,3 +354,16 @@ routes:
         uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
+
+      limit-req:
+        rate: 30
+        burst: 60
+        key: remote_addr
+        rejected_code: 429
+
+      limit-count:
+        count: 600
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429

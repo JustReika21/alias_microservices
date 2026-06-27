@@ -1,0 +1,42 @@
+apisix:
+  node_listen: 9080
+  enable_ipv6: false
+
+  enable_control: true
+  control:
+    ip: 127.0.0.1
+    port: 9092
+
+deployment:
+  admin:
+    allow_admin:
+      - 10.0.0.0/8
+      - 172.16.0.0/12
+      - 192.168.0.0/16
+
+    admin_key:
+      - name: admin
+        key: ${{APISIX_ADMIN_KEY}}
+        role: admin
+
+  etcd:
+    host:
+      - http://etcd:2379
+    prefix: /apisix
+    timeout: 30
+
+nginx_config:
+  http:
+    enable_access_log: true
+
+  https:
+    enable: true
+    https_port: 9443
+
+plugins:
+  - forward-auth
+  - limit-req
+  - limit-count
+  - ip-restriction
+  - prometheus
+  - cors

@@ -85,3 +85,5 @@ docker-compose.override.yml
 *.tmp
 *.bak
 certs/
+apisix.crt
+apisix.key

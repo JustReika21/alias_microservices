@@ -30,3 +30,8 @@ authentication:
 
 plugins:
   - forward-auth
+  - limit-req
+  - limit-count
+  - ip-restriction
+  - prometheus
+  - cors

@@ -4,22 +4,22 @@ services:
     ports:
       - "9000:9000"
     volumes:
-      - ./apisix-dashboard/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+      - ./apisix-dashboard/conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
     depends_on:
       - etcd
 
   apisix:
-    image: apache/apisix:3.15.0-debian
+    build:
+      context: apisix
     env_file:
       - .env
-    volumes:
-      - ./apisix/conf.yaml:/usr/local/apisix/conf/config.yaml
     depends_on:
       etcd:
         condition: service_healthy
     ports:
       - "9080:9080"
       - "9180:9180"
+      - "9443:9443"
 
   etcd:
     image: bitnamilegacy/etcd:3.5.13

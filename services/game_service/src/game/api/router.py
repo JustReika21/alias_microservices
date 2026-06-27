@@ -58,43 +58,44 @@ async def game_websocket(
 
         while True:
             data = await websocket.receive_json()
+            cmd = data.get('type')
             game_status = await game_service.get_game_status(game_id)
 
-            if data['type'] == 'set_up' and game_status == 'setting_up':
+            if cmd == 'set_up' and game_status == 'setting_up':
                 if await game_service.sender_is_host(game_id, user.user_id):
                     await game_service.handle_set_up(game_id)
 
-            if data['type'] == 'start' and game_status == 'waiting':
+            if cmd == 'start' and game_status == 'waiting':
                 if await game_service.sender_is_current_player(game_id, user.user_id):
                     await game_service.handle_start_round(game_id)
 
-            if data['type'] == 'next' and game_status == 'started':
+            if cmd == 'next' and game_status == 'started':
                 if await game_service.sender_is_current_player(game_id, user.user_id):
                     await game_service.send_card(game_id)
 
-            if data['type'] == 'switch_team' and game_status == 'setting_up':
-                new_team_id = int(data['new_team_id'])
+            if cmd == 'switch_team' and game_status == 'setting_up':
+                new_team_id = int(data.get('new_team_id'))
                 await game_service.handle_switch_team(game_id, user.user_id, new_team_id)
 
-            if data['type'] == 'guessed' and game_status == 'calculating':
-                card_id = int(data['card'])
+            if cmd == 'guessed' and game_status == 'calculating':
+                card_id = int(data.get('card'))
                 await game_service.handle_card_guess(game_id, card_id, True)
 
-            if data['type'] == 'not_guessed' and game_status == 'calculating':
-                card_id = int(data['card'])
+            if cmd == 'not_guessed' and game_status == 'calculating':
+                card_id = int(data.get('card'))
                 await game_service.handle_card_guess(game_id, card_id, False)
 
-            if data['type'] == 'calculated' and game_status == 'calculating':
+            if cmd == 'calculated' and game_status == 'calculating':
                 if await game_service.sender_is_current_player(game_id, user.user_id):
                     await game_service.handle_calculating(game_id)
 
-            if data['type'] == 'restart' and game_status == 'finished':
+            if cmd == 'restart' and game_status == 'finished':
                 if await game_service.sender_is_host(game_id, user.user_id):
                     await game_service.restart_game(game_id)
 
-            if data['type'] == 'kick':
+            if cmd == 'kick':
                 if await game_service.sender_is_host(game_id, user.user_id):
-                    await game_service.kick_player(game_id, data['id'])
+                    await game_service.kick_player(game_id, data.get('id'))
 
     except WebSocketDisconnect:
         pass
