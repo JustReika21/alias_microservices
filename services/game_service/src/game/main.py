@@ -2,6 +2,8 @@ import asyncio
 from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
+
 from game.api.router import game_router
 from game.dependencies import start_up_redis
 from game.exc.exception_handlers import register_game_exception_handlers
@@ -60,3 +62,13 @@ app = FastAPI(lifespan=lifespan)
 app.include_router(game_router)
 
 register_game_exception_handlers(app)
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=[
+        "http://82.146.60.75"
+    ],
+    allow_credentials=True,
+    allow_methods=["GET", "POST", "PUT", "DELETE"],
+    allow_headers=["Authorization", "Content-Type"],
+)
