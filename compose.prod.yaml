@@ -1,4 +1,12 @@
 services:
+  apisix:
+    env_file:
+      - .env.prod
+
+  apisix-init:
+    env_file:
+      - .env.prod
+
   frontend:
     build:
       target: prod

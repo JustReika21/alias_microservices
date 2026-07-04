@@ -1,4 +1,12 @@
 services:
+  apisix:
+    env_file:
+      - .env.dev
+
+  apisix-init:
+    env_file:
+      - .env.dev
+
   apisix-dashboard:
     image: apache/apisix-dashboard:3.0.1-alpine
     ports:
