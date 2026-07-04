@@ -1,0 +1,119 @@
+services:
+  apisix:
+    build:
+      context: apisix
+    env_file:
+      - .env.dev
+    depends_on:
+      etcd:
+        condition: service_healthy
+    ports:
+      - "80:9080"
+      - "443:9443"
+
+  etcd:
+    image: bitnamilegacy/etcd:3.5.13
+    environment:
+      ALLOW_NONE_AUTHENTICATION: "yes"
+      ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
+      ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
+    ports:
+      - "2379:2379"
+    volumes:
+      - etcd_data:/bitnami/etcd
+    healthcheck:
+      test: ["CMD", "sh", "-c", "etcdctl endpoint health || exit 1"]
+      interval: 5s
+      timeout: 5s
+      retries: 30
+
+  apisix-init:
+    image: alpine:3.20
+    depends_on:
+      apisix:
+        condition: service_started
+    volumes:
+      - ./apisix/routes.yaml:/routes.yaml
+      - ./scripts/load-routes.sh:/load-routes.sh
+    env_file:
+      - .env.dev
+    command: >
+      sh -c "
+        apk add --no-cache curl jq yq &&
+        until curl -s http://etcd:2379/health; do sleep 2; done &&
+        until curl -s http://apisix:9180/apisix/admin/routes; do sleep 2; done &&
+        chmod +x /load-routes.sh &&
+        /load-routes.sh
+      "
+
+  frontend:
+    build:
+      context: ./frontend
+    depends_on:
+      - apisix
+
+  cards-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${CARDS_DB_NAME}
+      POSTGRES_USER: ${CARDS_DB_USER}
+      POSTGRES_PASSWORD: ${CARDS_DB_PASSWORD}
+    volumes:
+      - cards_data:/var/lib/postgresql/data
+
+  packs-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${PACKS_DB_NAME}
+      POSTGRES_USER: ${PACKS_DB_USER}
+      POSTGRES_PASSWORD: ${PACKS_DB_PASSWORD}
+    volumes:
+      - packs_data:/var/lib/postgresql/data
+
+  auth-db:
+    image: postgres:17
+    environment:
+      POSTGRES_DB: ${AUTH_DB_NAME}
+      POSTGRES_USER: ${AUTH_DB_USER}
+      POSTGRES_PASSWORD: ${AUTH_DB_PASSWORD}
+    volumes:
+      - auth_data:/var/lib/postgresql/data
+
+  cards:
+    build:
+      context: services/cards_service
+    depends_on:
+      - cards-db
+
+  packs:
+    build:
+      context: services/packs_service
+    depends_on:
+      - packs-db
+
+  game:
+    build:
+      context: services/game_service
+
+  auth:
+    build:
+      context: services/auth_service
+    depends_on:
+      - auth-db
+
+  game-redis:
+    image: redis:8.6.1
+    command: >
+      --requirepass ${REDIS_PASSWORD}
+    volumes:
+      - game_redis_data:/data
+
+volumes:
+  etcd_data:
+  node_modules:
+
+  cards_data:
+  packs_data:
+  auth_data:
+
+  game_redis_data:

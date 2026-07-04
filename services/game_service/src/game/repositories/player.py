@@ -11,11 +11,8 @@ from game.schemas.schemas import Player
 class GamePlayerRepository(RedisConfig):
     def __init__(
             self,
-            db: AsyncSession,
             redis_client: Redis
     ):
-        self.db = db
-
         self.redis_client = redis_client
 
     async def add_player(self, game_id: str, player: Player) -> None:

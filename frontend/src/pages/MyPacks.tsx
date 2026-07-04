@@ -1,12 +1,12 @@
 import { useEffect, useState } from "react";
 import { useNavigate } from "react-router-dom";
 
-import { fetchMyPacks, type MyPacksResponse } from "../services/packService";
+import { fetchMyPacks, type PacksResponse } from "../services/packService";
 
 export default function MyPacks() {
   const navigate = useNavigate();
 
-  const [data, setData] = useState<MyPacksResponse | null>(null);
+  const [data, setData] = useState<PacksResponse | null>(null);
   const [page, setPage] = useState(1);
 
   const [loading, setLoading] = useState(true);

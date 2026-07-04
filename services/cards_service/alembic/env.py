@@ -13,9 +13,11 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
+config.set_main_option("sqlalchemy.url", settings.CARDS_DATABASE_URL)
+
 
 def run_migrations_offline() -> None:
-    url = settings.database_url
+    url = config.get_main_option("sqlalchemy.url")
     context.configure(
         url=url,
         target_metadata=target_metadata,

@@ -18,6 +18,7 @@ dependencies = [
     "greenlet>=3.3.0",
     "grpcio==1.76",
     "grpcio-tools==1.76",
+    "gunicorn>=26.0.0",
     "opentelemetry-instrumentation-fastapi>=0.60b1",
     "opentelemetry-sdk>=1.39.1",
     "packs-grpc==0.1.7",

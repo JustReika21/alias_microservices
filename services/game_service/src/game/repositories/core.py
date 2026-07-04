@@ -8,11 +8,8 @@ from game.schemas.schemas import Game
 class GameCoreRepository(RedisConfig):
     def __init__(
             self,
-            db: AsyncSession,
             redis_client: Redis
     ):
-        self.db = db
-
         self.redis_client = redis_client
 
     async def create_game(self, game: Game) -> None:

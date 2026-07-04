@@ -1,0 +1,35 @@
+services:
+  frontend:
+    build:
+      target: prod
+    env_file:
+      - .env.prod
+    restart: always
+
+  cards:
+    build:
+      target: prod
+    env_file:
+      - .env.prod
+    restart: always
+
+  packs:
+    build:
+      target: prod
+    env_file:
+      - .env.prod
+    restart: always
+
+  game:
+    build:
+      target: prod
+    env_file:
+      - .env.prod
+    restart: always
+
+  auth:
+    build:
+      target: prod
+    env_file:
+      - .env.prod
+    restart: always

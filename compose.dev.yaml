@@ -1,0 +1,83 @@
+services:
+  apisix-dashboard:
+    image: apache/apisix-dashboard:3.0.1-alpine
+    ports:
+      - "9000:9000"
+    volumes:
+      - ./apisix-dashboard/conf/conf.yaml:/usr/local/apisix-dashboard/conf/conf.yaml
+    depends_on:
+      - etcd
+
+  frontend:
+    container_name: frontend
+    build:
+      target: dev
+    volumes:
+      - ./frontend:/app
+      - node_modules:/app/node_modules
+    ports:
+      - "5173:5173"
+    environment:
+      CHOKIDAR_USEPOLLING: "true"
+
+  cards:
+    build:
+      target: dev
+    env_file:
+      - .env.dev
+    volumes:
+      - ./services/cards_service/src:/app/src
+      - ./services/cards_service/alembic:/app/alembic
+    ports:
+      - "8001:8000"
+      - "50052:50051"
+
+  packs:
+    build:
+      target: dev
+    env_file:
+      - .env.dev
+    volumes:
+      - ./services/packs_service/src:/app/src
+      - ./services/packs_service/alembic:/app/alembic
+    ports:
+      - "8002:8000"
+      - "50053:50051"
+
+  game:
+    build:
+      target: dev
+    env_file:
+      - .env.dev
+    volumes:
+      - ./services/game_service/src:/app/src
+      - ./services/game_service/alembic:/app/alembic
+    ports:
+      - "8003:8000"
+
+  auth:
+    build:
+      target: dev
+    env_file:
+      - .env.dev
+    volumes:
+      - ./services/auth_service/src:/app/src
+      - ./services/auth_service/alembic:/app/alembic
+    ports:
+      - "8004:8000"
+
+  cards-db:
+    ports:
+      - "5433:5432"
+
+  packs-db:
+    ports:
+      - "5434:5432"
+
+  auth-db:
+    ports:
+      - "5436:5432"
+
+  game-redis:
+    ports:
+      - "6380:6379"

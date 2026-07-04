@@ -11,8 +11,8 @@ from packs.grpc.server import start_grpc_server
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    auth_client = AuthClient('aliasmicro-auth-1:50051')
-    cards_client = CardsClient('aliasmicro-cards-1:50051')
+    auth_client = AuthClient('auth:50051')
+    cards_client = CardsClient('cards:50051')
 
     app.state.auth_client = auth_client
     app.state.cards_client = cards_client

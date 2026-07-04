@@ -10,7 +10,7 @@ from fastapi.middleware.cors import CORSMiddleware
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    packs_client = PacksClient('aliasmicro-packs-1:50051')
+    packs_client = PacksClient('packs:50051')
     await packs_client.connect()
     app.state.packs_client = packs_client
 

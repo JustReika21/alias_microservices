@@ -33,10 +33,10 @@ htmlcov/
 
 # Docker artifacts
 Dockerfile
-docker-compose.yml
+compose.yaml
 
 # Local env files (usually secret)
-.env
+.env.dev
 .env.*
 
 # Build artifacts

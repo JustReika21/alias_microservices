@@ -8,8 +8,7 @@ from game.repositories.redis_keys import RedisConfig
 
 
 class GameCardRepository(RedisConfig):
-    def __init__(self, db: AsyncSession, redis_client: Redis):
-        self.db = db
+    def __init__(self, redis_client: Redis):
         self.redis_client = redis_client
 
     async def set_game_cards(self, game_id: str, cards: List[dict]) -> None:

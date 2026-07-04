@@ -9,11 +9,8 @@ from game.repositories.redis_keys import RedisConfig
 class GameScoreRepository(RedisConfig):
     def __init__(
             self,
-            db: AsyncSession,
             redis_client: Redis
     ):
-        self.db = db
-
         self.redis_client = redis_client
 
     async def update_player_score(self, game_id: str, player_id: int, points: int) -> int:

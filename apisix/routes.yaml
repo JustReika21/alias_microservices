@@ -1,4 +1,13 @@
 routes:
+  - id: 100
+    name: frontend_root
+    uri: /*
+    methods: [ GET ]
+    upstream:
+      type: roundrobin
+      nodes:
+        "frontend:80": 1
+
   - id: 1
     name: cards_post_wildcard
     uri: /api/v1/cards/*
@@ -6,10 +15,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-cards-1:8000": 1
+        "cards:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -35,7 +44,7 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-game-1:8000": 1
+        "game:8000": 1
 
       timeout:
         connect: 5
@@ -61,7 +70,7 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-auth-1:8000": 1
+        "auth:8000": 1
     plugins:
       limit-req:
         rate: 15
@@ -83,7 +92,7 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-auth-1:8000": 1
+        "auth:8000": 1
     plugins:
       limit-req:
         rate: 5
@@ -105,10 +114,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-game-1:8000": 1
+        "game:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -132,10 +141,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-packs-1:8000": 1
+        "packs:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -159,10 +168,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-packs-1:8000": 1
+        "packs:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -186,10 +195,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-packs-1:8000": 1
+        "packs:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -213,10 +222,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-packs-1:8000": 1
+        "packs:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -240,10 +249,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-packs-1:8000": 1
+        "packs:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -267,10 +276,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-cards-1:8000": 1
+        "cards:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -294,10 +303,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-cards-1:8000": 1
+        "cards:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -321,10 +330,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-cards-1:8000": 1
+        "cards:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 
@@ -348,10 +357,10 @@ routes:
     upstream:
       type: roundrobin
       nodes:
-        "aliasmicro-auth-1:8000": 1
+        "auth:8000": 1
     plugins:
       forward-auth:
-        uri: http://aliasmicro-auth-1:8000/api/v1/auth/verify
+        uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
 

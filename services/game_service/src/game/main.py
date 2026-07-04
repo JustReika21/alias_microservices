@@ -14,9 +14,9 @@ from game.services.connection_manager import ConnectionManager
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    packs_client = PacksClient('aliasmicro-packs-1:50051')
-    cards_client = CardsClient('aliasmicro-cards-1:50051')
-    auth_client = AuthClient('aliasmicro-auth-1:50051')
+    packs_client = PacksClient('packs:50051')
+    cards_client = CardsClient('cards:50051')
+    auth_client = AuthClient('auth:50051')
 
     await packs_client.connect()
     await cards_client.connect()

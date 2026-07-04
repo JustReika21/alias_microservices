@@ -7,11 +7,8 @@ from game.repositories.redis_keys import RedisConfig
 class GameRoundRepository(RedisConfig):
     def __init__(
             self,
-            db: AsyncSession,
             redis_client: Redis
     ):
-        self.db = db
-
         self.redis_client = redis_client
 
     async def cleanup_round(self, game_id: str) -> None:

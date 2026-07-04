@@ -1,5 +1,4 @@
 from fastapi import Depends
-from game.database.db import async_session
 from game.services.connection_manager import ConnectionManager
 from game.services.event_publisher import GameEventPublisher
 from game.settings import settings
@@ -29,11 +28,6 @@ from game.services.snapshot import GameSnapshotService
 from game.services.team import GameTeamService
 from game.services.timer import GameTimerService
 from game.services.orchestration import GameOrchestrationService
-
-
-async def get_session() -> AsyncSession:
-    async with async_session() as session:
-        yield session
 
 
 async def start_up_redis() -> Redis:
@@ -79,52 +73,45 @@ def get_auth_client(conn: HTTPConnection) -> AuthClient:
 # =========================
 
 def get_game_card_repository(
-    db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_from_app),
 ) -> GameCardRepository:
-    return GameCardRepository(db, redis)
+    return GameCardRepository(redis)
 
 
 def get_game_core_repository(
-    db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_from_app),
 ) -> GameCoreRepository:
-    return GameCoreRepository(db, redis)
+    return GameCoreRepository(redis)
 
 
 def get_game_player_repository(
-    db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_from_app),
 ) -> GamePlayerRepository:
-    return GamePlayerRepository(db, redis)
+    return GamePlayerRepository(redis)
 
 
 def get_game_round_repository(
-    db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_from_app),
 ) -> GameRoundRepository:
-    return GameRoundRepository(db, redis)
+    return GameRoundRepository(redis)
 
 
 def get_game_score_repository(
-    db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_from_app),
 ) -> GameScoreRepository:
-    return GameScoreRepository(db, redis)
+    return GameScoreRepository(redis)
 
 
 def get_game_team_repository(
-    db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_from_app),
 ) -> GameTeamRepository:
-    return GameTeamRepository(db, redis)
+    return GameTeamRepository(redis)
 
 
 def get_game_timer_repository(
-    db: AsyncSession = Depends(get_session),
     redis: Redis = Depends(get_redis_from_app),
 ) -> GameTimerRepository:
-    return GameTimerRepository(db, redis)
+    return GameTimerRepository(redis)
 
 
 # =========================

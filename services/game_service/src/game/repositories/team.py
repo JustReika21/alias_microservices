@@ -10,10 +10,8 @@ from game.repositories.redis_keys import RedisConfig
 class GameTeamRepository(RedisConfig):
     def __init__(
             self,
-            db: AsyncSession,
             redis_client: Redis
     ):
-        self.db = db
         self.redis_client = redis_client
 
     async def create_team(self, game_id: str, team_id: int) -> None:
