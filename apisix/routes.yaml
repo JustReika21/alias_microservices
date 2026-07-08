@@ -1,15 +1,27 @@
 routes:
   - id: 100
     name: frontend_root
-    uri: /*
+    uri: /
     methods: [ GET ]
     upstream:
       type: roundrobin
       nodes:
         "frontend:80": 1
+    plugins:
+      limit-req:
+        rate: 15
+        burst: 30
+        key: remote_addr
+        rejected_code: 429
+      limit-count:
+        count: 300
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
 
   - id: 1
-    name: cards_post_wildcard
+    name: cards_post
     uri: /api/v1/cards/*
     methods: [POST]
     upstream:
@@ -21,13 +33,11 @@ routes:
         uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-
       limit-req:
         rate: 15
         burst: 30
         key: remote_addr
         rejected_code: 429
-
       limit-count:
         count: 300
         time_window: 60
@@ -36,34 +46,110 @@ routes:
         rejected_code: 429
 
   - id: 2
+    name: cards_get
+    uri: /api/v1/cards
+    methods: [ GET ]
+    upstream:
+      type: roundrobin
+      nodes:
+        "cards:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://auth:8000/api/v1/auth/verify
+        request_headers: [ Authorization ]
+        upstream_headers: [ X-User-Id ]
+      limit-req:
+        rate: 10
+        burst: 20
+        key: remote_addr
+        rejected_code: 429
+      limit-count:
+        count: 200
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 3
+    name: cards_cd
+    uri: /api/v1/cards
+    methods: [ POST, DELETE ]
+    upstream:
+      type: roundrobin
+      nodes:
+        "cards:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://auth:8000/api/v1/auth/verify
+        request_headers: [ Authorization ]
+        upstream_headers: [ X-User-Id ]
+      limit-req:
+        rate: 5
+        burst: 10
+        key: remote_addr
+        rejected_code: 429
+      limit-count:
+        count: 25
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 4
     name: game_ws
     uri: /ws/game/*
     methods: [ GET ]
     enable_websocket: true
-
     upstream:
       type: roundrobin
       nodes:
         "game:8000": 1
-
       timeout:
         connect: 5
         send: 3600
         read: 3600
-
       keepalive_pool:
         size: 20
         idle_timeout: 60
         requests: 10000
-
     plugins:
       limit-req:
         rate: 10
         burst: 20
         key: remote_addr
         rejected_code: 429
+      limit-conn:
+        conn: 2
+        burst: 1
+        default_conn_delay: 0.1
+        key: remote_addr
 
-  - id: 3
+  - id: 5
+    name: auth_me
+    uri: /api/v1/auth/me
+    methods: [ GET ]
+    upstream:
+      type: roundrobin
+      nodes:
+        "auth:8000": 1
+    plugins:
+      forward-auth:
+        uri: http://auth:8000/api/v1/auth/verify
+        request_headers: [ Authorization ]
+        upstream_headers: [ X-User-Id ]
+      limit-req:
+        rate: 10
+        burst: 20
+        key: remote_addr
+        rejected_code: 429
+      limit-count:
+        count: 200
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 6
     name: auth
     uri: /api/v1/auth/*
     methods: [GET, POST]
@@ -77,7 +163,6 @@ routes:
         burst: 30
         key: remote_addr
         rejected_code: 429
-
       limit-count:
         count: 300
         time_window: 60
@@ -85,29 +170,7 @@ routes:
         policy: local
         rejected_code: 429
 
-  - id: 4
-    name: register
-    uri: /api/v1/auth/register/
-    methods: [POST]
-    upstream:
-      type: roundrobin
-      nodes:
-        "auth:8000": 1
-    plugins:
-      limit-req:
-        rate: 5
-        burst: 10
-        key: remote_addr
-        rejected_code: 429
-
-      limit-count:
-        count: 30
-        time_window: 60
-        key: remote_addr
-        policy: local
-        rejected_code: 429
-
-  - id: 5
+  - id: 7
     name: game
     uri: /api/v1/game
     methods: [POST]
@@ -120,21 +183,19 @@ routes:
         uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-
       limit-req:
-        rate: 15
-        burst: 30
+        rate: 1
+        burst: 2
         key: remote_addr
         rejected_code: 429
-
       limit-count:
-        count: 300
+        count: 2
         time_window: 60
         key: remote_addr
         policy: local
         rejected_code: 429
 
-  - id: 6
+  - id: 8
     name: packs_get
     uri: /api/v1/packs
     methods: [GET]
@@ -147,21 +208,19 @@ routes:
         uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-
       limit-req:
-        rate: 30
-        burst: 60
+        rate: 10
+        burst: 20
         key: remote_addr
         rejected_code: 429
-
       limit-count:
-        count: 600
+        count: 50
         time_window: 60
         key: remote_addr
         policy: local
         rejected_code: 429
 
-  - id: 7
+  - id: 9
     name: packs_post
     uri: /api/v1/packs
     methods: [POST]
@@ -174,22 +233,20 @@ routes:
         uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-
       limit-req:
-        rate: 15
-        burst: 30
+        rate: 2
+        burst: 4
         key: remote_addr
         rejected_code: 429
-
       limit-count:
-        count: 300
+        count: 2
         time_window: 60
         key: remote_addr
         policy: local
         rejected_code: 429
 
-  - id: 8
-    name: packs_get_wildcard
+  - id: 10
+    name: packs_fetch
     uri: /api/v1/packs/*
     methods: [GET]
     upstream:
@@ -201,22 +258,20 @@ routes:
         uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-
       limit-req:
-        rate: 30
-        burst: 60
+        rate: 5
+        burst: 10
         key: remote_addr
         rejected_code: 429
-
       limit-count:
-        count: 600
+        count: 50
         time_window: 60
         key: remote_addr
         policy: local
         rejected_code: 429
 
-  - id: 9
-    name: packs_put_wildcard
+  - id: 11
+    name: packs_put
     uri: /api/v1/packs/*
     methods: [PUT]
     upstream:
@@ -228,22 +283,21 @@ routes:
         uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-
       limit-req:
-        rate: 15
-        burst: 30
+        rate: 2
+        burst: 4
         key: remote_addr
         rejected_code: 429
 
       limit-count:
-        count: 300
+        count: 5
         time_window: 60
         key: remote_addr
         policy: local
         rejected_code: 429
 
-  - id: 10
-    name: packs_delete_wildcard
+  - id: 12
+    name: packs_delete
     uri: /api/v1/packs/*
     methods: [DELETE]
     upstream:
@@ -255,123 +309,13 @@ routes:
         uri: http://auth:8000/api/v1/auth/verify
         request_headers: [Authorization]
         upstream_headers: [X-User-Id]
-
       limit-req:
         rate: 5
         burst: 10
         key: remote_addr
         rejected_code: 429
-
       limit-count:
-        count: 100
-        time_window: 60
-        key: remote_addr
-        policy: local
-        rejected_code: 429
-
-  - id: 11
-    name: cards_get
-    uri: /api/v1/cards
-    methods: [GET]
-    upstream:
-      type: roundrobin
-      nodes:
-        "cards:8000": 1
-    plugins:
-      forward-auth:
-        uri: http://auth:8000/api/v1/auth/verify
-        request_headers: [Authorization]
-        upstream_headers: [X-User-Id]
-
-      limit-req:
-        rate: 30
-        burst: 60
-        key: remote_addr
-        rejected_code: 429
-
-      limit-count:
-        count: 600
-        time_window: 60
-        key: remote_addr
-        policy: local
-        rejected_code: 429
-
-  - id: 12
-    name: cards_post
-    uri: /api/v1/cards
-    methods: [POST]
-    upstream:
-      type: roundrobin
-      nodes:
-        "cards:8000": 1
-    plugins:
-      forward-auth:
-        uri: http://auth:8000/api/v1/auth/verify
-        request_headers: [Authorization]
-        upstream_headers: [X-User-Id]
-
-      limit-req:
-        rate: 15
-        burst: 30
-        key: remote_addr
-        rejected_code: 429
-
-      limit-count:
-        count: 300
-        time_window: 60
-        key: remote_addr
-        policy: local
-        rejected_code: 429
-
-  - id: 13
-    name: cards_delete
-    uri: /api/v1/cards
-    methods: [DELETE]
-    upstream:
-      type: roundrobin
-      nodes:
-        "cards:8000": 1
-    plugins:
-      forward-auth:
-        uri: http://auth:8000/api/v1/auth/verify
-        request_headers: [Authorization]
-        upstream_headers: [X-User-Id]
-
-      limit-req:
-        rate: 5
-        burst: 10
-        key: remote_addr
-        rejected_code: 429
-
-      limit-count:
-        count: 100
-        time_window: 60
-        key: remote_addr
-        policy: local
-        rejected_code: 429
-
-  - id: 14
-    name: auth_me
-    uri: /api/v1/auth/me
-    methods: [GET]
-    upstream:
-      type: roundrobin
-      nodes:
-        "auth:8000": 1
-    plugins:
-      forward-auth:
-        uri: http://auth:8000/api/v1/auth/verify
-        request_headers: [Authorization]
-        upstream_headers: [X-User-Id]
-
-      limit-req:
-        rate: 30
-        burst: 60
-        key: remote_addr
-        rejected_code: 429
-
-      limit-count:
-        count: 600
+        count: 25
         time_window: 60
         key: remote_addr
         policy: local

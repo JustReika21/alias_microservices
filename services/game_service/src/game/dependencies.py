@@ -32,9 +32,9 @@ from game.services.orchestration import GameOrchestrationService
 
 async def start_up_redis() -> Redis:
     redis_client = Redis(
-        host=settings.redis_host,
-        port=settings.redis_port,
-        password=settings.redis_password,
+        host=settings.REDIS_HOST,
+        port=settings.REDIS_PORT,
+        password=settings.REDIS_PASSWORD,
         decode_responses=True,
     )
     try:

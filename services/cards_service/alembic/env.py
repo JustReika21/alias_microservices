@@ -2,9 +2,11 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from cards.database.db import Base, engine
+from cards.database.db import Base
 from cards.database.models import Card
 from cards.settings import settings
+
+from sqlalchemy.ext.asyncio import create_async_engine
 
 config = context.config
 
@@ -13,7 +15,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-config.set_main_option("sqlalchemy.url", settings.CARDS_DATABASE_URL)
+config.set_main_option("sqlalchemy.url", settings.CARDS_DATABASE_ADMIN_URL)
 
 
 def run_migrations_offline() -> None:
@@ -41,7 +43,7 @@ def do_run_migrations(connection):
 
 
 async def run_migrations_online() -> None:
-    connectable = engine
+    connectable = create_async_engine(settings.CARDS_DATABASE_ADMIN_URL)
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

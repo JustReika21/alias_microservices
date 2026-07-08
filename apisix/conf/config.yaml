@@ -2,6 +2,10 @@ apisix:
   node_listen: 9080
   enable_ipv6: false
 
+  ssl:
+    enable: true
+    listen_port: 9443
+
   enable_control: true
   control:
     ip: 127.0.0.1
@@ -41,3 +45,4 @@ plugins:
   - ip-restriction
   - prometheus
   - cors
+  - limit-conn

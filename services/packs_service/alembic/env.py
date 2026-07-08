@@ -2,9 +2,11 @@ import asyncio
 from logging.config import fileConfig
 
 from alembic import context
-from packs.database.db import Base, engine
+from packs.database.db import Base
 from packs.database.models import Pack
 from packs.settings import settings
+
+from sqlalchemy.ext.asyncio import create_async_engine
 
 config = context.config
 
@@ -13,8 +15,7 @@ if config.config_file_name is not None:
 
 target_metadata = Base.metadata
 
-config.set_main_option("sqlalchemy.url", settings.PACKS_DATABASE_URL)
-
+config.set_main_option("sqlalchemy.url", settings.PACKS_DATABASE_ADMIN_URL)
 
 def run_migrations_offline() -> None:
     url = config.get_main_option("sqlalchemy.url")
@@ -41,7 +42,7 @@ def do_run_migrations(connection):
 
 
 async def run_migrations_online() -> None:
-    connectable = engine
+    connectable = create_async_engine(settings.PACKS_DATABASE_ADMIN_URL)
 
     async with connectable.connect() as connection:
         await connection.run_sync(do_run_migrations)

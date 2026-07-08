@@ -53,19 +53,6 @@ async def get_pack_for_update(
     await pack_service.is_creator(pack_id, access_token)
     return await pack_service.get_pack(pack_id)
 
-
-# @pack_router.get(
-#     '',
-#     status_code=status.HTTP_200_OK,
-#     response_model=PaginatedPacksPreview,
-# )
-# async def get_packs_api(
-#         page: int = Query(1, ge=1),
-#         pack_service: PackService = Depends(get_pack_service)
-# ):
-#     return await pack_service.get_packs(page)
-
-
 @pack_router.get(
     '/{pack_id}',
     status_code=status.HTTP_200_OK,

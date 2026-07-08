@@ -20,7 +20,8 @@ class AuthJWT(AuthBase):
 
 
 class Settings(BaseSettings):
-    AUTH_DATABASE_URL: str
+    AUTH_DATABASE_ADMIN_URL: str
+    AUTH_DATABASE_USER_URL: str
 
     auth_jwt: AuthJWT = AuthJWT()
 

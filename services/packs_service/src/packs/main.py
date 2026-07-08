@@ -32,16 +32,16 @@ async def lifespan(app: FastAPI):
 
 app = FastAPI(lifespan=lifespan)
 
-app.include_router(pack_router, prefix="/api/v1")
+app.include_router(pack_router, prefix='/api/v1')
 
 register_pack_exception_handlers(app)
 
 app.add_middleware(
     CORSMiddleware,
     allow_origins=[
-        "http://82.146.60.75"
+        'http://82.146.60.75'
     ],
     allow_credentials=True,
-    allow_methods=["GET", "POST", "PUT", "DELETE"],
-    allow_headers=["Authorization", "Content-Type"],
+    allow_methods=['GET', 'POST', 'PUT', 'DELETE'],
+    allow_headers=['Authorization', 'Content-Type'],
 )
