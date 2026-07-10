@@ -12,6 +12,10 @@ export default function MyPacks() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState<string | null>(null);
 
+  useEffect(() => {
+    document.title = "Алиас - Мои паки";
+  }, []);
+
   async function load(p: number) {
     setLoading(true);
 

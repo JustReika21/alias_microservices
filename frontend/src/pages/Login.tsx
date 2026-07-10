@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 
 import { useAuth } from "../context/AuthContext";
@@ -14,6 +14,9 @@ export default function Login() {
   const { login } = useAuth();
   const { showToast } = useToast();
 
+  useEffect(() => {
+    document.title = "Алиас - Вход";
+  }, []);
 
   const handleLogin = async (
     e: React.FormEvent

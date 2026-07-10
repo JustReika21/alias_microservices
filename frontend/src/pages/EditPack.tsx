@@ -46,6 +46,12 @@ export default function EditPack() {
   const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
+    if (pack) {
+      document.title = `Алиас - Пак ${pack.name}`;
+    }
+  }, [pack]);
+
+  useEffect(() => {
     async function load() {
       const [packData, cardsData] = await Promise.all([
         fetchPack(numericPackId),

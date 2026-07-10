@@ -1,4 +1,9 @@
+import {useEffect} from "react";
+
 export default function Rules() {
+  useEffect(() => {
+    document.title = "Алиас - Правила";
+  }, []);
   return (
     <main className="container rules-page">
 
@@ -9,7 +14,6 @@ export default function Rules() {
         </p>
       </div>
 
-
       <section className="card rules-section">
         <h2>Цель игры</h2>
         <p>
@@ -19,7 +23,6 @@ export default function Rules() {
         </p>
       </section>
 
-
       <section className="card rules-section">
         <h2>Как объяснять слова</h2>
         <p>
@@ -28,10 +31,8 @@ export default function Rules() {
         </p>
       </section>
 
-
       <section className="card rules-section">
         <h2>Как проходит раунд</h2>
-
         <ul>
           <li>Один игрок начинает объяснять слова своей команде.</li>
           <li>На это есть ограниченное время.</li>
@@ -41,14 +42,12 @@ export default function Rules() {
         </ul>
       </section>
 
-
       <section className="card rules-section">
         <h2>Победа</h2>
           <p>
             После окончания всех раундов побеждает команда, которая угадала больше всего слов.
           </p>
       </section>
-
     </main>
   );
 }

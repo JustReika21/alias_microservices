@@ -1,4 +1,4 @@
-import { useState } from "react";
+import {useEffect, useState} from "react";
 import { useNavigate } from "react-router-dom";
 
 import { registerUser } from "../services/authService";
@@ -12,6 +12,9 @@ export default function Register() {
   const navigate = useNavigate();
   const { showToast } = useToast();
 
+  useEffect(() => {
+    document.title = "Алиас - Регистрация";
+  }, []);
 
   const handleRegister = async (
     e: React.FormEvent

@@ -1,6 +1,10 @@
 import { Link } from "react-router-dom";
+import {useEffect} from "react";
 
 export default function Main() {
+  useEffect(() => {
+    document.title = "Алиас";
+  }, []);
   return (
     <main className="main-page">
       <div className="hero">
@@ -32,7 +36,6 @@ export default function Main() {
           </div>
         </div>
 
-
         <div className="game-preview">
 
           <div className="word-card card-one">
@@ -53,7 +56,6 @@ export default function Main() {
         </div>
 
       </div>
-
 
       <section className="features">
 
@@ -77,9 +79,7 @@ export default function Main() {
             Не ругайтесь на баги, все починю. Приятной вам игры
           </p>
         </div>
-
       </section>
-
     </main>
   );
 }

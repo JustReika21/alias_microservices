@@ -4,7 +4,13 @@ import { useNavigate } from "react-router-dom";
 import { useToast } from "../components/ToastProvider";
 import { createPack } from "../services/packService";
 
+import { useEffect } from "react";
+
 export default function CreatePack() {
+  useEffect(() => {
+    document.title = "Алиас - Создать пак";
+  }, []);
+
   const { showToast } = useToast();
   const navigate = useNavigate();
 

@@ -31,6 +31,10 @@ export default function CreateGame() {
 
   const { showToast } = useToast();
 
+  useEffect(() => {
+    document.title = "Алиас - Создать игру";
+  }, []);
+
   async function loadPacks(
     p: number,
     query: string,
