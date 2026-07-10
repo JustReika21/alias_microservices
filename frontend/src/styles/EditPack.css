@@ -136,6 +136,95 @@
   line-height: 1.3;
 }
 
+.word-input-wrapper {
+  position: relative;
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.word-input-wrapper input {
+  flex: 1;
+}
+
+.info-button {
+  width: 42px;
+  height: 42px;
+  flex-shrink: 0;
+
+  display: flex;
+  align-items: center;
+  justify-content: center;
+
+  border: 1px solid #2b2d36;
+  border-radius: 6px;
+
+  background: #171923;
+  color: #cfcfcf;
+
+  font-size: 18px;
+  font-weight: 600;
+
+  cursor: pointer;
+  transition: 0.15s;
+}
+
+.info-button:hover {
+  background: rgba(255, 255, 255, 0.05);
+  border-color: var(--primary);
+  color: #fff;
+}
+
+.info-button:active {
+  transform: scale(0.96);
+}
+
+.info-popup {
+  position: absolute;
+  top: calc(100% + 10px);
+  right: 0;
+
+  width: 290px;
+
+  padding: 14px 16px;
+
+  border: 1px solid #2b2d36;
+  border-radius: 8px;
+
+  background: #171923;
+
+  color: #d6d6d6;
+
+  font-size: 14px;
+  line-height: 1.6;
+
+  box-shadow: 0 12px 30px rgba(0, 0, 0, 0.45);
+
+  z-index: 100;
+}
+
+.info-popup::before {
+  content: "";
+
+  position: absolute;
+  top: -6px;
+  right: 14px;
+
+  width: 10px;
+  height: 10px;
+
+  background: #171923;
+
+  border-top: 1px solid #2b2d36;
+  border-left: 1px solid #2b2d36;
+
+  transform: rotate(45deg);
+}
+
+.info-popup div + div {
+  margin-top: 6px;
+}
+
 .word-item:hover {
   background: rgba(255, 255, 255, 0.04);
 }
@@ -387,5 +476,20 @@
   .words-actions button {
     width: 100%;
     height: 42px;
+  }
+  .word-input-wrapper {
+  gap: 8px;
+    }
+
+    .info-button {
+    width: 36px;
+    height: 36px;
+    font-size: 16px;
+  }
+
+  .info-popup {
+    width: 220px;
+    right: 0;
+    font-size: 13px;
   }
 }

@@ -10,7 +10,7 @@ export async function fetchCards(
   );
 
   if (!res.ok) {
-    throw new Error("Failed to fetch cards");
+    throw new Error("Ошибка получения карт");
   }
 
   return res.json();
@@ -32,7 +32,7 @@ export async function createCards(
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create cards");
+    throw new Error("Ошибка создания карт");
   }
 }
 
@@ -52,6 +52,6 @@ export async function deleteCards(
   });
 
   if (!res.ok) {
-    throw new Error("Failed to delete cards");
+    throw new Error("Ошибка удаления карт");
   }
 }

@@ -70,12 +70,12 @@ async def get_pack_api(
     status_code=status.HTTP_200_OK,
     response_model=PaginatedInfiniteScroll,
 )
-async def get_packs_by_name(
+async def get_packs(
         pack_name: str = Query(default=None, max_length=127),
         page: int = Query(1, ge=1),
         pack_service: PackService = Depends(get_pack_service)
 ):
-    return await pack_service.get_packs_by_name(pack_name, page)
+    return await pack_service.get_packs(pack_name, page)
 
 
 @pack_router.delete('/{pack_id}', status_code=status.HTTP_204_NO_CONTENT)

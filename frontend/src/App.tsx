@@ -10,6 +10,7 @@ import EditPack from "./pages/EditPack"
 import CreateGame from "./pages/CreateGame"
 import GamePage from "./pages/GamePage"
 import MyPacks from "./pages/MyPacks.tsx";
+import Rules from  "./pages/Rules.tsx"
 
 function App() {
   return (
@@ -20,6 +21,7 @@ function App() {
         <Route path="/" element={<Main />} />
         <Route path="/login" element={<Login />} />
         <Route path="/register" element={<Register />} />
+        <Route path="/rules" element={<Rules />} />
 
         <Route
           path="/pack/create"

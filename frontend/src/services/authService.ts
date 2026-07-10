@@ -12,9 +12,15 @@ export async function registerUser(
     body: JSON.stringify({ name, password }),
   });
 
-  if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err);
+  if (res.status === 429) {
+    throw new Error(
+      "Слишком много запросов. Попробуйте немного позже."
+    );
+  }
+
+  else if (!res.ok) {
+    const err = await res.json();
+    throw new Error(err.detail);
   }
 
   return res.json();
@@ -34,8 +40,8 @@ export async function loginUser(
   });
 
   if (!res.ok) {
-    const err = await res.text();
-    throw new Error(err);
+    const err = await res.json();
+    throw new Error(err.detail);
   }
 
   const data = await res.json();

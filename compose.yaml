@@ -15,8 +15,6 @@ services:
       ALLOW_NONE_AUTHENTICATION: "yes"
       ETCD_ADVERTISE_CLIENT_URLS: http://etcd:2379
       ETCD_LISTEN_CLIENT_URLS: http://0.0.0.0:2379
-    ports:
-      - "2379:2379"
     volumes:
       - etcd_data:/bitnami/etcd
     healthcheck:
@@ -49,7 +47,8 @@ services:
       - apisix
 
   cards-db:
-    image: postgres:17
+    build:
+      context: ./db/cards
     environment:
       POSTGRES_DB: ${CARDS_DB_NAME}
       POSTGRES_USER: ${CARDS_DB_USER}
@@ -59,10 +58,10 @@ services:
       CARDS_APP_PASSWORD: ${CARDS_APP_PASSWORD}
     volumes:
       - cards_data:/var/lib/postgresql/data
-      - ./scripts/db/cards/init.sh:/docker-entrypoint-initdb.d/init.sh
 
   packs-db:
-    image: postgres:17
+    build:
+      context: ./db/packs
     environment:
       POSTGRES_DB: ${PACKS_DB_NAME}
       POSTGRES_USER: ${PACKS_DB_USER}
@@ -72,10 +71,10 @@ services:
       PACKS_APP_PASSWORD: ${PACKS_APP_PASSWORD}
     volumes:
       - packs_data:/var/lib/postgresql/data
-      - ./scripts/db/packs/init.sh:/docker-entrypoint-initdb.d/init.sh
 
   auth-db:
-    image: postgres:17
+    build:
+      context: ./db/auth
     environment:
       POSTGRES_DB: ${AUTH_DB_NAME}
       POSTGRES_USER: ${AUTH_DB_USER}
@@ -85,7 +84,6 @@ services:
       AUTH_APP_PASSWORD: ${AUTH_APP_PASSWORD}
     volumes:
       - auth_data:/var/lib/postgresql/data
-      - ./scripts/db/auth/init.sh:/docker-entrypoint-initdb.d/init.sh
 
   cards:
     build:

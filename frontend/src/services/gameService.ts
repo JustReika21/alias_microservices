@@ -25,8 +25,7 @@ export async function createGame(data: CreateGamePayload): Promise<GameCreated> 
   });
 
   if (!res.ok) {
-    const text = await res.text();
-    throw new Error(text);
+    throw new Error("Ошибка создания игры");
   }
 
   return res.json();

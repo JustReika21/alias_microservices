@@ -20,7 +20,7 @@ class UserService:
     async def create_user(self, data: UserCreate) -> None:
         user_exists = await self.user_repository.get_user_by_name(data)
         if user_exists:
-            raise UserCreationError('User with this name already exists')
+            raise UserCreationError('Такой пользователь уже существует')
         user = await self.user_repository.create_user(data)
         await self.db.commit()
         await self.db.refresh(user)
@@ -28,40 +28,40 @@ class UserService:
     async def validate_auth_user(self, data: UserLogin) -> User:
         user = await self.user_repository.get_user_by_name(data)
         if not user:
-            raise UserLoginError('Data is incorrect')
+            raise UserLoginError('Данные не верны')
 
         password_is_correct = validate_password(data.password, user.password)
         if not password_is_correct:
-            raise UserLoginError('Data is incorrect')
+            raise UserLoginError('Данные не верны')
         return user
 
     async def get_user(self, user_id: int) -> User:
         user = await self.user_repository.get_user_by_id(user_id)
         if not user:
-            raise UserNotFound('User not found')
+            raise UserNotFound('Пользователь не найден')
         return user
 
     async def get_auth_user(self, token: str, token_type: str) -> User:
         try:
             payload = decode_jwt(token)
         except:
-            raise InvalidToken('Invalid token')
+            raise InvalidToken('Невалидный токен')
 
         validate_token_type(payload, token_type)
 
         user_id = payload.get('sub')
         if not user_id:
-            raise InvalidToken('Invalid token payload')
+            raise InvalidToken('Невалидный токен')
 
         user = await self.get_user(int(user_id))
         if not user:
-            raise UserNotFound('User not found')
+            raise UserNotFound('Пользователь не найден')
 
         return user
 
     async def refresh(self, refresh_token: str) -> TokenInfo:
         if not refresh_token:
-            raise TokenNotFound('Token not found')
+            raise TokenNotFound('Токен не найден')
         user_id = await self.validate_refresh_token(refresh_token)
 
         user = await self.get_user(user_id)
@@ -77,7 +77,7 @@ class UserService:
             await self.db.refresh(token)
         except IntegrityError:
             await self.db.rollback()
-            raise UserLoginError('User login error')
+            raise UserLoginError('Ошибка входа')
 
     async def delete_refresh_token(self, token: str) -> None:
         if token:
@@ -92,15 +92,15 @@ class UserService:
         stored_token = await self.user_repository.get_refresh_token(token)
 
         if not stored_token:
-            raise InvalidToken('Invalid token')
+            raise InvalidToken('Невалидный токен')
         elif stored_token.expires_at < datetime.now(timezone.utc):
-            raise InvalidToken('Token is expired')
+            raise InvalidToken('Токен истек')
 
         return int(payload.get('sub'))
 
     async def validate_refresh_token_for_websocket(self, refresh_token: str) -> UserRead:
         if not refresh_token:
-            raise TokenNotFound('Token not found')
+            raise TokenNotFound('Токен не найден')
 
         user_id = await self.validate_refresh_token(refresh_token)
         user = await self.get_user(user_id)

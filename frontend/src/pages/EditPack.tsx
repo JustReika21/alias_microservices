@@ -1,5 +1,6 @@
 import { useEffect, useState } from "react";
 import { useNavigate, useParams } from "react-router-dom";
+import { useToast } from "../components/ToastProvider";
 
 import {
   deletePack,
@@ -26,6 +27,7 @@ function generateId() {
 }
 
 export default function EditPack() {
+  const { showToast } = useToast();
   const navigate = useNavigate();
   const { packId } = useParams<{ packId: string }>();
 
@@ -41,6 +43,7 @@ export default function EditPack() {
 
   const [loading, setLoading] = useState(true);
   const [saving, setSaving] = useState(false);
+  const [showInfo, setShowInfo] = useState(false);
 
   useEffect(() => {
     async function load() {
@@ -151,6 +154,19 @@ export default function EditPack() {
       setCards([...fresh].reverse());
 
       setInputValue("");
+
+      showToast(
+        "Карты успешно добавлены",
+        "success"
+      );
+
+    } catch (e: any) {
+
+      showToast(
+        e.message,
+        "error"
+      );
+
     } finally {
       setSaving(false);
     }
@@ -160,17 +176,23 @@ export default function EditPack() {
     if (selectedCards.size === 0) return;
 
     setSaving(true);
+      try {
+        await deleteCards(
+          numericPackId,
+          Array.from(selectedCards)
+        );
 
-    try {
-      await deleteCards(numericPackId, Array.from(selectedCards));
+        const fresh = await fetchCards(numericPackId);
+        setCards([...fresh].reverse());
 
-      const fresh = await fetchCards(numericPackId);
-      setCards([...fresh].reverse());
+        setSelectedCards(new Set());
 
-      setSelectedCards(new Set());
-    } finally {
-      setSaving(false);
-    }
+        showToast("Карты успешно удалены", "success");
+      } catch (e: any) {
+        showToast(e.message, "error");
+      } finally {
+        setSaving(false);
+      }
   }
 
   async function handleSavePack() {
@@ -183,6 +205,10 @@ export default function EditPack() {
         name: pack.name,
         description: pack.description || "",
       });
+
+      showToast("Пак успешно сохранён", "success");
+    } catch (e: any) {
+      showToast(e.message, "error");
     } finally {
       setSaving(false);
     }
@@ -191,8 +217,15 @@ export default function EditPack() {
   async function handleDeletePack() {
     if (!confirm("Удалить этот пак?")) return;
 
-    await deletePack(numericPackId);
-    navigate("/");
+    try {
+      await deletePack(numericPackId);
+
+      showToast("Пак успешно удалён", "success");
+
+      navigate("/");
+    } catch (e: any) {
+      showToast(e.message, "error");
+    }
   }
 
   if (loading)
@@ -237,7 +270,7 @@ export default function EditPack() {
 
             <div className="pack-actions">
               <button onClick={handleSavePack} disabled={saving}>
-                Сохранить
+                Сохранить пак
               </button>
 
               <button className="danger-btn" onClick={handleDeletePack}>
@@ -248,13 +281,30 @@ export default function EditPack() {
 
           <div className="words-panel">
             <div className="words-input">
-              <input
-                value={inputValue}
-                onChange={handleChange}
-                onKeyDown={handleKeyDown}
-                onPaste={handlePaste}
-                placeholder="Введите слово..."
-              />
+              <div className="word-input-wrapper">
+                <input
+                  value={inputValue}
+                  onChange={handleChange}
+                  onKeyDown={handleKeyDown}
+                  onPaste={handlePaste}
+                  placeholder="Введите слово..."
+                />
+
+                <button
+                  type="button"
+                  className="info-button"
+                  onClick={() => setShowInfo((prev) => !prev)}
+                >
+                  i
+                </button>
+
+                {showInfo && (
+                  <div className="info-popup">
+                    <div>• Слово не должно превышать 127 символов</div>
+                    <div>• В словах не должно быть дубликатов</div>
+                  </div>
+                )}
+              </div>
 
               <div className="input-hint">
                 Нажмите <b>Enter</b> или поставьте <b>запятую</b>, чтобы добавить слово

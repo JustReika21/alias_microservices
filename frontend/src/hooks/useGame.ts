@@ -3,6 +3,8 @@ import { GameSocket } from "../services/gameService";
 import type { GuessData, SwitchData } from "../types/game";
 import type { Player, Team } from "../types/team";
 import type { Status } from "../types/game_button";
+import { useToast } from "../components/ToastProvider";
+import { useNavigate } from "react-router-dom";
 
 type Snapshot = {
   type: "snapshot";
@@ -31,25 +33,19 @@ export function useGame(gameId: string) {
   const [currentPlayerId, setCurrentPlayerId] = useState<string | null>(null);
 
   const [guessedMap, setGuessedMap] = useState<Record<number, boolean>>({});
-  const [logs, setLogs] = useState<string[]>([]);
   const [endTime, setEndTime] = useState<number | null>(null);
   const [socket, setSocket] = useState<GameSocket | null>(null);
 
   const [winners, setWinners] = useState<string[]>([]);
   const [isDraw, setIsDraw] = useState(false);
 
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+
   const isMyTurn =
     myId !== null &&
     currentPlayerId !== null &&
     String(currentPlayerId) === String(myId);
-
-  function log(msg: string, data?: unknown) {
-    const entry =
-      `[${new Date().toLocaleTimeString()}] ${msg}` +
-      (data ? ` ${JSON.stringify(data)}` : "");
-
-    setLogs((prev) => [...prev, entry]);
-  }
 
   function resetGameState() {
     setCards([]);
@@ -65,7 +61,6 @@ export function useGame(gameId: string) {
       name: p.name,
       score: Number(p.score),
       teamId: String(p.team_id),
-
       connected:
         p.connected === true ||
         p.connected === 1 ||
@@ -82,8 +77,6 @@ export function useGame(gameId: string) {
   }
 
   function applySnapshot(snapshot: Snapshot) {
-    log("snapshot received", snapshot);
-
     resetGameState();
 
     setStatus(snapshot.status as Status);
@@ -114,29 +107,23 @@ export function useGame(gameId: string) {
   }
 
   function handleMessage(data: any) {
-    log("recv", data);
-
     switch (data.type) {
       case "snapshot":
         applySnapshot(data);
         break;
 
       case "player_joined": {
-        log("player_joined", data.player);
-
         if (data.player) {
           const newPlayer = normalizePlayer(data.player);
 
           setPlayers((prev) => {
-            const exists = prev.some(
-              (p) => p.id === newPlayer.id
-            );
+            const exists = prev.some((p) => p.id === newPlayer.id);
 
             if (!exists) return [...prev, newPlayer];
 
             return prev.map((p) =>
               p.id === newPlayer.id
-                ? {...p, ...newPlayer, connected: true}
+                ? { ...p, ...newPlayer, connected: true }
                 : p
             );
           });
@@ -145,8 +132,6 @@ export function useGame(gameId: string) {
       }
 
       case "player_switch_team":
-        log("player_switch_team", data);
-
         setPlayers((prev) => {
           const player = prev.find(
             (p) => p.id === String(data.player_id)
@@ -167,67 +152,49 @@ export function useGame(gameId: string) {
         });
 
         if (data.current_player_id !== undefined) {
-          setCurrentPlayerId(
-            String(data.current_player_id)
-          );
+          setCurrentPlayerId(String(data.current_player_id));
         }
         break;
 
       case "players":
-        log("players update", data.players);
-
-        setPlayers(
-          (data.players || []).map(normalizePlayer)
-        );
+        setPlayers((data.players || []).map(normalizePlayer));
         break;
 
       case "teams":
-        log("teams update", data.teams);
-
-        setTeams(
-          (data.teams || []).map(normalizeTeam)
-        );
+        setTeams((data.teams || []).map(normalizeTeam));
         break;
 
       case "team_score_update":
-        log("team_score_update", data);
-
         setTeams((prev) =>
           prev.map((t) =>
             t.id === String(data.id)
               ? {
-                ...t,
-                score: Number(data.score),
-              }
+                  ...t,
+                  score: Number(data.score),
+                }
               : t
           )
         );
         break;
 
       case "player_score_update":
-        log("player_score_update", data);
-
         setPlayers((prev) =>
           prev.map((p) =>
             p.id === String(data.id)
               ? {
-                ...p,
-                score: Number(data.score),
-              }
+                  ...p,
+                  score: Number(data.score),
+                }
               : p
           )
         );
         break;
 
       case "current_player":
-        log("current_player", data);
-
         setCurrentPlayerId(String(data.player_id));
         break;
 
       case "status":
-        log("status", data.value);
-
         setStatus(data.value as Status);
 
         if (
@@ -241,16 +208,12 @@ export function useGame(gameId: string) {
         break;
 
       case "card":
-        log("card", data.card);
-
         if (data.card) {
           setCards((prev) => [...prev, data.card]);
         }
         break;
 
       case "guess":
-        log("guess", data);
-
         setGuessedMap((prev) => ({
           ...prev,
           [data.card]: data.guessed,
@@ -258,17 +221,11 @@ export function useGame(gameId: string) {
         break;
 
       case "timer":
-        log("timer", data.end_time);
-
         setEndTime(data.end_time);
         break;
 
       case "end_game": {
-        log("end_game", data.winners);
-
-        const winnerIds = (data.winners || []).map(
-          String
-        );
+        const winnerIds = (data.winners || []).map(String);
 
         setStatus("finished");
         setWinners(winnerIds);
@@ -278,8 +235,6 @@ export function useGame(gameId: string) {
       }
 
       case "restart":
-        log("restart");
-
         resetGameState();
 
         setStatus("setting_up");
@@ -308,14 +263,12 @@ export function useGame(gameId: string) {
       }
 
       case "you_have_been_kicked": {
-        alert("Вас исключили из игры :(");
-        window.location.href = "/";
+        showToast("Вас исключили из игры :(", "error");
+        navigate("/");
         break;
       }
 
       case "player_disconnected": {
-        log("player_disconnected", data);
-
         const id = String(data.disconnected_user_id);
 
         setPlayers((prev) =>
@@ -336,33 +289,27 @@ export function useGame(gameId: string) {
 
   function sendGuess(guessData: GuessData) {
     socket?.send(guessData);
-    log("send guess", guessData);
   }
 
   function sendSwitch(data: SwitchData) {
     socket?.send(data);
-    log("send switch", data);
   }
 
   function sendAction(type: string) {
     socket?.send({ type });
-    log("send action", type);
   }
 
   function sendKick(playerId: string) {
-    const payload = {
+    socket?.send({
       type: "kick",
       id: Number(playerId),
-    };
-
-    socket?.send(payload);
-
-    log("send kick", payload);
+    });
   }
 
   useEffect(() => {
     const s = new GameSocket(gameId, handleMessage);
     setSocket(s);
+
     return () => s.close();
   }, [gameId]);
 
@@ -376,7 +323,6 @@ export function useGame(gameId: string) {
     hostId,
     currentPlayerId,
     guessedMap,
-    logs,
     endTime,
     winners,
     isDraw,

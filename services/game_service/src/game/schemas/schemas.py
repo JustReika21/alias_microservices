@@ -1,6 +1,6 @@
 from typing import List
 
-from pydantic import BaseModel
+from pydantic import BaseModel, Field
 
 
 class GameBase(BaseModel):
@@ -23,10 +23,9 @@ class Team(GameBase):
 
 class GameCreate(BaseModel):
     rounds: int
-    time: int = 60
+    time: int = Field(ge=30, le=600)
     pack: int
     password: str | None = None
-
 
 class Game(GameBase):
     id: str

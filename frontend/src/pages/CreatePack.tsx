@@ -1,16 +1,23 @@
 import { useState } from "react";
 import { useNavigate } from "react-router-dom";
+
+import { useToast } from "../components/ToastProvider";
 import { createPack } from "../services/packService";
 
 export default function CreatePack() {
+  const { showToast } = useToast();
+  const navigate = useNavigate();
+
   const [name, setName] = useState("");
   const [description, setDescription] = useState("");
-  const [msg, setMsg] = useState("");
-  const navigate = useNavigate();
+  const [loading, setLoading] = useState(false);
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
-    setMsg("Загрузка...");
+
+    if (loading) return;
+
+    setLoading(true);
 
     const packData = {
       name: name.trim(),
@@ -19,9 +26,17 @@ export default function CreatePack() {
 
     try {
       const data = await createPack(packData);
+
+      showToast("Пак успешно создан", "success");
+
       navigate(`/pack/edit/${data.id}`);
     } catch (err: any) {
-      setMsg("Ошибка: " + (err.message || "Сессия истекла"));
+      showToast(
+        err.message || "Не удалось создать пак",
+        "error"
+      );
+    } finally {
+      setLoading(false);
     }
   };
 
@@ -35,17 +50,19 @@ export default function CreatePack() {
           onChange={(e) => setName(e.target.value)}
           placeholder="Название"
           required
+          disabled={loading}
         />
 
         <textarea
           value={description}
           onChange={(e) => setDescription(e.target.value)}
           placeholder="Описание"
+          disabled={loading}
         />
 
-        <button type="submit">Создать пак</button>
-
-        <div>{msg}</div>
+        <button type="submit" disabled={loading}>
+          {loading ? "Создание..." : "Создать пак"}
+        </button>
       </form>
     </div>
   );

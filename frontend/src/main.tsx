@@ -10,14 +10,19 @@ import "./styles/GameButton.css"
 import "./styles/EditPack.css"
 import "./styles/MyPacks.css"
 import "./styles/CreateGame.css"
+import "./styles/Main.css";
+import "./styles/Rules.css"
 
 import App from "./App"
 import { AuthProvider } from "./context/AuthContext"
+import { ToastProvider } from "./components/ToastProvider";
 
 createRoot(document.getElementById("root")!).render(
-  <BrowserRouter>
-    <AuthProvider>
-      <App />
-    </AuthProvider>
-  </BrowserRouter>
+  <ToastProvider>
+    <BrowserRouter>
+      <AuthProvider>
+        <App />
+      </AuthProvider>
+    </BrowserRouter>
+  </ToastProvider>
 )

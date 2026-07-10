@@ -119,14 +119,15 @@ routes:
         key: remote_addr
         rejected_code: 429
       limit-conn:
-        conn: 2
-        burst: 1
-        default_conn_delay: 0.1
+        conn: 5
+        burst: 5
+        default_conn_delay: 0.01
         key: remote_addr
 
   - id: 5
     name: auth_me
     uri: /api/v1/auth/me
+    priority: 100
     methods: [ GET ]
     upstream:
       type: roundrobin
@@ -150,8 +151,31 @@ routes:
         rejected_code: 429
 
   - id: 6
+    name: auth_register
+    uri: /api/v1/auth/register
+    priority: 100
+    methods: [ POST ]
+    upstream:
+      type: roundrobin
+      nodes:
+        "auth:8000": 1
+    plugins:
+      limit-req:
+        rate: 1
+        burst: 2
+        key: remote_addr
+        rejected_code: 429
+      limit-count:
+        count: 2
+        time_window: 60
+        key: remote_addr
+        policy: local
+        rejected_code: 429
+
+  - id: 7
     name: auth
     uri: /api/v1/auth/*
+    priority: 1
     methods: [GET, POST]
     upstream:
       type: roundrobin
@@ -170,7 +194,7 @@ routes:
         policy: local
         rejected_code: 429
 
-  - id: 7
+  - id: 8
     name: game
     uri: /api/v1/game
     methods: [POST]
@@ -195,7 +219,7 @@ routes:
         policy: local
         rejected_code: 429
 
-  - id: 8
+  - id: 9
     name: packs_get
     uri: /api/v1/packs
     methods: [GET]
@@ -220,7 +244,7 @@ routes:
         policy: local
         rejected_code: 429
 
-  - id: 9
+  - id: 10
     name: packs_post
     uri: /api/v1/packs
     methods: [POST]
@@ -245,7 +269,7 @@ routes:
         policy: local
         rejected_code: 429
 
-  - id: 10
+  - id: 11
     name: packs_fetch
     uri: /api/v1/packs/*
     methods: [GET]
@@ -270,7 +294,7 @@ routes:
         policy: local
         rejected_code: 429
 
-  - id: 11
+  - id: 12
     name: packs_put
     uri: /api/v1/packs/*
     methods: [PUT]
@@ -288,7 +312,6 @@ routes:
         burst: 4
         key: remote_addr
         rejected_code: 429
-
       limit-count:
         count: 5
         time_window: 60
@@ -296,7 +319,7 @@ routes:
         policy: local
         rejected_code: 429
 
-  - id: 12
+  - id: 13
     name: packs_delete
     uri: /api/v1/packs/*
     methods: [DELETE]

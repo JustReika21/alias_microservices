@@ -194,6 +194,22 @@
   border-radius: 6px;
 }
 
+.game-field input[type="number"]::-webkit-inner-spin-button,
+.game-field input[type="number"]::-webkit-outer-spin-button {
+  -webkit-appearance: none;
+  margin: 0;
+}
+
+.game-field input[type="number"] {
+  appearance: textfield;
+  -moz-appearance: textfield;
+}
+
+.field-status {
+  opacity: 0.6;
+  font-size: 0.85em;
+}
+
 /* ========================= */
 /* TABLET                    */
 /* ========================= */

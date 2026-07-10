@@ -5,6 +5,8 @@ import { fetchPacksByName } from "../services/packService";
 import { fetchCards } from "../services/cardService";
 import { createGame } from "../services/gameService";
 
+import { useToast } from "../components/ToastProvider";
+
 export default function CreateGame() {
   const navigate = useNavigate();
   const loaderRef = useRef<HTMLDivElement>(null);
@@ -16,8 +18,9 @@ export default function CreateGame() {
   const [page, setPage] = useState(1);
   const [hasMore, setHasMore] = useState(true);
 
-  const [rounds, setRounds] = useState(5);
-  const [time, setTime] = useState(10);
+  const [rounds, setRounds] = useState("5");
+  const [time, setTime] = useState("60");
+
   const [password, setPassword] = useState("");
 
   const [search, setSearch] = useState("");
@@ -25,6 +28,8 @@ export default function CreateGame() {
 
   const [loading, setLoading] = useState(false);
   const [packsLoading, setPacksLoading] = useState(false);
+
+  const { showToast } = useToast();
 
   async function loadPacks(
     p: number,
@@ -44,11 +49,7 @@ export default function CreateGame() {
 
       setPage(p);
 
-      if (res.items.length === 0) {
-        setHasMore(false);
-      } else {
-        setHasMore(true);
-      }
+      setHasMore(res.items.length > 0);
 
       if (replace && res.items.length > 0 && !selectedPack) {
         selectPack(res.items[0].id);
@@ -69,19 +70,46 @@ export default function CreateGame() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
 
-    if (!selectedPack) return;
+    if (!selectedPack || loading) return;
+
+    const roundsValue = Number(rounds);
+    const timeValue = Number(time);
+
+    if (!roundsValue || roundsValue < 1) {
+      showToast("Количество раундов должно быть больше 0", "error");
+      return;
+    }
+
+    if (!roundsValue || roundsValue > 50) {
+      showToast("Количество раундов должно меньше 50", "error");
+      return;
+    }
+
+    if (!timeValue || timeValue < 30) {
+      showToast("Время должно быть больше 30 секунд", "error");
+      return;
+    }
+
+    if (!timeValue || timeValue > 600) {
+      showToast("Время должно быть больше 600 секунд", "error");
+      return;
+    }
 
     setLoading(true);
 
     try {
       const game = await createGame({
-        rounds,
-        time,
+        rounds: roundsValue,
+        time: timeValue,
         pack: selectedPack,
         password: password || null,
       });
 
+      showToast("Игра успешно создана", "success");
+
       navigate(`/game/${game.id}`);
+    } catch (e: any) {
+      showToast(e.message, "error");
     } finally {
       setLoading(false);
     }
@@ -112,8 +140,16 @@ export default function CreateGame() {
 
     const observer = new IntersectionObserver(
       ([entry]) => {
-        if (entry.isIntersecting && !packsLoading && hasMore) {
-          loadPacks(page + 1, debouncedSearch, false);
+        if (
+          entry.isIntersecting &&
+          !packsLoading &&
+          hasMore
+        ) {
+          loadPacks(
+            page + 1,
+            debouncedSearch,
+            false
+          );
         }
       },
       {
@@ -125,7 +161,12 @@ export default function CreateGame() {
     observer.observe(loader);
 
     return () => observer.disconnect();
-  }, [page, packsLoading, hasMore, debouncedSearch]);
+  }, [
+    page,
+    packsLoading,
+    hasMore,
+    debouncedSearch,
+  ]);
 
   return (
     <div className="create-game-layout">
@@ -143,7 +184,9 @@ export default function CreateGame() {
             <div className="packs-search">
               <input
                 value={search}
-                onChange={(e) => setSearch(e.target.value)}
+                onChange={(e) =>
+                  setSearch(e.target.value)
+                }
                 placeholder="Поиск набора..."
               />
             </div>
@@ -153,15 +196,22 @@ export default function CreateGame() {
                 <div
                   key={p.id}
                   className={`pack-item ${
-                    selectedPack === p.id ? "active" : ""
+                    selectedPack === p.id
+                      ? "active"
+                      : ""
                   }`}
-                  onClick={() => selectPack(p.id)}
+                  onClick={() =>
+                    selectPack(p.id)
+                  }
                 >
                   {p.name}
                 </div>
               ))}
 
-              <div ref={loaderRef} className="packs-loader">
+              <div
+                ref={loaderRef}
+                className="packs-loader"
+              >
                 {packsLoading && "Загрузка..."}
               </div>
             </div>
@@ -170,48 +220,100 @@ export default function CreateGame() {
           <div className="cards-panel">
             <div className="cards-list">
               {cards.map((c) => (
-                <div key={c.id} className="card-chip">
+                <div
+                  key={c.id}
+                  className="card-chip"
+                >
                   {c.word}
                 </div>
               ))}
             </div>
 
-            <form onSubmit={handleSubmit} className="game-form">
+            <form
+              onSubmit={handleSubmit}
+              className="game-form"
+            >
               <div className="game-field">
-                <label>Раунды</label>
+                <label htmlFor="rounds">
+                  Раунды
+                </label>
 
                 <input
+                  id="rounds"
                   type="number"
-                  min={1}
+                  min="1"
+                  inputMode="numeric"
                   value={rounds}
-                  onChange={(e) => setRounds(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value;
+
+                    if (
+                      value === "" ||
+                      Number(value) >= 1
+                    ) {
+                      setRounds(value);
+                    }
+                  }}
                 />
               </div>
 
               <div className="game-field">
-                <label>Время (сек)</label>
+                <label htmlFor="time">
+                  Время (сек)
+                </label>
 
                 <input
+                  id="time"
                   type="number"
-                  min={1}
+                  min="1"
+                  inputMode="numeric"
                   value={time}
-                  onChange={(e) => setTime(Number(e.target.value))}
+                  onChange={(e) => {
+                    const value =
+                      e.target.value;
+
+                    if (
+                      value === "" ||
+                      Number(value) >= 1
+                    ) {
+                      setTime(value);
+                    }
+                  }}
                 />
               </div>
 
               <div className="game-field game-field-password">
-                <label>Пароль</label>
+
+                <label htmlFor="password">
+                  Пароль
+                  <span className="field-status">
+                    {" "}
+                  </span>
+                </label>
 
                 <input
+                  id="password"
                   type="text"
                   value={password}
-                  onChange={(e) => setPassword(e.target.value)}
-                  placeholder="Необязательно"
+                  placeholder="(Скоро)"
+                  disabled
+                  onChange={(e) =>
+                    setPassword(e.target.value)
+                  }
                 />
               </div>
 
-              <button type="submit" disabled={!selectedPack || loading}>
-                {loading ? "Создание..." : "Создать"}
+              <button
+                type="submit"
+                disabled={
+                  !selectedPack ||
+                  loading
+                }
+              >
+                {loading
+                  ? "Создание..."
+                  : "Создать"}
               </button>
             </form>
           </div>

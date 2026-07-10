@@ -15,7 +15,7 @@ export async function createPack(payload: {
   });
 
   if (!res.ok) {
-    throw new Error("Failed to create pack");
+    throw new Error("Ошибка создания пака");
   }
 
   return res.json();
@@ -29,15 +29,15 @@ export async function fetchPack(
   );
 
   if (res.status === 403) {
-    throw new Error("Forbidden");
+    throw new Error("Доступ запрещен");
   }
 
   if (res.status === 404) {
-    throw new Error("Pack not found");
+    throw new Error("Пак не найден");
   }
 
   if (!res.ok) {
-    throw new Error("Failed to fetch pack");
+    throw new Error("Ошибка получения пакак");
   }
 
   return res.json();
@@ -62,7 +62,7 @@ export async function updatePack(
   );
 
   if (!res.ok) {
-    throw new Error("Failed to update pack");
+    throw new Error("Ошибка обновления пака");
   }
 
   return res.json();
@@ -79,7 +79,7 @@ export async function deletePack(
   );
 
   if (!res.ok) {
-    throw new Error("Failed to delete pack");
+    throw new Error("Ошибка удаления пака");
   }
 }
 
@@ -101,7 +101,7 @@ export async function fetchMyPacks(page = 1): Promise<PacksResponse> {
   const res = await apiFetch(`/api/v1/packs/my?page=${page}`);
 
   if (!res.ok) {
-    throw new Error("Failed to fetch packs");
+    throw new Error("Ошибка получения паков");
   }
 
   return res.json();
@@ -114,7 +114,7 @@ export async function fetchPacksByName(
   page = 1
 ): Promise<PacksResponse> {
   if (Date.now() < nextRequestTime) {
-    throw new Error("Server temporarily unavailable");
+    throw new Error("Сервер временно недоступен");
   }
 
   const params = new URLSearchParams();
@@ -133,7 +133,7 @@ export async function fetchPacksByName(
         nextRequestTime = Date.now() + 3000;
       }
 
-      throw new Error("Failed to fetch packs");
+      throw new Error("Ошибка получения паков");
     }
 
     nextRequestTime = 0;

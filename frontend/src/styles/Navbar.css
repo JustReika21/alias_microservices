@@ -9,8 +9,12 @@
 
 .navbar-brand {
   font-size: 24px;
-  font-weight: 600;
-  color: var(--text-strong);
+  font-weight: 800;
+  color: white !important;
+}
+
+.navbar-brand:hover {
+  color: var(--primary-hover) !important;
 }
 
 .navbar-links {

@@ -38,16 +38,6 @@ class PackRepository:
         result = await self.db.scalar(stmt)
         return result
 
-    async def get_packs(self, page: int, limit: int) -> Sequence[Pack]:
-        stmt = (
-            select(Pack)
-            .offset((page - 1) * limit)
-            .limit(limit)
-            .order_by(Pack.id)
-        )
-        result = await self.db.execute(stmt)
-        return result.scalars().all()
-
     async def get_total_packs(self) -> int:
         stmt = (select(func.count(Pack.id)))
         result = await self.db.execute(stmt)
@@ -69,11 +59,15 @@ class PackRepository:
     ) -> Sequence[Pack]:
         stmt = (
             select(Pack)
-            .where(Pack.name.icontains(pack_name))
+            .where(Pack.total > 0)
             .offset((page - 1) * limit)
             .limit(limit)
             .order_by(Pack.id)
         )
+
+        if pack_name is not None:
+            stmt = stmt.where(Pack.name.icontains(pack_name))
+
         result = await self.db.execute(stmt)
         return result.scalars().all()
 

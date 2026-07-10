@@ -30,8 +30,8 @@ class PackService:
     async def create_pack(self, pack: PackCreate, user_id: int) -> PackRead:
         total = await self.pack_repository.get_total_user_packs(user_id)
 
-        if total >= 50:
-            raise PackCreationError('Too many packs. Max 50')
+        if total >= 10:
+            raise PackCreationError('Too many packs. Max 10')
 
         try:
             created_pack = await self.pack_repository.create(pack, user_id)
@@ -68,20 +68,6 @@ class PackService:
             await self.db.rollback()
             raise PackUpdateError('Update failed')
 
-    # async def get_packs(self, page: int) -> PaginatedPacksPreview:
-    #     packs = await self.pack_repository.get_packs(page, PACKS_QUERY_LIMIT_FOR_CREATE_GAME)
-    #
-    #     total = await self.pack_repository.get_total_packs()
-    #
-    #     response = PaginatedPacksPreview(
-    #         items=[PackPreview.model_validate(pack) for pack in packs],
-    #         total=total,
-    #         page=page,
-    #         limit=PACKS_QUERY_LIMIT,
-    #         pages=(total + PACKS_QUERY_LIMIT - 1) // PACKS_QUERY_LIMIT,
-    #     )
-    #     return response
-
     async def get_pack(self, pack_id: int) -> PackRead:
         pack = await self.pack_repository.get_pack(pack_id)
 
@@ -90,15 +76,10 @@ class PackService:
 
         return PackRead.model_validate(pack)
 
-    async def get_packs_by_name(self, pack_name: str, page: int) -> PaginatedInfiniteScroll:
-        if pack_name:
-            packs = await self.pack_repository.get_packs_by_name(
-                pack_name, page, PACKS_QUERY_LIMIT_FOR_CREATE_GAME
-            )
-        else:
-            packs = await self.pack_repository.get_packs(
-                page, PACKS_QUERY_LIMIT_FOR_CREATE_GAME
-            )
+    async def get_packs(self, pack_name: str, page: int) -> PaginatedInfiniteScroll:
+        packs = await self.pack_repository.get_packs_by_name(
+            pack_name, page, PACKS_QUERY_LIMIT_FOR_CREATE_GAME
+        )
 
         response = PaginatedInfiniteScroll(
             items=[PackPreview.model_validate(pack) for pack in packs],

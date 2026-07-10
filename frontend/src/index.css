@@ -17,6 +17,14 @@ body,
 body {
   line-height: 1.5;
   -webkit-font-smoothing: antialiased;
+  /*overflow:hidden;*/
+  background:
+  radial-gradient(
+    circle at top,
+    rgba(209,0,209,.15),
+    transparent 40%
+  ),
+  var(--bg);
 }
 
 :root {
@@ -172,4 +180,140 @@ button:disabled {
 ::-webkit-scrollbar-thumb {
   background: var(--border);
   border-radius: 4px;
+}
+
+.toast-container {
+  position: fixed;
+
+  top: 90px;
+  left: 50%;
+  transform: translateX(-50%);
+
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+
+  gap: 12px;
+
+  z-index: 9999;
+}
+
+
+.toast {
+  position: relative;
+
+  min-width: 300px;
+  max-width: 460px;
+
+  padding: 14px 45px 18px 18px;
+
+  border-radius: 8px;
+
+  background: #171923;
+
+  color: #f1f1f1;
+
+  font-size: 14px;
+
+  border: 1px solid #2b2d36;
+
+  box-shadow:
+    0 10px 30px rgba(0,0,0,.35);
+
+  overflow: hidden;
+
+  animation:
+    toast-show .25s ease;
+}
+
+.toast.success {
+  border-color: #22c55e;
+}
+
+.toast.error {
+  border-color: #ef4444;
+}
+
+.toast-message {
+  display: block;
+  line-height: 1.4;
+}
+
+.toast-close {
+  position: absolute;
+  top: 12px;
+  right: 10px;
+  width: 24px;
+  height: 24px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  padding: 0;
+  border: none;
+  background: transparent;
+  color: #aaa;
+  font-size: 14px;
+  cursor: pointer;
+  transition: .15s;
+}
+
+.toast-close:hover {
+  color: white;
+}
+
+.toast-progress {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  height: 3px;
+  width: 100%;
+  background: currentColor;
+  opacity: .7;
+  animation: toast-progress 4s linear forwards;
+}
+
+
+.toast.success .toast-progress {
+  color: #22c55e;
+}
+
+.toast.error .toast-progress {
+  color: #ef4444;
+}
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes toast-show {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@media(max-width:640px){
+  .toast-container {
+    top: 75px;
+
+    left: 12px;
+    right: 12px;
+
+    transform: none;
+
+    align-items: stretch;
+  }
+  .toast {
+    min-width: 0;
+    width: 100%;
+  }
 }
