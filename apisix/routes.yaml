@@ -1,7 +1,7 @@
 routes:
   - id: 100
     name: frontend_root
-    uri: /
+    uri: /*
     methods: [ GET ]
     upstream:
       type: roundrobin
@@ -118,11 +118,11 @@ routes:
         burst: 20
         key: remote_addr
         rejected_code: 429
-      limit-conn:
-        conn: 5
-        burst: 5
-        default_conn_delay: 0.01
-        key: remote_addr
+#      limit-conn:
+#        conn: 5
+#        burst: 5
+#        default_conn_delay: 0.01
+#        key: remote_addr
 
   - id: 5
     name: auth_me

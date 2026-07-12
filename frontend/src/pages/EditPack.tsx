@@ -247,7 +247,7 @@ export default function EditPack() {
           <h2>Редактирование пака</h2>
 
           <div className="edit-pack-info">
-            <span>Слов: {cards.length}</span>
+            <span>Карт: {cards.length}</span>
           </div>
         </div>
 

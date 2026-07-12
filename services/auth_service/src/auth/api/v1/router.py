@@ -44,8 +44,9 @@ async def user_login(
         key='refresh_token',
         value=refresh_token,
         httponly=True,
-        secure=False,
-        samesite='lax'
+        secure=True,
+        samesite='lax',
+        max_age=60 * 60 * 24 * 30,
     )
 
     return TokenInfo(access_token=access_token, token_type="Bearer")

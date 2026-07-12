@@ -179,7 +179,7 @@ export default function CreateGame() {
           <h2>Пользовательские паки</h2>
 
           <div className="create-game-info">
-            <span>Слов: {cards.length}</span>
+            <span>Карт: {cards.length}</span>
           </div>
         </div>
 
